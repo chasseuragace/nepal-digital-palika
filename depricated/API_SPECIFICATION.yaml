@@ -1,0 +1,2529 @@
+openapi: 3.0.3
+info:
+  title: Nepal Digital Tourism Infrastructure API
+  description: |
+    Complete API specification for the Nepal Digital Tourism Infrastructure platform.
+    
+    This API serves:
+    - Mobile applications (Android/iOS)
+    - Web portals (public-facing)
+    - Admin CMS (Palika staff management)
+    
+    **Authentication:**
+    - Public endpoints: No authentication required
+    - User endpoints: JWT Bearer token (obtained via OTP)
+    - Admin endpoints: JWT Bearer token (email/password login)
+    
+    **Base URL:** `https://api.palika.gov.np/v1`
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api-support@palika.gov.np
+  license:
+    name: Government of Nepal
+    
+servers:
+  - url: https://api.palika.gov.np/v1
+    description: Production server
+  - url: https://staging-api.palika.gov.np/v1
+    description: Staging server
+  - url: http://localhost:3000/v1
+    description: Local development
+
+tags:
+  - name: Public
+    description: Public endpoints (no authentication required)
+  - name: Authentication
+    description: User and admin authentication
+  - name: Users
+    description: User profile and preferences
+  - name: Heritage Sites
+    description: Heritage sites and monuments
+  - name: Events
+    description: Events and festivals
+  - name: Businesses
+    description: Business directory and marketplace
+  - name: Inquiries
+    description: Business inquiries and bookings
+  - name: Reviews
+    description: Reviews and ratings
+  - name: SOS
+    description: Emergency SOS system
+  - name: Notifications
+    description: Push notifications
+  - name: Favorites
+    description: User saved content
+  - name: Search
+    description: Global search functionality
+  - name: Admin
+    description: Admin and CMS operations
+
+paths:
+  # ==========================================
+  # PUBLIC ENDPOINTS
+  # ==========================================
+  
+  /health:
+    get:
+      tags: [Public]
+      summary: Health check
+      description: Check API server health status
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: 1.0.0
+  
+  /palikas:
+    get:
+      tags: [Public]
+      summary: List all Palikas
+      description: Get list of all Palikas with optional filtering
+      parameters:
+        - name: province_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by province
+        - name: district_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by district
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [metropolitan, sub-metropolitan, municipality, rural]
+          description: Filter by Palika type
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of Palikas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Palika'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+  
+  /palikas/{id}:
+    get:
+      tags: [Public]
+      summary: Get Palika details
+      parameters:
+        - $ref: '#/components/parameters/PalikaId'
+      responses:
+        '200':
+          description: Palika details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Palika'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /heritage-sites:
+    get:
+      tags: [Public, Heritage Sites]
+      summary: List heritage sites
+      description: Get paginated list of heritage sites with filtering
+      parameters:
+        - name: palika_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by Palika
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category (temple, stupa, monastery, etc.)
+        - name: heritage_status
+          in: query
+          schema:
+            type: string
+            enum: [unesco, national, provincial, local]
+        - name: near
+          in: query
+          schema:
+            type: string
+          description: "Lat,Lng coordinates for proximity search (e.g., 27.7172,85.3240)"
+        - name: radius
+          in: query
+          schema:
+            type: number
+            default: 10
+          description: Search radius in kilometers (used with 'near')
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [published]
+            default: published
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at, view_count, distance]
+            default: name
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of heritage sites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HeritageSite'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /heritage-sites/{id}:
+    get:
+      tags: [Public, Heritage Sites]
+      summary: Get heritage site details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Heritage site details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HeritageSite'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /heritage-sites/slug/{slug}:
+    get:
+      tags: [Public, Heritage Sites]
+      summary: Get heritage site by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: bindabasini-temple
+      responses:
+        '200':
+          description: Heritage site details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HeritageSite'
+
+  /events:
+    get:
+      tags: [Public, Events]
+      summary: List events and festivals
+      parameters:
+        - name: palika_id
+          in: query
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter events starting from this date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter events until this date
+        - name: upcoming
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Only show upcoming events
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /events/{id}:
+    get:
+      tags: [Public, Events]
+      summary: Get event details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Event'
+
+  /businesses:
+    get:
+      tags: [Public, Businesses]
+      summary: List businesses
+      parameters:
+        - name: palika_id
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: "Business type: accommodation, restaurant, shop, guide, producer, service"
+        - name: sub_category
+          in: query
+          schema:
+            type: string
+        - name: verified_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: near
+          in: query
+          schema:
+            type: string
+          description: "Lat,Lng for proximity search"
+        - name: radius
+          in: query
+          schema:
+            type: number
+            default: 10
+        - name: min_rating
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 5
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, rating, distance, created_at]
+            default: rating
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of businesses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Business'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /businesses/{id}:
+    get:
+      tags: [Public, Businesses]
+      summary: Get business details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Business details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Business'
+
+  /search:
+    get:
+      tags: [Public, Search]
+      summary: Global search
+      description: Search across heritage sites, events, and businesses
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - name: palika_id
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [all, heritage_sites, events, businesses]
+            default: all
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      heritage_sites:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HeritageSite'
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                      businesses:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Business'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  # ==========================================
+  # AUTHENTICATION
+  # ==========================================
+  
+  /auth/send-otp:
+    post:
+      tags: [Authentication]
+      summary: Send OTP for login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+              properties:
+                phone:
+                  type: string
+                  example: "+9779841234567"
+                  description: Phone number with country code
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "OTP sent to +977-984-XXX-4567"
+                  expires_in:
+                    type: integer
+                    example: 300
+                    description: OTP expiry in seconds
+        '429':
+          description: Too many OTP requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify-otp:
+    post:
+      tags: [Authentication]
+      summary: Verify OTP and get auth token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+                - otp
+              properties:
+                phone:
+                  type: string
+                  example: "+9779841234567"
+                otp:
+                  type: string
+                  example: "123456"
+                device_token:
+                  type: string
+                  description: FCM token for push notifications
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refresh_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: "Bearer"
+                  expires_in:
+                    type: integer
+                    example: 900
+                    description: Access token expiry in seconds
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  expires_in:
+                    type: integer
+
+  /auth/admin/login:
+    post:
+      tags: [Authentication, Admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Admin authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: "Bearer"
+                  expires_in:
+                    type: integer
+                  admin:
+                    $ref: '#/components/schemas/AdminUser'
+
+  # ==========================================
+  # USER PROFILE
+  # ==========================================
+  
+  /user/profile:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+    
+    put:
+      tags: [Users]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                user_type:
+                  type: string
+                  enum: [resident, tourist_domestic, tourist_international]
+                default_palika_id:
+                  type: integer
+                preferences:
+                  type: object
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+
+  /user/device-token:
+    post:
+      tags: [Users]
+      summary: Register device token for notifications
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: FCM device token
+                platform:
+                  type: string
+                  enum: [android, ios, web]
+      responses:
+        '200':
+          description: Token registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Device token registered"
+
+  # ==========================================
+  # FAVORITES
+  # ==========================================
+  
+  /user/favorites:
+    get:
+      tags: [Users, Favorites]
+      summary: Get user's saved favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [heritage_site, event, business]
+          description: Filter by entity type
+      responses:
+        '200':
+          description: List of favorites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Favorite'
+    
+    post:
+      tags: [Users, Favorites]
+      summary: Add to favorites
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - entity_type
+                - entity_id
+              properties:
+                entity_type:
+                  type: string
+                  enum: [heritage_site, event, business]
+                entity_id:
+                  type: string
+                  format: uuid
+                personal_note:
+                  type: string
+      responses:
+        '201':
+          description: Added to favorites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Favorite'
+
+  /user/favorites/{id}:
+    delete:
+      tags: [Users, Favorites]
+      summary: Remove from favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Removed from favorites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ==========================================
+  # INQUIRIES
+  # ==========================================
+  
+  /inquiries:
+    post:
+      tags: [Inquiries]
+      summary: Create business inquiry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - business_id
+                - inquiry_data
+              properties:
+                business_id:
+                  type: string
+                  format: uuid
+                inquiry_data:
+                  type: object
+                  description: "Flexible data based on business type"
+                  example:
+                    check_in: "2025-10-28"
+                    check_out: "2025-10-30"
+                    guests: 2
+                    room_type: "double"
+                    special_requests: "Need vegetarian meals"
+      responses:
+        '201':
+          description: Inquiry created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inquiry'
+    
+    get:
+      tags: [Inquiries]
+      summary: Get user's inquiries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, contacted, confirmed, completed, cancelled]
+      responses:
+        '200':
+          description: List of inquiries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Inquiry'
+
+  /inquiries/{id}:
+    get:
+      tags: [Inquiries]
+      summary: Get inquiry details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Inquiry details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inquiry'
+
+  /inquiries/{id}/confirm:
+    post:
+      tags: [Inquiries]
+      summary: Confirm inquiry/booking completed (customer side)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Inquiry confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ==========================================
+  # REVIEWS
+  # ==========================================
+  
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Submit a review
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - business_id
+                - rating
+              properties:
+                business_id:
+                  type: string
+                  format: uuid
+                inquiry_id:
+                  type: string
+                  format: uuid
+                  description: Optional link to inquiry
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                title:
+                  type: string
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Review submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Review'
+
+  /businesses/{id}/reviews:
+    get:
+      tags: [Reviews, Businesses]
+      summary: Get reviews for a business
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [recent, rating_high, rating_low, helpful]
+            default: recent
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /reviews/{id}/helpful:
+    post:
+      tags: [Reviews]
+      summary: Mark review as helpful
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Marked as helpful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ==========================================
+  # SOS EMERGENCY
+  # ==========================================
+  
+  /sos:
+    post:
+      tags: [SOS]
+      summary: Create SOS emergency request
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - emergency_type
+                - location
+                - user_phone
+              properties:
+                emergency_type:
+                  type: string
+                  enum: [medical, fire, police, disaster, accident, other]
+                location:
+                  type: object
+                  required:
+                    - latitude
+                    - longitude
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                    accuracy:
+                      type: number
+                      description: GPS accuracy in meters
+                location_description:
+                  type: string
+                  example: "Near Temple, Main Road"
+                user_phone:
+                  type: string
+                details:
+                  type: string
+                sent_offline:
+                  type: boolean
+                  default: false
+                queued_at:
+                  type: string
+                  format: date-time
+                  description: When was it created offline
+      responses:
+        '201':
+          description: SOS request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SOSRequest'
+
+  /sos/{id}:
+    get:
+      tags: [SOS]
+      summary: Get SOS request status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SOS request details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SOSRequest'
+
+  /sos/{id}/cancel:
+    put:
+      tags: [SOS]
+      summary: Cancel SOS request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SOS request cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /sos/{id}/rate:
+    post:
+      tags: [SOS]
+      summary: Rate SOS response
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                feedback:
+                  type: string
+      responses:
+        '200':
+          description: Rating submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ==========================================
+  # NOTIFICATIONS
+  # ==========================================
+  
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Get user's notification history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [emergency, event, tourism, business, system]
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserNotification'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /notifications/{id}/read:
+    put:
+      tags: [Notifications]
+      summary: Mark notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /notifications/read-all:
+    put:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: All marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ==========================================
+  # BUSINESS OWNER ENDPOINTS
+  # ==========================================
+  
+  /businesses/register:
+    post:
+      tags: [Businesses]
+      summary: Register a new business
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - business_name
+                - business_type
+                - phone
+                - palika_id
+                - ward_number
+                - address
+                - location
+                - description
+              properties:
+                business_name:
+                  type: string
+                business_type:
+                  type: string
+                  enum: [accommodation, restaurant, shop, guide, producer, service]
+                sub_category:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                palika_id:
+                  type: integer
+                ward_number:
+                  type: integer
+                address:
+                  type: string
+                location:
+                  type: string
+                  description: "lat,lng"
+                  example: "27.7172,85.3240"
+                description:
+                  type: string
+                details:
+                  type: string
+                  description: "JSON string of business-specific details"
+                price_range:
+                  type: string
+                  description: "JSON string: {min: 1500, max: 2500}"
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: "5-10 images"
+                business_license:
+                  type: string
+                  format: binary
+                license_number:
+                  type: string
+                pan_number:
+                  type: string
+      responses:
+        '201':
+          description: Business registered (pending verification)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Business'
+
+  /businesses/mine:
+    get:
+      tags: [Businesses]
+      summary: Get my businesses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of user's businesses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Business'
+
+  /businesses/{id}:
+    put:
+      tags: [Businesses]
+      summary: Update business information
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                business_name:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                address:
+                  type: string
+                description:
+                  type: string
+                details:
+                  type: object
+                price_range:
+                  type: object
+                operating_hours:
+                  type: object
+      responses:
+        '200':
+          description: Business updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Business'
+
+    delete:
+      tags: [Businesses]
+      summary: Delete/deactivate business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Business deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /businesses/{id}/inquiries:
+    get:
+      tags: [Businesses, Inquiries]
+      summary: Get inquiries for my business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, contacted, confirmed, completed, cancelled]
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of inquiries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Inquiry'
+
+  /businesses/{id}/analytics:
+    get:
+      tags: [Businesses]
+      summary: Get business analytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Business analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/BusinessAnalytics'
+
+  /inquiries/{id}/status:
+    put:
+      tags: [Inquiries]
+      summary: Update inquiry status (business owner)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [contacted, confirmed, completed, cancelled, no_booking]
+                booking_details:
+                  type: object
+                  description: "If status is 'confirmed', provide booking details"
+                internal_notes:
+                  type: string
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inquiry'
+
+  /reviews/{id}/respond:
+    post:
+      tags: [Reviews]
+      summary: Respond to a review (business owner)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - response
+              properties:
+                response:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Response posted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Review'
+
+  # ==========================================
+  # ADMIN/CMS ENDPOINTS
+  # ==========================================
+  
+  /admin/heritage-sites:
+    post:
+      tags: [Admin, Heritage Sites]
+      summary: Create heritage site (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - palika_id
+                - name_en
+                - name_ne
+                - location
+              properties:
+                palika_id:
+                  type: integer
+                name_en:
+                  type: string
+                name_ne:
+                  type: string
+                category:
+                  type: string
+                site_type:
+                  type: string
+                ward_number:
+                  type: integer
+                address:
+                  type: string
+                location:
+                  type: string
+                  description: "lat,lng"
+                short_description:
+                  type: string
+                full_description:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                audio_guide:
+                  type: string
+                  format: binary
+                status:
+                  type: string
+                  enum: [draft, published]
+                  default: draft
+      responses:
+        '201':
+          description: Heritage site created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HeritageSite'
+
+  /admin/heritage-sites/{id}:
+    put:
+      tags: [Admin, Heritage Sites]
+      summary: Update heritage site (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              # Similar to create but all fields optional
+      responses:
+        '200':
+          description: Heritage site updated
+    
+    delete:
+      tags: [Admin, Heritage Sites]
+      summary: Delete heritage site (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Heritage site deleted
+
+  /admin/businesses/{id}/verify:
+    put:
+      tags: [Admin, Businesses]
+      summary: Verify business registration (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - verification_status
+              properties:
+                verification_status:
+                  type: string
+                  enum: [verified, rejected, under_review]
+                verification_notes:
+                  type: string
+      responses:
+        '200':
+          description: Verification status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Business'
+
+  /admin/sos-requests:
+    get:
+      tags: [Admin, SOS]
+      summary: List SOS requests (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: palika_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: emergency_type
+          in: query
+          schema:
+            type: string
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of SOS requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SOSRequest'
+
+  /admin/sos-requests/{id}/assign:
+    put:
+      tags: [Admin, SOS]
+      summary: Assign SOS request to responder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - responder_name
+                - responder_phone
+              properties:
+                responder_name:
+                  type: string
+                responder_phone:
+                  type: string
+                responder_eta_minutes:
+                  type: integer
+      responses:
+        '200':
+          description: SOS request assigned
+
+  /admin/sos-requests/{id}/status:
+    put:
+      tags: [Admin, SOS]
+      summary: Update SOS request status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [assigned, en_route, on_site, resolved]
+                responder_location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                resolution_notes:
+                  type: string
+      responses:
+        '200':
+          description: Status updated
+
+  /admin/notifications/send:
+    post:
+      tags: [Admin, Notifications]
+      summary: Send notification to users (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - message
+                - notification_type
+              properties:
+                palika_id:
+                  type: integer
+                  description: "Null for national notification"
+                title:
+                  type: string
+                message:
+                  type: string
+                notification_type:
+                  type: string
+                  enum: [emergency, event, tourism, business, system]
+                priority:
+                  type: string
+                  enum: [low, default, high, max]
+                  default: default
+                target_criteria:
+                  type: object
+                  description: "Targeting rules"
+                  example:
+                    wards: [5, 6]
+                    user_types: ["resident"]
+                image_url:
+                  type: string
+                action_url:
+                  type: string
+                scheduled_at:
+                  type: string
+                  format: date-time
+                  description: "Null for immediate send"
+      responses:
+        '201':
+          description: Notification created/sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Notification'
+
+# ==========================================
+# COMPONENTS
+# ==========================================
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token obtained from /auth/verify-otp or /auth/admin/login"
+
+  parameters:
+    PalikaId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Palika ID
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "NOT_FOUND"
+            message:
+              type: string
+              example: "Resource not found"
+        timestamp:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 150
+        total_pages:
+          type: integer
+          example: 8
+
+    Location:
+      type: object
+      properties:
+        latitude:
+          type: number
+          example: 27.7172
+        longitude:
+          type: number
+          example: 85.3240
+
+    Palika:
+      type: object
+      properties:
+        id:
+          type: integer
+        name_en:
+          type: string
+        name_ne:
+          type: string
+        type:
+          type: string
+        code:
+          type: string
+        district:
+          type: object
+          properties:
+            id:
+              type: integer
+            name_en:
+              type: string
+            name_ne:
+              type: string
+        province:
+          type: object
+          properties:
+            id:
+              type: integer
+            name_en:
+              type: string
+            name_ne:
+              type: string
+        center_point:
+          $ref: '#/components/schemas/Location'
+        total_wards:
+          type: integer
+        office_phone:
+          type: string
+        office_email:
+          type: string
+        website:
+          type: string
+        settings:
+          type: object
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        phone:
+          type: string
+        phone_verified:
+          type: boolean
+        email:
+          type: string
+        name:
+          type: string
+        profile_photo:
+          type: string
+        user_type:
+          type: string
+          enum: [resident, tourist_domestic, tourist_international]
+        default_palika:
+          type: object
+          properties:
+            id:
+              type: integer
+            name_en:
+              type: string
+        preferences:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+        palika:
+          type: object
+        permissions:
+          type: array
+          items:
+            type: string
+
+    HeritageSite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        palika:
+          type: object
+          properties:
+            id:
+              type: integer
+            name_en:
+              type: string
+        name_en:
+          type: string
+        name_ne:
+          type: string
+        slug:
+          type: string
+        category:
+          type: string
+        site_type:
+          type: string
+        heritage_status:
+          type: string
+        ward_number:
+          type: integer
+        address:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        short_description:
+          type: string
+        full_description:
+          type: string
+        opening_hours:
+          type: object
+        entry_fee:
+          type: object
+        featured_image:
+          type: string
+        images:
+          type: array
+          items:
+            type: object
+        qr_code_url:
+          type: string
+        view_count:
+          type: integer
+        rating_average:
+          type: number
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        palika:
+          type: object
+        name_en:
+          type: string
+        name_ne:
+          type: string
+        slug:
+          type: string
+        category:
+          type: string
+        event_type:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_all_day:
+          type: boolean
+        is_recurring:
+          type: boolean
+        primary_location:
+          $ref: '#/components/schemas/Location'
+        venue_name:
+          type: string
+        short_description:
+          type: string
+        full_description:
+          type: string
+        featured_image:
+          type: string
+        images:
+          type: array
+        organizer_name:
+          type: string
+        organizer_contact:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Business:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        palika:
+          type: object
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        business_name:
+          type: string
+        slug:
+          type: string
+        business_type:
+          type: string
+        sub_category:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        ward_number:
+          type: integer
+        address:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        description:
+          type: string
+        details:
+          type: object
+        price_range:
+          type: object
+        facilities:
+          type: array
+          items:
+            type: string
+        featured_image:
+          type: string
+        images:
+          type: array
+        verification_status:
+          type: string
+          enum: [pending, under_review, verified, rejected]
+        verified_at:
+          type: string
+          format: date-time
+        view_count:
+          type: integer
+        contact_count:
+          type: integer
+        inquiry_count:
+          type: integer
+        rating_average:
+          type: number
+        rating_count:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Inquiry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business:
+          type: object
+          properties:
+            id:
+              type: string
+            business_name:
+              type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            phone:
+              type: string
+        inquiry_code:
+          type: string
+        inquiry_data:
+          type: object
+        status:
+          type: string
+        status_updated_at:
+          type: string
+          format: date-time
+        booking_confirmed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business:
+          type: object
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        rating:
+          type: integer
+        title:
+          type: string
+        comment:
+          type: string
+        is_verified_stay:
+          type: boolean
+        owner_response:
+          type: string
+        owner_responded_at:
+          type: string
+          format: date-time
+        helpful_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    SOSRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        request_code:
+          type: string
+        palika:
+          type: object
+        user:
+          type: object
+        emergency_type:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        location_description:
+          type: string
+        user_name:
+          type: string
+        user_phone:
+          type: string
+        details:
+          type: string
+        status:
+          type: string
+        responder_name:
+          type: string
+        responder_phone:
+          type: string
+        responder_eta_minutes:
+          type: integer
+        responder_location:
+          $ref: '#/components/schemas/Location'
+        timeline:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        palika:
+          type: object
+        title:
+          type: string
+        message:
+          type: string
+        notification_type:
+          type: string
+        priority:
+          type: string
+        image_url:
+          type: string
+        action_url:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    UserNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        notification:
+          $ref: '#/components/schemas/Notification'
+        delivered_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+        clicked_at:
+          type: string
+          format: date-time
+
+    Favorite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        entity:
+          type: object
+          description: "The actual entity (heritage site, event, or business)"
+        personal_note:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    BusinessAnalytics:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            from_date:
+              type: string
+              format: date
+            to_date:
+              type: string
+              format: date
+        metrics:
+          type: object
+          properties:
+            total_views:
+              type: integer
+            views_change_percent:
+              type: number
+            contact_clicks:
+              type: integer
+            contacts_change_percent:
+              type: number
+            inquiries:
+              type: integer
+            inquiries_change_percent:
+              type: number
+            rating_average:
+              type: number
+            new_reviews:
+              type: integer
+        views_trend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer
+        top_sources:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              percentage:
+                type: number
+        search_keywords:
+          type: array
+          items:
+            type: object
+            properties:
+              keyword:
+                type: string
+              count:
+                type: integer
