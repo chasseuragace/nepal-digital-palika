@@ -88,6 +88,10 @@ CREATE TABLE profiles (
     -- Preferences: {"language": "en", "notifications_enabled": true, "theme": "light"}
     preferences JSONB DEFAULT '{"language": "en", "notifications_enabled": true, "theme": "light"}',
     
+    -- Phone verification
+    phone_verified BOOLEAN DEFAULT false,
+    phone_verified_at TIMESTAMPTZ,
+    
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -112,6 +116,9 @@ CREATE TABLE admin_users (
     is_active BOOLEAN DEFAULT true,
     last_login_at TIMESTAMPTZ,
     
+    -- Additional fields
+    role_id INTEGER REFERENCES roles(id),
+    
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -131,7 +138,7 @@ CREATE TABLE heritage_sites (
     name_ne VARCHAR(300) NOT NULL,
     slug VARCHAR(300) UNIQUE NOT NULL,
     
-    category VARCHAR(100) NOT NULL CHECK (category IN ('temple', 'monastery', 'palace', 'fort', 'museum', 'archaeological', 'natural', 'cultural', 'other')),
+    category_id INTEGER NOT NULL REFERENCES categories(id),
     site_type VARCHAR(100),
     heritage_status VARCHAR(100) CHECK (heritage_status IN ('world_heritage', 'national', 'provincial', 'local', 'proposed')),
     
@@ -140,7 +147,9 @@ CREATE TABLE heritage_sites (
     location GEOGRAPHY(POINT, 4326) NOT NULL,
     
     short_description TEXT,
+    short_description_ne TEXT,
     full_description TEXT,
+    full_description_ne TEXT,
     
     -- Opening hours: {"monday": "09:00-17:00", "tuesday": "09:00-17:00", ..., "sunday": "09:00-17:00"}
     opening_hours JSONB DEFAULT '{"monday": "09:00-17:00", "tuesday": "09:00-17:00", "wednesday": "09:00-17:00", "thursday": "09:00-17:00", "friday": "09:00-17:00", "saturday": "09:00-17:00", "sunday": "09:00-17:00"}',
@@ -168,6 +177,15 @@ CREATE TABLE heritage_sites (
     status VARCHAR(40) DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
     published_at TIMESTAMPTZ,
     
+    -- Additional fields
+    is_featured BOOLEAN DEFAULT false,
+    rejection_reason TEXT,
+    reviewer_feedback TEXT,
+    rejected_at TIMESTAMPTZ,
+    scheduled_at TIMESTAMPTZ,
+    
+    created_by UUID REFERENCES auth.users(id),
+    updated_by UUID REFERENCES auth.users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -175,7 +193,8 @@ CREATE TABLE heritage_sites (
 CREATE INDEX idx_heritage_palika ON heritage_sites(palika_id);
 CREATE INDEX idx_heritage_location ON heritage_sites USING GIST(location);
 CREATE INDEX idx_heritage_status ON heritage_sites(status);
-CREATE INDEX idx_heritage_category ON heritage_sites(category);
+CREATE INDEX idx_heritage_category ON heritage_sites(category_id);
+CREATE INDEX idx_heritage_featured ON heritage_sites(is_featured);
 CREATE INDEX idx_heritage_name_search ON heritage_sites USING gin(to_tsvector('english', name_en));
 
 -- ==========================================
@@ -190,8 +209,11 @@ CREATE TABLE events (
     name_ne VARCHAR(300) NOT NULL,
     slug VARCHAR(300) UNIQUE NOT NULL,
     
-    category VARCHAR(100),
+    category_id INTEGER REFERENCES categories(id),
     event_type VARCHAR(50),
+    is_festival BOOLEAN DEFAULT false,
+    nepali_calendar_date VARCHAR(50),
+    recurrence_pattern VARCHAR(50),
     
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
@@ -200,7 +222,9 @@ CREATE TABLE events (
     venue_name VARCHAR(200),
     
     short_description TEXT,
+    short_description_ne TEXT,
     full_description TEXT,
+    full_description_ne TEXT,
     
     featured_image TEXT,
     -- Images: [{"url": "https://...", "caption": "Event photo", "order": 1}, ...]
@@ -208,6 +232,11 @@ CREATE TABLE events (
     
     status VARCHAR(40) DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
     
+    -- Additional fields
+    scheduled_at TIMESTAMPTZ,
+    
+    created_by UUID REFERENCES auth.users(id),
+    updated_by UUID REFERENCES auth.users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -215,6 +244,8 @@ CREATE TABLE events (
 CREATE INDEX idx_events_palika ON events(palika_id);
 CREATE INDEX idx_events_dates ON events(start_date, end_date);
 CREATE INDEX idx_events_location ON events USING GIST(location);
+CREATE INDEX idx_events_category ON events(category_id);
+CREATE INDEX idx_events_festival ON events(is_festival);
 
 -- ==========================================
 -- BUSINESSES
@@ -226,9 +257,10 @@ CREATE TABLE businesses (
     owner_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     
     business_name VARCHAR(300) NOT NULL,
+    business_name_ne VARCHAR(300),
     slug VARCHAR(300) UNIQUE NOT NULL,
     
-    business_type VARCHAR(100) NOT NULL CHECK (business_type IN ('accommodation', 'restaurant', 'tour_operator', 'transport', 'shopping', 'entertainment', 'service', 'other')),
+    business_type_id INTEGER NOT NULL REFERENCES categories(id),
     sub_category VARCHAR(100),
     
     phone VARCHAR(40) NOT NULL,
@@ -271,6 +303,11 @@ CREATE TABLE businesses (
     
     is_active BOOLEAN DEFAULT true,
     
+    -- Additional fields
+    is_featured BOOLEAN DEFAULT false,
+    
+    created_by UUID REFERENCES auth.users(id),
+    updated_by UUID REFERENCES auth.users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -279,7 +316,8 @@ CREATE INDEX idx_businesses_palika ON businesses(palika_id);
 CREATE INDEX idx_businesses_owner ON businesses(owner_user_id);
 CREATE INDEX idx_businesses_location ON businesses USING GIST(location);
 CREATE INDEX idx_businesses_verification ON businesses(verification_status);
-CREATE INDEX idx_businesses_type_status ON businesses(business_type, verification_status, is_active);
+CREATE INDEX idx_businesses_type_status ON businesses(business_type_id, verification_status, is_active);
+CREATE INDEX idx_businesses_featured ON businesses(is_featured);
 CREATE INDEX idx_businesses_name_search ON businesses USING gin(to_tsvector('english', business_name));
 
 -- ==========================================
@@ -296,6 +334,13 @@ CREATE TABLE inquiries (
     
     status VARCHAR(50) DEFAULT 'new',
     status_updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    -- Enhanced inquiry tracking
+    inquiry_status VARCHAR(30) DEFAULT 'new' CHECK (inquiry_status IN ('new', 'contacted', 'confirmed', 'completed', 'cancelled')),
+    confirmed_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    estimated_revenue NUMERIC(10,2),
+    actual_revenue NUMERIC(10,2),
     
     internal_notes TEXT,
     
@@ -404,6 +449,206 @@ CREATE TABLE favorites (
 CREATE INDEX idx_favorites_user ON favorites(user_id);
 
 -- ==========================================
+-- BLOG/NEWS SYSTEM
+-- ==========================================
+
+CREATE TABLE blog_posts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    palika_id INTEGER NOT NULL REFERENCES palikas(id) ON DELETE CASCADE,
+    author_id UUID NOT NULL REFERENCES admin_users(id),
+    
+    title_en VARCHAR(300) NOT NULL,
+    title_ne VARCHAR(300) NOT NULL,
+    slug VARCHAR(300) UNIQUE NOT NULL,
+    
+    excerpt TEXT,
+    excerpt_ne TEXT,
+    content TEXT NOT NULL,
+    content_ne TEXT,
+    featured_image TEXT,
+    
+    category VARCHAR(100),
+    tags TEXT[],
+    
+    status VARCHAR(40) DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+    published_at TIMESTAMPTZ,
+    
+    view_count INTEGER DEFAULT 0,
+    
+    -- Additional fields
+    scheduled_at TIMESTAMPTZ,
+    
+    created_by UUID REFERENCES auth.users(id),
+    updated_by UUID REFERENCES auth.users(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_blog_palika ON blog_posts(palika_id);
+CREATE INDEX idx_blog_status ON blog_posts(status);
+CREATE INDEX idx_blog_published ON blog_posts(published_at DESC);
+CREATE INDEX idx_blog_name_search ON blog_posts USING gin(to_tsvector('english', title_en));
+
+-- ==========================================
+-- CATEGORIES/TAXONOMY MANAGEMENT
+-- ==========================================
+
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    palika_id INTEGER REFERENCES palikas(id),
+    
+    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('heritage_site', 'event', 'business', 'blog_post')),
+    name_en VARCHAR(100) NOT NULL,
+    name_ne VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    
+    parent_id INTEGER REFERENCES categories(id),
+    
+    description TEXT,
+    description_ne TEXT,
+    icon_url TEXT,
+    
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(palika_id, entity_type, slug)
+);
+
+CREATE INDEX idx_categories_entity ON categories(entity_type, is_active);
+CREATE INDEX idx_categories_parent ON categories(parent_id);
+
+-- ==========================================
+-- NOTIFICATIONS SYSTEM
+-- ==========================================
+
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    palika_id INTEGER REFERENCES palikas(id),
+    
+    type VARCHAR(50) NOT NULL CHECK (type IN ('emergency', 'event', 'tourism_update', 'business_announcement', 'system')),
+    title VARCHAR(200) NOT NULL,
+    title_ne VARCHAR(200),
+    message TEXT NOT NULL,
+    message_ne TEXT,
+    
+    entity_type VARCHAR(50),
+    entity_id UUID,
+    
+    status VARCHAR(20) DEFAULT 'unread' CHECK (status IN ('unread', 'read', 'archived')),
+    
+    sent_at TIMESTAMPTZ DEFAULT NOW(),
+    read_at TIMESTAMPTZ,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_user ON notifications(user_id, status);
+CREATE INDEX idx_notifications_type ON notifications(type);
+CREATE INDEX idx_notifications_sent ON notifications(sent_at DESC);
+
+-- ==========================================
+-- SUPPORT TICKETS SYSTEM
+-- ==========================================
+
+CREATE TABLE support_tickets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ticket_code VARCHAR(40) UNIQUE NOT NULL,
+    
+    palika_id INTEGER NOT NULL REFERENCES palikas(id),
+    user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    assigned_to UUID REFERENCES admin_users(id),
+    
+    subject VARCHAR(300) NOT NULL,
+    description TEXT NOT NULL,
+    priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+    
+    status VARCHAR(30) DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+    
+    resolution_notes TEXT,
+    resolved_at TIMESTAMPTZ,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_support_palika ON support_tickets(palika_id);
+CREATE INDEX idx_support_status ON support_tickets(status);
+CREATE INDEX idx_support_assigned ON support_tickets(assigned_to);
+
+-- ==========================================
+-- CONTENT MODERATION
+-- ==========================================
+
+CREATE TABLE content_moderation (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    content_type VARCHAR(50) NOT NULL CHECK (content_type IN ('heritage_site', 'event', 'business', 'blog_post')),
+    content_id UUID NOT NULL,
+    
+    status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'approved', 'rejected', 'changes_requested')),
+    reviewer_id UUID REFERENCES admin_users(id),
+    
+    reason TEXT,
+    feedback TEXT,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_moderation_content ON content_moderation(content_type, content_id);
+CREATE INDEX idx_moderation_status ON content_moderation(status);
+
+-- ==========================================
+-- USER ROLES & PERMISSIONS
+-- ==========================================
+
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    description_ne TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE permissions (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    description_ne TEXT,
+    resource VARCHAR(50),
+    action VARCHAR(50),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE role_permissions (
+    role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id INTEGER REFERENCES permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+);
+
+-- ==========================================
+-- USER EVENTS (Junction Table)
+-- ==========================================
+
+CREATE TABLE user_events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    
+    status VARCHAR(30) DEFAULT 'interested' CHECK (status IN ('interested', 'attending', 'attended', 'cancelled')),
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(user_id, event_id)
+);
+
+CREATE INDEX idx_user_events_user ON user_events(user_id);
+CREATE INDEX idx_user_events_event ON user_events(event_id);
+
+-- ==========================================
 -- ANALYTICS
 -- ==========================================
 
@@ -426,8 +671,278 @@ CREATE INDEX idx_analytics_entity ON analytics_events(entity_type, entity_id);
 CREATE INDEX idx_analytics_created ON analytics_events(created_at DESC);
 
 -- ==========================================
--- TRIGGERS (Automatic Updates)
+-- AUDIT TRAIL SYSTEM
 -- ==========================================
+
+CREATE TABLE audit_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    table_name VARCHAR(50) NOT NULL,
+    record_id TEXT NOT NULL,  -- Changed from UUID to TEXT to handle different ID types
+    action VARCHAR(20) NOT NULL CHECK (action IN ('INSERT', 'UPDATE', 'DELETE')),
+    
+    user_id UUID REFERENCES auth.users(id),
+    user_type VARCHAR(20) CHECK (user_type IN ('user', 'admin')),
+    
+    old_values JSONB,
+    new_values JSONB,
+    changed_fields TEXT[],
+    
+    ip_address INET,
+    user_agent TEXT,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_table_record ON audit_log(table_name, record_id);
+CREATE INDEX idx_audit_user ON audit_log(user_id);
+CREATE INDEX idx_audit_created ON audit_log(created_at DESC);
+
+-- Enhance profiles with structured preferences
+-- Update the default preferences to include notification settings
+ALTER TABLE profiles ALTER COLUMN preferences SET DEFAULT '{
+    "language": "en", 
+    "notifications": {
+        "emergency": true, 
+        "events": true, 
+        "tourism_updates": true, 
+        "business_announcements": false
+    }, 
+    "quiet_hours": {
+        "enabled": false, 
+        "start": "22:00", 
+        "end": "07:00"
+    }, 
+    "theme": "light",
+    "offline_maps": false,
+    "download_content": false
+}';
+
+-- ==========================================
+-- ADDITIONAL TRIGGERS
+-- ==========================================
+
+-- Update blog_posts updated_at
+CREATE TRIGGER update_blog_posts_updated_at BEFORE UPDATE ON blog_posts
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Update support_tickets updated_at
+CREATE TRIGGER update_support_tickets_updated_at BEFORE UPDATE ON support_tickets
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Update content_moderation updated_at
+CREATE TRIGGER update_content_moderation_updated_at BEFORE UPDATE ON content_moderation
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Update user_events updated_at
+CREATE TRIGGER update_user_events_updated_at BEFORE UPDATE ON user_events
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Generate support ticket code automatically
+CREATE OR REPLACE FUNCTION generate_support_ticket_code()
+RETURNS TRIGGER AS $
+BEGIN
+    NEW.ticket_code = 'SUP-' || TO_CHAR(NOW(), 'YYYY') || '-' || 
+                      LPAD(FLOOR(RANDOM() * 10000)::TEXT, 4, '0');
+    RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+CREATE TRIGGER generate_support_ticket_code_trigger
+BEFORE INSERT ON support_tickets
+FOR EACH ROW EXECUTE FUNCTION generate_support_ticket_code();
+
+-- Generate blog post slug automatically
+CREATE TRIGGER generate_blog_slug_trigger
+BEFORE INSERT ON blog_posts
+FOR EACH ROW EXECUTE FUNCTION generate_slug();
+
+-- ==========================================
+-- AUDIT TRAIL TRIGGERS
+-- ==========================================
+
+-- Function to log changes to audit_log table
+CREATE OR REPLACE FUNCTION log_audit_trail()
+RETURNS TRIGGER AS $
+DECLARE
+    old_data JSONB;
+    new_data JSONB;
+    changed_fields TEXT[];
+    record_id TEXT;
+BEGIN
+    -- Determine old and new data based on operation
+    IF TG_OP = 'DELETE' THEN
+        old_data = to_jsonb(OLD);
+        new_data = NULL;
+    ELSIF TG_OP = 'INSERT' THEN
+        old_data = NULL;
+        new_data = to_jsonb(NEW);
+    ELSE -- UPDATE
+        old_data = to_jsonb(OLD);
+        new_data = to_jsonb(NEW);
+        
+        -- Find changed fields
+        SELECT array_agg(key) INTO changed_fields
+        FROM jsonb_each(old_data) o
+        JOIN jsonb_each(new_data) n ON o.key = n.key
+        WHERE o.value IS DISTINCT FROM n.value;
+    END IF;
+    
+    -- Get record ID (handle different primary key names)
+    record_id = CASE 
+        WHEN TG_TABLE_NAME IN ('roles', 'permissions', 'categories', 'provinces', 'districts', 'palikas') THEN
+            COALESCE(NEW.id::TEXT, OLD.id::TEXT)
+        WHEN TG_TABLE_NAME = 'role_permissions' THEN
+            COALESCE(NEW.role_id::TEXT || '-' || NEW.permission_id::TEXT, OLD.role_id::TEXT || '-' || OLD.permission_id::TEXT)
+        ELSE
+            COALESCE(NEW.id::TEXT, OLD.id::TEXT)
+    END;
+    
+    -- Insert audit record
+    INSERT INTO audit_log (
+        table_name, record_id, action, user_id, user_type,
+        old_values, new_values, changed_fields
+    ) VALUES (
+        TG_TABLE_NAME,
+        record_id,
+        TG_OP,
+        auth.uid(),
+        CASE 
+            WHEN EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid()) THEN 'admin'
+            ELSE 'user'
+        END,
+        old_data,
+        new_data,
+        changed_fields
+    );
+    
+    RETURN COALESCE(NEW, OLD);
+END;
+$ LANGUAGE plpgsql;
+
+-- Add audit triggers to main content tables
+CREATE TRIGGER audit_heritage_sites_trigger
+AFTER INSERT OR UPDATE OR DELETE ON heritage_sites
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_events_trigger
+AFTER INSERT OR UPDATE OR DELETE ON events
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_businesses_trigger
+AFTER INSERT OR UPDATE OR DELETE ON businesses
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_blog_posts_trigger
+AFTER INSERT OR UPDATE OR DELETE ON blog_posts
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_sos_requests_trigger
+AFTER INSERT OR UPDATE OR DELETE ON sos_requests
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- Add audit triggers to user management tables
+CREATE TRIGGER audit_profiles_trigger
+AFTER INSERT OR UPDATE OR DELETE ON profiles
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_admin_users_trigger
+AFTER INSERT OR UPDATE OR DELETE ON admin_users
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- Add audit triggers to engagement tables
+CREATE TRIGGER audit_reviews_trigger
+AFTER INSERT OR UPDATE OR DELETE ON reviews
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_inquiries_trigger
+AFTER INSERT OR UPDATE OR DELETE ON inquiries
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- Add audit triggers to operational tables
+CREATE TRIGGER audit_support_tickets_trigger
+AFTER INSERT OR UPDATE OR DELETE ON support_tickets
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_content_moderation_trigger
+AFTER INSERT OR UPDATE OR DELETE ON content_moderation
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_notifications_trigger
+AFTER INSERT OR UPDATE OR DELETE ON notifications
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- Add audit triggers to configuration tables
+CREATE TRIGGER audit_categories_trigger
+AFTER INSERT OR UPDATE OR DELETE ON categories
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_roles_trigger
+AFTER INSERT OR UPDATE OR DELETE ON roles
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_permissions_trigger
+AFTER INSERT OR UPDATE OR DELETE ON permissions
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER audit_role_permissions_trigger
+AFTER INSERT OR UPDATE OR DELETE ON role_permissions
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- Add audit triggers to user activity tables
+CREATE TRIGGER audit_user_events_trigger
+AFTER INSERT OR UPDATE OR DELETE ON user_events
+FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- ==========================================
+-- OTP SYSTEM TRIGGERS
+-- ==========================================
+
+-- Function to generate OTP code
+CREATE OR REPLACE FUNCTION generate_otp_code()
+RETURNS TRIGGER AS $
+BEGIN
+    -- Generate 6-digit OTP
+    NEW.otp_code = LPAD(FLOOR(RANDOM() * 1000000)::TEXT, 6, '0');
+    
+    -- Set expiry (5 minutes from now)
+    NEW.expires_at = NOW() + INTERVAL '5 minutes';
+    
+    RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+CREATE TRIGGER generate_otp_code_trigger
+BEFORE INSERT ON otp_verifications
+FOR EACH ROW EXECUTE FUNCTION generate_otp_code();
+
+-- Function to cleanup expired OTPs
+CREATE OR REPLACE FUNCTION cleanup_expired_otps()
+RETURNS void AS $
+BEGIN
+    DELETE FROM otp_verifications 
+    WHERE expires_at < NOW() - INTERVAL '1 hour';
+END;
+$ LANGUAGE plpgsql;
+
+-- Function to update phone verification status
+CREATE OR REPLACE FUNCTION update_phone_verification()
+RETURNS TRIGGER AS $
+BEGIN
+    -- When OTP is verified for registration/login, mark phone as verified
+    IF NEW.is_verified = true AND OLD.is_verified = false AND NEW.purpose IN ('registration', 'login') THEN
+        UPDATE profiles 
+        SET phone_verified = true, phone_verified_at = NOW()
+        WHERE phone = NEW.phone;
+    END IF;
+    
+    RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_phone_verification_trigger
+AFTER UPDATE ON otp_verifications
+FOR EACH ROW EXECUTE FUNCTION update_phone_verification();
 
 -- Update updated_at timestamp automatically
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -526,7 +1041,275 @@ BEFORE INSERT ON businesses
 FOR EACH ROW EXECUTE FUNCTION generate_slug();
 
 -- ==========================================
--- ROW LEVEL SECURITY POLICIES
+-- ROW LEVEL SECURITY POLICIES FOR NEW TABLES
+-- ==========================================
+
+-- Enable RLS on new tables
+ALTER TABLE otp_verifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE support_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE content_moderation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_devices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE search_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_downloads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE qr_codes ENABLE ROW LEVEL SECURITY;
+
+-- ==========================================
+-- OTP VERIFICATION POLICIES
+-- ==========================================
+
+-- No SELECT policy - OTPs should not be readable by users for security
+-- Only the backend service can create and verify OTPs
+
+-- System can create OTP records (no user access)
+-- System can verify OTP records (no user access)
+-- This prevents users from reading OTP codes
+
+-- ==========================================
+-- BLOG POSTS POLICIES
+-- ==========================================
+
+-- Anyone can view published blog posts
+CREATE POLICY "Anyone can view published blog posts"
+ON blog_posts FOR SELECT
+USING (status = 'published');
+
+-- Admins can manage blog posts
+CREATE POLICY "Admins can manage blog posts"
+ON blog_posts FOR ALL
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE id = auth.uid()
+        AND is_active = true
+    )
+);
+
+-- ==========================================
+-- CATEGORIES POLICIES
+-- ==========================================
+
+-- Anyone can view active categories
+CREATE POLICY "Anyone can view categories"
+ON categories FOR SELECT
+USING (is_active = true);
+
+-- Admins can manage categories
+CREATE POLICY "Admins can manage categories"
+ON categories FOR ALL
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE id = auth.uid()
+        AND is_active = true
+    )
+);
+
+-- ==========================================
+-- NOTIFICATIONS POLICIES
+-- ==========================================
+
+-- Users can view their own notifications
+CREATE POLICY "Users can view own notifications"
+ON notifications FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can update their own notification status
+CREATE POLICY "Users can update own notifications"
+ON notifications FOR UPDATE
+USING (auth.uid() = user_id);
+
+-- Admins can create notifications
+CREATE POLICY "Admins can create notifications"
+ON notifications FOR INSERT
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE id = auth.uid()
+        AND is_active = true
+    )
+);
+
+-- ==========================================
+-- SUPPORT TICKETS POLICIES
+-- ==========================================
+
+-- Users can view their own tickets
+CREATE POLICY "Users can view own tickets"
+ON support_tickets FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can create tickets
+CREATE POLICY "Users can create tickets"
+ON support_tickets FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Admins can view tickets in their palika
+CREATE POLICY "Admins can view palika tickets"
+ON support_tickets FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE admin_users.id = auth.uid()
+        AND admin_users.palika_id = support_tickets.palika_id
+        AND admin_users.is_active = true
+    )
+);
+
+-- Admins can update tickets
+CREATE POLICY "Admins can update tickets"
+ON support_tickets FOR UPDATE
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE admin_users.id = auth.uid()
+        AND admin_users.palika_id = support_tickets.palika_id
+        AND admin_users.is_active = true
+    )
+);
+
+-- ==========================================
+-- CONTENT MODERATION POLICIES
+-- ==========================================
+
+-- Only admins can access moderation
+CREATE POLICY "Admins can manage moderation"
+ON content_moderation FOR ALL
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE id = auth.uid()
+        AND is_active = true
+    )
+);
+
+-- ==========================================
+-- USER EVENTS POLICIES
+-- ==========================================
+
+-- Users can view their own event registrations
+CREATE POLICY "Users can view own events"
+ON user_events FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can register for events
+CREATE POLICY "Users can register for events"
+ON user_events FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own event status
+CREATE POLICY "Users can update own events"
+ON user_events FOR UPDATE
+USING (auth.uid() = user_id);
+
+-- Users can cancel their event registration
+CREATE POLICY "Users can cancel events"
+ON user_events FOR DELETE
+USING (auth.uid() = user_id);
+
+-- ==========================================
+-- AUDIT LOG POLICIES
+-- ==========================================
+
+-- Only super admins can view audit logs
+CREATE POLICY "Super admins can view audit logs"
+ON audit_log FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users a
+        JOIN roles r ON a.role_id = r.id
+        WHERE a.id = auth.uid()
+        AND r.name = 'super_admin'
+        AND a.is_active = true
+    )
+);
+
+-- System can insert audit records (no user policy needed for INSERT)
+
+-- ==========================================
+-- USER DEVICES POLICIES
+-- ==========================================
+
+-- Users can view their own devices
+CREATE POLICY "Users can view own devices"
+ON user_devices FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can register their devices
+CREATE POLICY "Users can register devices"
+ON user_devices FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own devices
+CREATE POLICY "Users can update own devices"
+ON user_devices FOR UPDATE
+USING (auth.uid() = user_id);
+
+-- ==========================================
+-- SEARCH HISTORY POLICIES
+-- ==========================================
+
+-- Users can view their own search history
+CREATE POLICY "Users can view own search history"
+ON search_history FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can create search history
+CREATE POLICY "Users can create search history"
+ON search_history FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Admins can view aggregated search data
+CREATE POLICY "Admins can view search analytics"
+ON search_history FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE id = auth.uid()
+        AND is_active = true
+    )
+);
+
+-- ==========================================
+-- USER DOWNLOADS POLICIES
+-- ==========================================
+
+-- Users can view their own downloads
+CREATE POLICY "Users can view own downloads"
+ON user_downloads FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can manage their downloads
+CREATE POLICY "Users can manage downloads"
+ON user_downloads FOR ALL
+USING (auth.uid() = user_id);
+
+-- ==========================================
+-- QR CODES POLICIES
+-- ==========================================
+
+-- Anyone can view active QR codes
+CREATE POLICY "Anyone can view QR codes"
+ON qr_codes FOR SELECT
+USING (is_active = true);
+
+-- Admins can manage QR codes
+CREATE POLICY "Admins can manage QR codes"
+ON qr_codes FOR ALL
+USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE id = auth.uid()
+        AND is_active = true
+    )
+);
+
+-- ==========================================
+-- TRIGGERS (Automatic Updates)
 -- ==========================================
 
 -- Enable RLS on all tables
@@ -733,6 +1516,278 @@ WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own favorites"
 ON favorites FOR DELETE
 USING (auth.uid() = user_id);
+
+-- ==========================================
+-- OTP VERIFICATION SYSTEM
+-- ==========================================
+
+CREATE TABLE otp_verifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    phone VARCHAR(40) NOT NULL,
+    otp_code VARCHAR(10) NOT NULL,
+    
+    purpose VARCHAR(30) NOT NULL CHECK (purpose IN ('registration', 'login', 'password_reset', 'phone_change')),
+    
+    attempts INTEGER DEFAULT 0,
+    max_attempts INTEGER DEFAULT 3,
+    
+    is_verified BOOLEAN DEFAULT false,
+    verified_at TIMESTAMPTZ,
+    
+    expires_at TIMESTAMPTZ NOT NULL,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    -- Prevent multiple active OTPs for same phone/purpose
+    UNIQUE(phone, purpose, is_verified) DEFERRABLE INITIALLY DEFERRED
+);
+
+CREATE INDEX idx_otp_phone ON otp_verifications(phone);
+CREATE INDEX idx_otp_expires ON otp_verifications(expires_at);
+CREATE INDEX idx_otp_purpose ON otp_verifications(purpose, is_verified);
+
+-- ==========================================
+-- PHONE VERIFICATION TRACKING
+-- ==========================================
+
+-- ==========================================
+-- DEVICE & SESSION MANAGEMENT
+-- ==========================================
+
+CREATE TABLE user_devices (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    
+    device_id VARCHAR(255) NOT NULL,
+    device_name VARCHAR(200),
+    device_type VARCHAR(50) CHECK (device_type IN ('android', 'ios', 'web')),
+    
+    fcm_token TEXT,
+    
+    app_version VARCHAR(20),
+    os_version VARCHAR(50),
+    
+    last_active_at TIMESTAMPTZ DEFAULT NOW(),
+    is_active BOOLEAN DEFAULT true,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(user_id, device_id)
+);
+
+CREATE INDEX idx_user_devices_user ON user_devices(user_id);
+CREATE INDEX idx_user_devices_active ON user_devices(is_active, last_active_at);
+
+-- ==========================================
+-- SEARCH HISTORY & ANALYTICS
+-- ==========================================
+
+CREATE TABLE search_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    palika_id INTEGER REFERENCES palikas(id),
+    
+    query TEXT NOT NULL,
+    search_type VARCHAR(50),
+    filters JSONB DEFAULT '{}',
+    
+    results_count INTEGER DEFAULT 0,
+    clicked_result_id UUID,
+    clicked_result_type VARCHAR(50),
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_search_history_user ON search_history(user_id);
+CREATE INDEX idx_search_history_query ON search_history(query);
+CREATE INDEX idx_search_history_created ON search_history(created_at DESC);
+
+-- ==========================================
+-- OFFLINE CONTENT TRACKING
+-- ==========================================
+
+CREATE TABLE user_downloads (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    device_id VARCHAR(255) NOT NULL,
+    
+    content_type VARCHAR(50) NOT NULL CHECK (content_type IN ('heritage_site', 'event', 'business', 'blog_post', 'map_area')),
+    content_id UUID,
+    
+    download_size_mb NUMERIC(8,2),
+    download_status VARCHAR(20) DEFAULT 'completed' CHECK (download_status IN ('downloading', 'completed', 'failed', 'deleted')),
+    
+    downloaded_at TIMESTAMPTZ DEFAULT NOW(),
+    last_accessed_at TIMESTAMPTZ,
+    
+    UNIQUE(user_id, device_id, content_type, content_id)
+);
+
+CREATE INDEX idx_user_downloads_user_device ON user_downloads(user_id, device_id);
+CREATE INDEX idx_user_downloads_content ON user_downloads(content_type, content_id);
+
+-- ==========================================
+-- APP VERSION MANAGEMENT
+-- ==========================================
+
+CREATE TABLE app_versions (
+    id SERIAL PRIMARY KEY,
+    
+    version_name VARCHAR(20) NOT NULL,
+    version_code INTEGER NOT NULL,
+    platform VARCHAR(20) NOT NULL CHECK (platform IN ('android', 'ios')),
+    
+    is_required BOOLEAN DEFAULT false,
+    is_latest BOOLEAN DEFAULT false,
+    
+    release_notes TEXT,
+    download_url TEXT,
+    
+    min_supported_version INTEGER,
+    
+    released_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(platform, version_code)
+);
+
+CREATE INDEX idx_app_versions_platform ON app_versions(platform, is_latest);
+
+-- ==========================================
+-- QR CODE MANAGEMENT
+-- ==========================================
+
+CREATE TABLE qr_codes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('heritage_site', 'event', 'business')),
+    entity_id UUID NOT NULL,
+    
+    qr_code_data TEXT NOT NULL,
+    qr_code_url TEXT NOT NULL,
+    
+    scan_count INTEGER DEFAULT 0,
+    last_scanned_at TIMESTAMPTZ,
+    
+    is_active BOOLEAN DEFAULT true,
+    
+    created_by UUID REFERENCES admin_users(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(entity_type, entity_id)
+);
+
+CREATE INDEX idx_qr_codes_entity ON qr_codes(entity_type, entity_id);
+CREATE INDEX idx_qr_codes_active ON qr_codes(is_active);
+
+-- ==========================================
+-- INITIAL DATA SETUP
+-- ==========================================
+
+-- Insert default roles
+INSERT INTO roles (name, description) VALUES
+    ('super_admin', 'Full system access across all palikas'),
+    ('palika_admin', 'Full access within assigned palika'),
+    ('content_editor', 'Can create and edit content'),
+    ('content_reviewer', 'Can review and approve content'),
+    ('support_agent', 'Can handle support tickets'),
+    ('moderator', 'Can moderate content and users');
+
+-- Insert default permissions
+INSERT INTO permissions (name, description, resource, action) VALUES
+    ('manage_heritage_sites', 'Create, edit, delete heritage sites', 'heritage_site', 'manage'),
+    ('manage_events', 'Create, edit, delete events', 'event', 'manage'),
+    ('manage_businesses', 'Verify, edit, delete businesses', 'business', 'manage'),
+    ('manage_blog_posts', 'Create, edit, delete blog posts', 'blog_post', 'manage'),
+    ('manage_users', 'Create, edit, delete user accounts', 'user', 'manage'),
+    ('manage_admins', 'Create, edit, delete admin accounts', 'admin', 'manage'),
+    ('manage_sos', 'Handle SOS requests and responses', 'sos_request', 'manage'),
+    ('manage_support', 'Handle support tickets', 'support_ticket', 'manage'),
+    ('moderate_content', 'Review and approve content', 'content', 'moderate'),
+    ('view_analytics', 'Access analytics and reports', 'analytics', 'view'),
+    ('manage_categories', 'Create and manage content categories', 'category', 'manage'),
+    ('send_notifications', 'Send notifications to users', 'notification', 'send');
+
+-- Assign permissions to roles
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'super_admin'; -- Super admin gets all permissions
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'palika_admin'
+AND p.name IN (
+    'manage_heritage_sites', 'manage_events', 'manage_businesses', 
+    'manage_blog_posts', 'manage_sos', 'manage_support', 
+    'moderate_content', 'view_analytics', 'manage_categories', 
+    'send_notifications'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'content_editor'
+AND p.name IN ('manage_heritage_sites', 'manage_events', 'manage_blog_posts');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'content_reviewer'
+AND p.name IN ('moderate_content', 'view_analytics');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'support_agent'
+AND p.name IN ('manage_support', 'manage_sos');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'moderator'
+AND p.name IN ('moderate_content', 'manage_businesses');
+
+-- Insert default categories for different entity types
+INSERT INTO categories (palika_id, entity_type, name_en, name_ne, slug, display_order) VALUES
+    -- Heritage site categories
+    (NULL, 'heritage_site', 'Temple', 'मन्दिर', 'temple', 1),
+    (NULL, 'heritage_site', 'Monastery', 'गुम्बा', 'monastery', 2),
+    (NULL, 'heritage_site', 'Palace', 'दरबार', 'palace', 3),
+    (NULL, 'heritage_site', 'Fort', 'किल्ला', 'fort', 4),
+    (NULL, 'heritage_site', 'Museum', 'संग्रहालय', 'museum', 5),
+    (NULL, 'heritage_site', 'Archaeological Site', 'पुरातत्व स्थल', 'archaeological', 6),
+    (NULL, 'heritage_site', 'Natural Heritage', 'प्राकृतिक सम्पदा', 'natural', 7),
+    
+    -- Event categories
+    (NULL, 'event', 'Festival', 'चाड पर्व', 'festival', 1),
+    (NULL, 'event', 'Cultural', 'सांस्कृतिक', 'cultural', 2),
+    (NULL, 'event', 'Sports', 'खेलकुद', 'sports', 3),
+    (NULL, 'event', 'Religious', 'धार्मिक', 'religious', 4),
+    (NULL, 'event', 'Food', 'खाना', 'food', 5),
+    (NULL, 'event', 'Music', 'संगीत', 'music', 6),
+    (NULL, 'event', 'Educational', 'शैक्षिक', 'educational', 7),
+    
+    -- Business categories
+    (NULL, 'business', 'Accommodation', 'बास स्थान', 'accommodation', 1),
+    (NULL, 'business', 'Restaurant', 'रेस्टुरेन्ट', 'restaurant', 2),
+    (NULL, 'business', 'Tour Operator', 'भ्रमण संचालक', 'tour-operator', 3),
+    (NULL, 'business', 'Transport', 'यातायात', 'transport', 4),
+    (NULL, 'business', 'Shopping', 'किनमेल', 'shopping', 5),
+    (NULL, 'business', 'Entertainment', 'मनोरञ्जन', 'entertainment', 6),
+    (NULL, 'business', 'Emergency Services', 'आपतकालीन सेवा', 'emergency', 7),
+    (NULL, 'business', 'Government Office', 'सरकारी कार्यालय', 'government', 8),
+    
+    -- Blog post categories
+    (NULL, 'blog_post', 'Tourism News', 'पर्यटन समाचार', 'tourism-news', 1),
+    (NULL, 'blog_post', 'Cultural Stories', 'सांस्कृतिक कथा', 'cultural-stories', 2),
+    (NULL, 'blog_post', 'Local Events', 'स्थानीय कार्यक्रम', 'local-events', 3),
+    (NULL, 'blog_post', 'Heritage Updates', 'सम्पदा अपडेट', 'heritage-updates', 4),
+    (NULL, 'blog_post', 'Community News', 'समुदायिक समाचार', 'community-news', 5);
 
 -- ==========================================
 -- STORAGE BUCKETS

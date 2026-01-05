@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+/08-admin-panel/node_modules/
+/07-database-seeding/node_modules/
+
+# Next.js build output
+/08-admin-panel/.next/
+out/
+
+# Local environment variables
+.env.local
+.env.*.local
+/08-admin-panel/.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS-generated files
+.DS_Store
+
+# Editor-specific files
+.vscode/
+!.vscode/settings.json
+.claude/
