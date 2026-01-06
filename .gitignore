@@ -1,27 +1,51 @@
 # Dependencies
 node_modules/
-/08-admin-panel/node_modules/
-/07-database-seeding/node_modules/
+/admin-panel/node_modules/
+/database/node_modules/
 
 # Next.js build output
-/08-admin-panel/.next/
-out/
+/admin-panel/.next/
+/admin-panel/out/
 
 # Local environment variables
+.env
 .env.local
 .env.*.local
-/08-admin-panel/.env.local
+/admin-panel/.env.local
+/database/.env
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+*.log
 
 # OS-generated files
 .DS_Store
+Thumbs.db
 
 # Editor-specific files
 .vscode/
 !.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# IDE
 .claude/
+.kiro/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Build artifacts
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

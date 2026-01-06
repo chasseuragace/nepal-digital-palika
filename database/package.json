@@ -1,0 +1,44 @@
+{
+  "name": "nepal-tourism-db-seeder",
+  "version": "1.0.0",
+  "description": "Database seeding script for Nepal Digital Tourism Infrastructure",
+  "main": "scripts/seed-database.ts",
+  "scripts": {
+    "seed": "tsx scripts/seed-database.ts",
+    "seed:content": "tsx scripts/seed-content.ts",
+    "seed:all": "npm run seed && npm run db:seed-admins && npm run seed:content",
+    "db:seed-admins": "tsx scripts/seed-admin-users.ts",
+    "db:copy-rls": "cat scripts/part3-rls-policies.sql | pbcopy && echo '📋 RLS policies SQL copied to clipboard!'",
+    "db:setup-prod": "npm run seed && npm run db:seed-admins",
+    "db:clear": "cat scripts/clear-database.sql | pbcopy && echo '📋 Clear database SQL copied to clipboard!'",
+    "seed:dev": "tsx scripts/seed-database.ts --drop-all",
+    "seed:staging": "tsx scripts/seed-database.ts --env=staging",
+    "setup:auth-admin": "tsx scripts/setup-supabase-auth.ts",
+    "setup:complete": "tsx scripts/setup-complete.ts",
+    "copy-part1": "cat scripts/part1-basic-tables.sql | pbcopy && echo '📋 Part 1 schema copied to clipboard!'",
+    "copy-part2": "cat scripts/part2-content-tables.sql | pbcopy && echo '📋 Part 2 schema copied to clipboard!'",
+    "check-status": "./check-status.sh",
+    "test-all": "./test-all.sh"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "nepal",
+    "tourism",
+    "supabase",
+    "seeding",
+    "database"
+  ],
+  "author": "Nepal Digital Tourism Infrastructure Team",
+  "license": "MIT"
+}
