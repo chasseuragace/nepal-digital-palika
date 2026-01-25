@@ -83,11 +83,11 @@ describe('AuthService Integration Tests', () => {
     it('should limit moderator permissions', async () => {
       await authService.login(testAdminCredentials.moderator)
       
-      // Moderator has: moderate_content, manage_reviews, view_reports
-      expect(authService.hasPermission('moderate_content')).toBe(true)
-      expect(authService.hasPermission('manage_reviews')).toBe(true)
-      expect(authService.hasPermission('view_reports')).toBe(true)
-      expect(authService.hasPermission('manage_heritage_sites')).toBe(false)
+      // Moderator has: heritage_sites.create, heritage_sites.read, heritage_sites.update, events.create, events.read, events.update, blog_posts.create, blog_posts.read, blog_posts.update, businesses.read
+      expect(authService.hasPermission('heritage_sites.create')).toBe(true)
+      expect(authService.hasPermission('heritage_sites.read')).toBe(true)
+      expect(authService.hasPermission('heritage_sites.update')).toBe(true)
+      expect(authService.hasPermission('heritage_sites.delete')).toBe(false)
       expect(authService.hasPermission('manage_users')).toBe(false)
     })
 
@@ -97,12 +97,13 @@ describe('AuthService Integration Tests', () => {
       const user = authService.getCurrentUser()
       const userPalikaId = user?.palika_id
       
-      // Palika admin has: manage_heritage_sites, manage_events, manage_businesses, view_analytics
-      expect(authService.hasPermission('manage_heritage_sites', { palika_id: userPalikaId! })).toBe(true)
-      expect(authService.hasPermission('manage_events', { palika_id: userPalikaId! })).toBe(true)
+      // Palika admin has: heritage_sites.create, heritage_sites.read, heritage_sites.update, heritage_sites.delete, events.create, events.read, events.update, events.delete, blog_posts.create, blog_posts.read, blog_posts.update, blog_posts.delete, businesses.read, businesses.verify, users.read, users.manage, analytics.read
+      expect(authService.hasPermission('heritage_sites.create', { palika_id: userPalikaId! })).toBe(true)
+      expect(authService.hasPermission('heritage_sites.delete', { palika_id: userPalikaId! })).toBe(true)
+      expect(authService.hasPermission('analytics.read', { palika_id: userPalikaId! })).toBe(true)
       
       // Should NOT have permission in different palika
-      expect(authService.hasPermission('manage_heritage_sites', { palika_id: 999 })).toBe(false)
+      expect(authService.hasPermission('heritage_sites.create', { palika_id: 999 })).toBe(false)
     })
   })
 })

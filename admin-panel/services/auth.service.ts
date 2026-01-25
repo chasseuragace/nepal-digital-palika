@@ -159,22 +159,29 @@ export class AuthService {
 
   // Private methods
 
-  private mapAdminUser(profileData: any): AdminUser {
+  private mapAdminUser(profileData: any, authEmail?: string): AdminUser {
+    // Get permissions from database or use role-based defaults
+    let permissions = profileData.permissions || []
+    
+    // If no permissions in DB, use role-based defaults
+    if (!permissions || permissions.length === 0) {
+      permissions = this.getRolePermissions(profileData.role)
+    }
+    
     return {
       id: profileData.id,
-      email: profileData.email, // This will be from the auth user, not profile
+      email: authEmail || profileData.email || '',
       full_name: profileData.full_name,
       full_name_ne: profileData.full_name_ne,
       role: profileData.role,
       palika_id: profileData.palika_id,
-      permissions: profileData.permissions?.length ? profileData.permissions : this.getRolePermissions(profileData.role),
+      permissions: permissions,
       is_active: profileData.is_active,
     }
   }
 
   private mapSupabaseSession(session: any, profile: any): AuthSession {
-    const adminUser = this.mapAdminUser(profile)
-    adminUser.email = session.user.email // Ensure email is from the auth user
+    const adminUser = this.mapAdminUser(profile, session.user.email)
     
     return {
       user: adminUser,

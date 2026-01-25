@@ -1,7 +1,8 @@
 -- ==========================================
--- PART 2: CONTENT TABLES (Dependencies now exist)
+-- MIGRATION: Create Content Tables
 -- ==========================================
--- Run this AFTER Part 1 to complete the setup
+-- Schema only - no data seeding
+-- Data seeding is handled by TypeScript scripts
 
 -- PROFILES (User accounts)
 CREATE TABLE IF NOT EXISTS profiles (
@@ -168,7 +169,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add remaining essential tables for functionality
+-- INQUIRIES
 CREATE TABLE IF NOT EXISTS inquiries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
@@ -187,6 +188,7 @@ CREATE TABLE IF NOT EXISTS inquiries (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- REVIEWS
 CREATE TABLE IF NOT EXISTS reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
@@ -203,6 +205,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     UNIQUE(business_id, user_id)
 );
 
+-- SOS REQUESTS
 CREATE TABLE IF NOT EXISTS sos_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
@@ -233,6 +236,7 @@ CREATE TABLE IF NOT EXISTS sos_requests (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- FAVORITES
 CREATE TABLE IF NOT EXISTS favorites (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,

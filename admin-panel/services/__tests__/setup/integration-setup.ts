@@ -26,16 +26,16 @@ export const integrationDb = createSupabaseClient(supabase)
 // Test admin user credentials (from your seeded data)
 export const testAdminCredentials = {
   superAdmin: {
-    email: 'superadmin@nepal-tourism.gov.np',
-    password: 'TempPassword123!'
+    email: 'superadmin@nepaltourism.dev',
+    password: 'SuperSecurePass123!'
   },
   palikaAdmin: {
-    email: 'ktm.admin@nepal-tourism.gov.np', 
-    password: 'TempPassword123!'
+    email: 'palika.admin@kathmandu.gov.np', 
+    password: 'KathmanduAdmin456!'
   },
   moderator: {
-    email: 'moderator@nepal-tourism.gov.np',
-    password: 'TempPassword123!'
+    email: 'content.moderator@kathmandu.gov.np',
+    password: 'ModeratorSecure789!'
   }
 }
 

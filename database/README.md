@@ -25,7 +25,7 @@ Complete database seeding solution for Nepal Digital Tourism Infrastructure.
 
 ### 1. Install Dependencies
 ```bash
-cd 07-database-seeding
+cd database
 npm install
 ```
 
@@ -40,36 +40,26 @@ nano .env
 
 ### 3. Database Setup
 
-#### Step 1: Create Foundation Tables
+#### Step 1: Apply Schema Migrations
 ```bash
-# Copy Part 1 schema to clipboard
-npm run copy-part1
-
-# Then paste and run in Supabase SQL Editor
-# This creates: provinces, districts, palikas, roles, permissions, categories, app_versions
+# From the root directory
+supabase db reset
 ```
+This automatically applies all migrations from `supabase/migrations/` and enables RLS policies.
 
-#### Step 2: Create Content Tables
+#### Step 2: Seed Reference Data
 ```bash
-# Copy Part 2 schema to clipboard  
-npm run copy-part2
-
-# Then paste and run in Supabase SQL Editor
-# This creates: heritage_sites, events, businesses, blog_posts, etc.
-```
-
-#### Step 3: Seed Reference Data
-```bash
-# Seed essential reference data
+# From the database directory
 npm run seed
 ```
+This seeds: provinces, districts, palikas, roles, permissions, categories, app_versions, and admin users.
 
-### 4. Seed Content (Optional)
+#### Step 3: Seed Content (Optional)
 ```bash
 # Seed sample tourism content
 npm run seed:content
 
-# Or seed everything at once (reference + content)
+# Or seed everything at once
 npm run seed:all
 ```
 
@@ -133,54 +123,49 @@ NODE_ENV=development
 ## 🔧 Available Scripts
 
 ```bash
-# Check database status and table counts
-npm run check-status
-
-# Copy Part 1 schema (foundation tables)
-npm run copy-part1
-
-# Copy Part 2 schema (content tables)  
-npm run copy-part2
-
-# Seed reference data only
+# Seed reference data (provinces, districts, palikas, roles, permissions, categories, app_versions, admin users)
 npm run seed
 
-# Seed sample content only (heritage sites + events)
+# Seed sample content (heritage sites, events, blog posts)
 npm run seed:content
 
-# Seed everything (reference + content)
+# Seed everything at once
 npm run seed:all
 
-# Setup production Supabase Auth admin users
+# Setup Supabase Auth admin users
 npm run setup:auth-admin
 
-# Development mode (shows drop instructions)
-npm run seed:dev
+# Complete setup
+npm run setup:complete
+
+# Check database status and table counts
+npm run check-status
 
 # Comprehensive test suite
 npm run test-all
 ```
 
+**Note:** Schema migrations are applied automatically via `supabase db reset` from the root directory.
+
 ## 🏗️ Database Setup Process
 
-The database setup uses a **two-part approach** to avoid dependency issues:
+The database setup uses a **three-part approach** with Supabase native migrations and TypeScript seeding:
 
-### **Part 1: Foundation Tables**
-- Geographic hierarchy (provinces, districts, palikas)
-- System tables (roles, permissions, categories, app_versions)
-- Initial reference data
-- **Run first** - creates the foundation
+### **Part 1: Schema Migrations**
+- Located in `supabase/migrations/`
+- Applied automatically via `supabase db reset`
+- Creates all table structures with proper constraints and indexes
+- Enables RLS policies for security
 
-### **Part 2: Content Tables**  
-- User tables (profiles, admin_users)
-- Content tables (heritage_sites, events, businesses, blog_posts)
-- Operational tables (inquiries, reviews, sos_requests, favorites)
-- **Run second** - depends on Part 1 tables
+### **Part 2: Reference Data Seeding**
+- Handled by `database/scripts/seed-database.ts`
+- Seeds: provinces, districts, palikas, roles, permissions, categories, app_versions, admin users
+- Run via `npm run seed`
 
-### **Part 3: Data Seeding**
-- Seeds essential reference data into foundation tables
-- Uses upsert operations (safe to run multiple times)
-- **Run last** - populates the database
+### **Part 3: Content Seeding**
+- Handled by `database/scripts/seed-content.ts`
+- Seeds: heritage sites, events, blog posts
+- Run via `npm run seed:content`
 
 ## 📋 Verification
 
@@ -221,22 +206,22 @@ After seeding, verify in Supabase dashboard:
 - Make sure you're using the `service_role` key, not the `anon` key
 - Check that RLS policies allow service role access
 
-**Schema Not Found:**
+**Migration Failed:**
 ```
-❌ relation "provinces" does not exist
+❌ Error applying migration
 ```
-- Run the SQL schema setup first (Part 1 and Part 2)
-- Use `npm run copy-part1` and `npm run copy-part2` to get the SQL
+- Ensure `supabase db reset` completes successfully first
+- Check that all migrations in `supabase/migrations/` are valid SQL
 
 **Content Seeding Errors:**
 ```
-❌ Category 'Temple' for entity type 'heritage_site' not found
+❌ Category 'X' for entity type 'Y' not found
 ```
 - Ensure reference data is seeded first: `npm run seed`
 - Check that all required categories exist in the database
 
 ### Re-running Seeding
-The script uses `upsert` operations, so it's safe to run multiple times:
+The scripts use `upsert` operations, so it's safe to run multiple times:
 - Existing data won't be duplicated
 - New data will be added
 - Changed data will be updated

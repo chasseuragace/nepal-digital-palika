@@ -5,34 +5,39 @@ export interface AdminUser {
   email: string
   full_name: string
   role: string
-  palika_id?: string
+  palika_id?: number
   is_active: boolean
 }
 
 export async function authenticateAdmin(email: string, password: string): Promise<AdminUser | null> {
   try {
-    // Get admin user from admin_users table
-    const { data: adminUser, error } = await supabaseAdmin
-      .from('admin_users')
-      .select('*')
-      .eq('email', email)
-      .eq('is_active', true)
-      .single()
+    // Authenticate using Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-    if (error || !adminUser) {
+    if (authError || !authData.session) {
+      console.error('Auth error:', authError?.message)
       return null
     }
 
-    // Verify password (for now, simple comparison - in production use proper hashing)
-    const isValidPassword = password === 'admin123' // Temporary password for all admins
-    
-    if (!isValidPassword) {
+    // Get admin profile from admin_users table
+    const { data: adminUser, error: profileError } = await supabaseAdmin
+      .from('admin_users')
+      .select('*')
+      .eq('id', authData.user.id)
+      .eq('is_active', true)
+      .single()
+
+    if (profileError || !adminUser) {
+      console.error('Profile error:', profileError?.message)
       return null
     }
 
     return {
       id: adminUser.id,
-      email: adminUser.email,
+      email: authData.user.email!,
       full_name: adminUser.full_name,
       role: adminUser.role,
       palika_id: adminUser.palika_id,

@@ -61,7 +61,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="admin@nepal-tourism.gov.np"
+                placeholder="superadmin@nepaltourism.dev"
               />
             </div>
 
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="admin123"
+                placeholder="SuperSecurePass123!"
               />
             </div>
 
@@ -87,11 +87,18 @@ export default function LoginPage() {
           </form>
 
           <div style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
-            <h3>Test Credentials:</h3>
-            <p><strong>Super Admin:</strong> superadmin@nepal-tourism.gov.np</p>
-            <p><strong>Palika Admin:</strong> ktm.admin@nepal-tourism.gov.np</p>
-            <p><strong>Content Moderator:</strong> moderator@nepal-tourism.gov.np</p>
-            <p><strong>Password:</strong> admin123 (for all accounts)</p>
+            <h3>Test Credentials (Local Supabase):</h3>
+            <p><strong>Super Admin:</strong></p>
+            <p style={{ marginLeft: '20px' }}>Email: superadmin@nepaltourism.dev</p>
+            <p style={{ marginLeft: '20px' }}>Password: SuperSecurePass123!</p>
+            
+            <p style={{ marginTop: '10px' }}><strong>Palika Admin (Kathmandu):</strong></p>
+            <p style={{ marginLeft: '20px' }}>Email: palika.admin@kathmandu.gov.np</p>
+            <p style={{ marginLeft: '20px' }}>Password: KathmanduAdmin456!</p>
+            
+            <p style={{ marginTop: '10px' }}><strong>Content Moderator:</strong></p>
+            <p style={{ marginLeft: '20px' }}>Email: content.moderator@kathmandu.gov.np</p>
+            <p style={{ marginLeft: '20px' }}>Password: ModeratorSecure789!</p>
           </div>
         </div>
       </div>

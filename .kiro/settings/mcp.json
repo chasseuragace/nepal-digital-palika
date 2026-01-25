@@ -2,7 +2,7 @@
   "mcpServers": {
     "supabase": {
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=adbkciyjlbtbunjswior&read_only=false&features=database,docs,debugging,development",
+      "url": "http://127.0.0.1:54321/mcp?project_ref=adbkciyjlbtbunjswior&read_only=false&features=database,docs,debugging,development",
       "disabled": false,
       "autoApprove": [
         "list_tables",
