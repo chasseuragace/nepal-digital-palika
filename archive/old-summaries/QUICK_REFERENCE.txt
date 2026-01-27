@@ -1,0 +1,61 @@
+================================================================================
+QUICK REFERENCE - TEST RESULTS
+================================================================================
+
+PASSING TESTS (16/26 = 62%)
+✅ admin-creation-form.property.test.ts
+✅ admin-creation.property.test.ts
+✅ admin-deletion.property.test.ts
+✅ admin-editing.property.test.ts
+✅ admin-list-rls.property.test.ts
+✅ delete-rls-enforcement.property.test.ts
+✅ dual-access-check.property.test.ts
+✅ duplicate-region-prevention.property.test.ts
+✅ insert-rls-enforcement.property.test.ts
+✅ legacy-palika-support.property.test.ts
+✅ multi-region-assignment.property.test.ts
+✅ multi-region-hierarchy.property.test.ts
+✅ role-hierarchy-levels.property.test.ts
+✅ super-admin-override.property.test.ts
+✅ update-rls-enforcement.property.test.ts
+✅ update-state-capture.property.test.ts
+
+FAILING TESTS (10/26 = 38%)
+❌ admin-regions-audit-logging.property.test.ts (3/3 failed)
+❌ admin-users-audit-logging.property.test.ts (2/3 failed)
+❌ audit-log-completeness.property.test.ts (3/3 failed)
+❌ blog-posts-rls-enforcement.property.test.ts (2/4 failed)
+❌ businesses-rls-enforcement.property.test.ts (2/4 failed)
+❌ events-rls-enforcement.property.test.ts (2/4 failed)
+❌ heritage-sites-rls-enforcement.property.test.ts (3/4 failed)
+❌ permission-based-access-control.property.test.ts (2/5 failed)
+❌ region-assignment-deletion.property.test.ts (2/2 failed)
+❌ sos-requests-rls-enforcement.property.test.ts (2/4 failed)
+
+FAILURE BREAKDOWN
+- Audit Logging: 9 failures (expected - service role limitation)
+- RLS SELECT Enforcement: 13 failures (needs investigation)
+- Permission Enforcement: 2 failures (needs investigation)
+- Region Deletion: 2 failures (needs investigation)
+
+KEY FINDINGS
+1. All admin CRUD operations work correctly ✅
+2. Basic RLS enforcement (INSERT/UPDATE/DELETE) works ✅
+3. Multi-region support works ✅
+4. Backward compatibility maintained ✅
+5. RLS SELECT filtering not working for palika admins ❌
+6. Audit logging requires authenticated context ⚠️
+
+RECOMMENDED ACTIONS
+1. Skip audit logging tests (service role limitation)
+2. Debug user_has_access_to_palika() RLS function
+3. Verify admin_regions table filtering in RLS policies
+4. Test RLS policies directly in Supabase SQL editor
+
+FILES CREATED
+- TEST_FAILURES.md - Detailed failure analysis
+- TEST_EXECUTION_SUMMARY.md - Complete test summary
+- FAILING_TESTS_LOG.txt - Detailed error logs
+- QUICK_REFERENCE.txt - This file
+
+================================================================================
