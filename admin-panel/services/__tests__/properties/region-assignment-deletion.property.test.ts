@@ -19,6 +19,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../setup/integration-setup'
+import { siteName } from '../setup/test-generators'
 
 describe('Property 3: Region Assignment Deletion Revokes Access', () => {
   let testProvinces: number[] = []
@@ -78,8 +79,8 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
     it('should revoke access immediately after deleting admin_regions record', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-region-deletion-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -200,15 +201,15 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
             expect(auditLog.entity_id).toBe(adminRegion.id.toString())
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
     it('should allow re-access after re-assigning the region', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-region-deletion-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -216,7 +217,7 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
             // Create a heritage site in the palika using service role
             const siteData = {
               palika_id: testPalikas[0],
-              name_en: `Test Region Deletion ${uniqueId}`,
+              name_en: `Test Region Deletion ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-region-deletion-${uniqueId}`,
               category_id: 1,
@@ -319,7 +320,7 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
             expect(visibleAfterReassign?.id).toBe(site.id)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

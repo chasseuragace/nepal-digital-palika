@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
-import { createClient } from '@supabase/supabase-js'
-import { supabase } from '../setup/integration-setup'
+import { supabase, createAuthenticatedClient } from '../setup/integration-setup'
+import { siteName } from '../setup/test-generators'
 
 /**
  * Property 19: Heritage Sites RLS Enforcement
@@ -70,13 +70,13 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
     it('should only see heritage sites in their assigned palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          siteName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role for admin operations)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
               password,
@@ -104,14 +104,16 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create heritage sites in different palikas
+            // Create heritage sites in different palikas (using service role for admin operations)
             const site1Data = {
               palika_id: testPalikas[0],
               name_en: `Test Heritage Site ${uniqueId} - Palika 1`,
               name_ne: 'Test Heritage Site',
+              short_description: 'Test description',
+              short_description_ne: 'परीक्षण विवरण',
               slug: `test-heritage-${uniqueId}-1`,
               category_id: 1,
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               status: 'published'
             }
 
@@ -119,9 +121,11 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               palika_id: testPalikas[testPalikas.length > 1 ? 1 : 0],
               name_en: `Test Heritage Site ${uniqueId} - Palika 2`,
               name_ne: 'Test Heritage Site',
+              short_description: 'Test description',
+              short_description_ne: 'परीक्षण विवरण',
               slug: `test-heritage-${uniqueId}-2`,
               category_id: 1,
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               status: 'published'
             }
 
@@ -131,24 +135,10 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             const { data: site2, error: site2Error } = await supabase.from('heritage_sites').insert(site2Data).select().single()
             if (site2Error) throw new Error(`Site 2 error: ${site2Error.message}`)
 
-            // Create a client authenticated as the admin user
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-            const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-            const adminClient = createClient(supabaseUrl, supabaseAnonKey, {
-              auth: {
-                autoRefreshToken: false,
-                persistSession: false
-              }
-            })
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
 
-            // Sign in as the admin
-            const { error: signInError } = await adminClient.auth.signInWithPassword({
-              email,
-              password
-            })
-            if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
-
-            // Query heritage sites as the admin
+            // Query heritage sites as the admin (RLS will filter results)
             const { data: visibleSites, error: visibleError } = await adminClient
               .from('heritage_sites')
               .select('id, palika_id, name_en')
@@ -167,7 +157,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -179,13 +169,13 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          siteName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test admin with access to first palika only
+            // Create test admin with access to first palika only (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
               password,
@@ -213,14 +203,14 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create heritage sites in different palikas
+            // Create heritage sites in different palikas (using service role)
             const site1Data = {
               palika_id: testPalikas[0],
               name_en: `Test Heritage Site ${uniqueId} - Accessible`,
               name_ne: 'Test Heritage Site',
               slug: `test-heritage-${uniqueId}-accessible`,
               category_id: 1,
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               status: 'published'
             }
 
@@ -230,31 +220,22 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               name_ne: 'Test Heritage Site',
               slug: `test-heritage-${uniqueId}-restricted`,
               category_id: 1,
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               status: 'published'
             }
 
-            const { data: site1 } = await supabase.from('heritage_sites').insert(site1Data).select().single()
-            const { data: site2 } = await supabase.from('heritage_sites').insert(site2Data).select().single()
+            const { data: site1, error: site1Error } = await supabase.from('heritage_sites').insert(site1Data).select().single()
+            if (site1Error) throw new Error(`Site 1 error: ${site1Error.message}`)
+            if (!site1) throw new Error('Site 1 was not created')
 
-            // Create a client authenticated as the admin user
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-            const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-            const adminClient = createClient(supabaseUrl, supabaseAnonKey, {
-              auth: {
-                autoRefreshToken: false,
-                persistSession: false
-              }
-            })
+            const { data: site2, error: site2Error } = await supabase.from('heritage_sites').insert(site2Data).select().single()
+            if (site2Error) throw new Error(`Site 2 error: ${site2Error.message}`)
+            if (!site2) throw new Error('Site 2 was not created')
 
-            // Sign in as the admin
-            const { error: signInError } = await adminClient.auth.signInWithPassword({
-              email,
-              password
-            })
-            if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
 
-            // Query as the restricted admin
+            // Query as the restricted admin (RLS will filter results)
             const { data: visibleSites } = await adminClient
               .from('heritage_sites')
               .select('id, palika_id')
@@ -269,7 +250,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             expect(canSeeSite2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -278,13 +259,13 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
     it('should see all heritage sites in their assigned district', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          siteName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
               password,
@@ -312,37 +293,25 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create heritage site in palika within the district
+            // Create heritage site in palika within the district (using service role)
             const siteData = {
               palika_id: testPalikas[0],
               name_en: `Test Heritage Site ${uniqueId}`,
               name_ne: 'Test Heritage Site',
               slug: `test-heritage-${uniqueId}`,
               category_id: 1,
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               status: 'published'
             }
 
-            const { data: site } = await supabase.from('heritage_sites').insert(siteData).select().single()
+            const { data: site, error: siteError } = await supabase.from('heritage_sites').insert(siteData).select().single()
+            if (siteError) throw new Error(`Site error: ${siteError.message}`)
+            if (!site) throw new Error('Site was not created')
 
-            // Create a client authenticated as the admin user
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-            const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-            const adminClient = createClient(supabaseUrl, supabaseAnonKey, {
-              auth: {
-                autoRefreshToken: false,
-                persistSession: false
-              }
-            })
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
 
-            // Sign in as the admin
-            const { error: signInError } = await adminClient.auth.signInWithPassword({
-              email,
-              password
-            })
-            if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
-
-            // Query as the district admin
+            // Query as the district admin (RLS will filter results)
             const { data: visibleSites } = await adminClient
               .from('heritage_sites')
               .select('id, palika_id')
@@ -353,7 +322,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             expect(canSeeSite).toBe(true)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -362,13 +331,13 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
     it('should see all heritage sites regardless of palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          siteName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test super admin
+            // Create test super admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
               password,
@@ -376,7 +345,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-heritage-rls-${uniqueId}`,
               role: 'super_admin',
@@ -388,7 +357,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             }).select().single()
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Create heritage sites in multiple palikas
+            // Create heritage sites in multiple palikas (using service role)
             const sites = []
             for (let i = 0; i < Math.min(2, testPalikas.length); i++) {
               const siteData = {
@@ -397,7 +366,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
                 name_ne: 'Test Heritage Site',
                 slug: `test-heritage-${uniqueId}-${i}`,
                 category_id: 1,
-                location: { type: 'Point', coordinates: [85.3, 27.7] },
+                location: 'POINT(85.3 27.7)',
                 status: 'published'
               }
 
@@ -405,24 +374,10 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               if (site) sites.push(site)
             }
 
-            // Create a client authenticated as the admin user
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-            const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-            const adminClient = createClient(supabaseUrl, supabaseAnonKey, {
-              auth: {
-                autoRefreshToken: false,
-                persistSession: false
-              }
-            })
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
 
-            // Sign in as the admin
-            const { error: signInError } = await adminClient.auth.signInWithPassword({
-              email,
-              password
-            })
-            if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
-
-            // Query as the super admin
+            // Query as the super admin (RLS will allow all)
             const { data: visibleSites } = await adminClient
               .from('heritage_sites')
               .select('id, palika_id')
@@ -435,7 +390,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

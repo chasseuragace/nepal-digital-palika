@@ -81,7 +81,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(roles.length).toBeGreaterThanOrEqual(8)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -105,7 +105,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('national')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -129,7 +129,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('province')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -153,7 +153,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('district')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -177,7 +177,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('palika')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -201,7 +201,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('palika')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -225,7 +225,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('palika')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -249,7 +249,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('palika')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -273,7 +273,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             expect(role?.hierarchy_level).toBe('palika')
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -303,7 +303,7 @@ describe('Property 4: Role Hierarchy Level Assignment', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
   })

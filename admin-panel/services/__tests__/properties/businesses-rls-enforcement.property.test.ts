@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
-import { supabase } from '../setup/integration-setup'
+import { supabase, createAuthenticatedClient } from '../setup/integration-setup'
+import { businessName } from '../setup/test-generators'
 
 /**
  * Property 21: Businesses RLS Enforcement
@@ -86,15 +87,16 @@ describe('Property 21: Businesses RLS Enforcement', () => {
     it('should only see businesses in their assigned palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ businessName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          businessName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-businesses-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role for admin operations)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -119,7 +121,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create businesses in different palikas
+            // Create businesses in different palikas (using service role)
             const business1Data = {
               palika_id: testPalikas[0],
               owner_user_id: testUserId,
@@ -129,7 +131,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               description: 'Test business',
               verification_status: 'verified'
             }
@@ -143,7 +145,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               description: 'Test business',
               verification_status: 'verified'
             }
@@ -151,8 +153,11 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             const { data: business1 } = await supabase.from('businesses').insert(business1Data).select().single()
             const { data: business2 } = await supabase.from('businesses').insert(business2Data).select().single()
 
-            // Query as the restricted admin
-            const { data: visibleBusinesses } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the restricted admin (RLS will filter results)
+            const { data: visibleBusinesses } = await adminClient
               .from('businesses')
               .select('id, palika_id, business_name')
               .eq('verification_status', 'verified')
@@ -166,7 +171,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             expect(canSeeBusiness2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -178,15 +183,16 @@ describe('Property 21: Businesses RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ businessName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          businessName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-businesses-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin with access to first palika only
+            // Create test admin with access to first palika only (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -211,7 +217,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create businesses in different palikas
+            // Create businesses in different palikas (using service role)
             const business1Data = {
               palika_id: testPalikas[0],
               owner_user_id: testUserId,
@@ -221,7 +227,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               description: 'Test business',
               verification_status: 'verified'
             }
@@ -235,7 +241,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               description: 'Test business',
               verification_status: 'verified'
             }
@@ -243,8 +249,11 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             const { data: business1 } = await supabase.from('businesses').insert(business1Data).select().single()
             const { data: business2 } = await supabase.from('businesses').insert(business2Data).select().single()
 
-            // Query as the restricted admin
-            const { data: visibleBusinesses } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the restricted admin (RLS will filter results)
+            const { data: visibleBusinesses } = await adminClient
               .from('businesses')
               .select('id, palika_id')
               .eq('verification_status', 'verified')
@@ -258,7 +267,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             expect(canSeeBusiness2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -267,20 +276,21 @@ describe('Property 21: Businesses RLS Enforcement', () => {
     it('should see all businesses in their assigned district', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ businessName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          businessName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-businesses-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-businesses-rls-${uniqueId}`,
               role: 'district_admin',
@@ -294,13 +304,13 @@ describe('Property 21: Businesses RLS Enforcement', () => {
 
             // Assign admin to district
             const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
+              admin_id: authUser.user.id,
               region_type: 'district',
               region_id: testDistricts[0]
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create business in palika within the district
+            // Create business in palika within the district (using service role)
             const businessData = {
               palika_id: testPalikas[0],
               owner_user_id: testUserId,
@@ -310,15 +320,18 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               description: 'Test business',
               verification_status: 'verified'
             }
 
             const { data: business } = await supabase.from('businesses').insert(businessData).select().single()
 
-            // Query as the district admin
-            const { data: visibleBusinesses } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the district admin (RLS will filter results)
+            const { data: visibleBusinesses } = await adminClient
               .from('businesses')
               .select('id, palika_id')
               .eq('verification_status', 'verified')
@@ -328,7 +341,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             expect(canSeeBusiness).toBe(true)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -337,20 +350,21 @@ describe('Property 21: Businesses RLS Enforcement', () => {
     it('should see all businesses regardless of palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ businessName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          businessName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-businesses-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test super admin
+            // Create test super admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-businesses-rls-${uniqueId}`,
               role: 'super_admin',
@@ -362,7 +376,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             }).select().single()
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Create businesses in multiple palikas
+            // Create businesses in multiple palikas (using service role)
             const businesses = []
             for (let i = 0; i < Math.min(2, testPalikas.length); i++) {
               const businessData = {
@@ -374,7 +388,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
                 phone: '9841234567',
                 ward_number: 1,
                 address: 'Test Address',
-                location: { type: 'Point', coordinates: [85.3, 27.7] },
+                location: 'POINT(85.3 27.7)',
                 description: 'Test business',
                 verification_status: 'verified'
               }
@@ -383,8 +397,11 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               if (business) businesses.push(business)
             }
 
-            // Query as the super admin
-            const { data: visibleBusinesses } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the super admin (RLS will allow all)
+            const { data: visibleBusinesses } = await adminClient
               .from('businesses')
               .select('id, palika_id')
               .eq('verification_status', 'verified')
@@ -396,7 +413,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

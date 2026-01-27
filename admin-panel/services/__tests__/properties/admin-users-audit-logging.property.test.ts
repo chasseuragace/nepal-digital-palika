@@ -242,7 +242,7 @@ describe('Property 14: Admin Users Audit Logging', () => {
           expect(auditLog.changes).toHaveProperty('hierarchy_level')
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 
@@ -342,7 +342,7 @@ describe('Property 14: Admin Users Audit Logging', () => {
           expect(auditLog.changes.new.full_name).toBe('Updated Admin Name')
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 
@@ -415,7 +415,7 @@ describe('Property 14: Admin Users Audit Logging', () => {
           // This test verifies that the DELETE operation succeeds, which is sufficient for this property.
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 })

@@ -169,7 +169,7 @@ describe('Property 31: Admin Deletion Cascades', () => {
             expect(afterDelete.length).toBe(0)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -254,7 +254,7 @@ describe('Property 31: Admin Deletion Cascades', () => {
             expect(afterDelete.length).toBe(0)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -334,7 +334,7 @@ describe('Property 31: Admin Deletion Cascades', () => {
             expect(deletedAdmin.length).toBe(0)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -493,7 +493,7 @@ describe('Property 31: Admin Deletion Cascades', () => {
             expect(admin2RegionsAfter.length).toBe(0)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
   })

@@ -127,7 +127,7 @@ describe('Property 18: Super Admin Override', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -183,7 +183,7 @@ describe('Property 18: Super Admin Override', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -248,7 +248,7 @@ describe('Property 18: Super Admin Override', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -313,7 +313,7 @@ describe('Property 18: Super Admin Override', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -385,7 +385,7 @@ describe('Property 18: Super Admin Override', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
   })

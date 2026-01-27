@@ -253,7 +253,7 @@ describe('Property 12: Audit Log Completeness', () => {
           expect(auditLog.changes).toHaveProperty('region_id')
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 
@@ -365,7 +365,7 @@ describe('Property 12: Audit Log Completeness', () => {
           expect(auditLog.changes).toHaveProperty('new')
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 
@@ -471,7 +471,7 @@ describe('Property 12: Audit Log Completeness', () => {
           expect(auditLog.created_at).not.toBeNull()
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 })

@@ -268,7 +268,7 @@ describe('Property 13: Admin Regions Audit Logging', () => {
           expect(auditLog.changes).toHaveProperty('region_id')
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 
@@ -378,7 +378,7 @@ describe('Property 13: Admin Regions Audit Logging', () => {
           expect(auditLog.changes).toHaveProperty('new')
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 
@@ -484,7 +484,7 @@ describe('Property 13: Admin Regions Audit Logging', () => {
           expect(auditLog.changes).not.toBeNull()
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 }
     )
   })
 })

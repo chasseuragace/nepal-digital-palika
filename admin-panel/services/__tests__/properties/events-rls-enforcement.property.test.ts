@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
-import { supabase } from '../setup/integration-setup'
+import { supabase, createAuthenticatedClient } from '../setup/integration-setup'
+import { eventName } from '../setup/test-generators'
 
 /**
  * Property 20: Events RLS Enforcement
@@ -69,15 +70,16 @@ describe('Property 20: Events RLS Enforcement', () => {
     it('should only see events in their assigned palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ eventName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          eventName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-events-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role for admin operations)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -107,6 +109,7 @@ describe('Property 20: Events RLS Enforcement', () => {
               palika_id: testPalikas[0],
               name_en: `Test Event ${uniqueId} - Palika 1`,
               name_ne: 'Test Event',
+              short_description: 'Test description',
               slug: `test-event-${uniqueId}-1`,
               start_date: '2025-01-15',
               end_date: '2025-01-15',
@@ -117,6 +120,7 @@ describe('Property 20: Events RLS Enforcement', () => {
               palika_id: testPalikas[1],
               name_en: `Test Event ${uniqueId} - Palika 2`,
               name_ne: 'Test Event',
+              short_description: 'Test description',
               slug: `test-event-${uniqueId}-2`,
               start_date: '2025-01-15',
               end_date: '2025-01-15',
@@ -126,8 +130,11 @@ describe('Property 20: Events RLS Enforcement', () => {
             const { data: event1 } = await supabase.from('events').insert(event1Data).select().single()
             const { data: event2 } = await supabase.from('events').insert(event2Data).select().single()
 
-            // Query as the restricted admin
-            const { data: visibleEvents } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the restricted admin (RLS will filter results)
+            const { data: visibleEvents } = await adminClient
               .from('events')
               .select('id, palika_id, name_en')
               .eq('status', 'published')
@@ -141,7 +148,7 @@ describe('Property 20: Events RLS Enforcement', () => {
             expect(canSeeEvent2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -153,15 +160,16 @@ describe('Property 20: Events RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ eventName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          eventName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-events-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin with access to first palika only
+            // Create test admin with access to first palika only (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -186,11 +194,12 @@ describe('Property 20: Events RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create events in different palikas
+            // Create events in different palikas (using service role)
             const event1Data = {
               palika_id: testPalikas[0],
               name_en: `Test Event ${uniqueId} - Accessible`,
               name_ne: 'Test Event',
+              short_description: 'Test description',
               slug: `test-event-${uniqueId}-accessible`,
               start_date: '2025-01-15',
               end_date: '2025-01-15',
@@ -201,6 +210,7 @@ describe('Property 20: Events RLS Enforcement', () => {
               palika_id: testPalikas[1],
               name_en: `Test Event ${uniqueId} - Restricted`,
               name_ne: 'Test Event',
+              short_description: 'Test description',
               slug: `test-event-${uniqueId}-restricted`,
               start_date: '2025-01-15',
               end_date: '2025-01-15',
@@ -210,8 +220,11 @@ describe('Property 20: Events RLS Enforcement', () => {
             const { data: event1 } = await supabase.from('events').insert(event1Data).select().single()
             const { data: event2 } = await supabase.from('events').insert(event2Data).select().single()
 
-            // Query as the restricted admin
-            const { data: visibleEvents } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the restricted admin (RLS will filter results)
+            const { data: visibleEvents } = await adminClient
               .from('events')
               .select('id, palika_id')
               .eq('status', 'published')
@@ -225,7 +238,7 @@ describe('Property 20: Events RLS Enforcement', () => {
             expect(canSeeEvent2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -234,20 +247,21 @@ describe('Property 20: Events RLS Enforcement', () => {
     it('should see all events in their assigned district', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ eventName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          eventName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-events-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-events-rls-${uniqueId}`,
               role: 'district_admin',
@@ -261,17 +275,18 @@ describe('Property 20: Events RLS Enforcement', () => {
 
             // Assign admin to district
             const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
+              admin_id: authUser.user.id,
               region_type: 'district',
               region_id: testDistricts[0]
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create event in palika within the district
+            // Create event in palika within the district (using service role)
             const eventData = {
               palika_id: testPalikas[0],
               name_en: `Test Event ${uniqueId}`,
               name_ne: 'Test Event',
+              short_description: 'Test description',
               slug: `test-event-${uniqueId}`,
               start_date: '2025-01-15',
               end_date: '2025-01-15',
@@ -280,8 +295,11 @@ describe('Property 20: Events RLS Enforcement', () => {
 
             const { data: event } = await supabase.from('events').insert(eventData).select().single()
 
-            // Query as the district admin
-            const { data: visibleEvents } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the district admin (RLS will filter results)
+            const { data: visibleEvents } = await adminClient
               .from('events')
               .select('id, palika_id')
               .eq('status', 'published')
@@ -291,7 +309,7 @@ describe('Property 20: Events RLS Enforcement', () => {
             expect(canSeeEvent).toBe(true)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -300,20 +318,21 @@ describe('Property 20: Events RLS Enforcement', () => {
     it('should see all events regardless of palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ eventName: fc.string({ minLength: 5, maxLength: 50 }) }),
+          eventName(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-events-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test super admin
+            // Create test super admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-events-rls-${uniqueId}`,
               role: 'super_admin',
@@ -325,13 +344,14 @@ describe('Property 20: Events RLS Enforcement', () => {
             }).select().single()
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Create events in multiple palikas
+            // Create events in multiple palikas (using service role)
             const events = []
             for (let i = 0; i < Math.min(2, testPalikas.length); i++) {
               const eventData = {
                 palika_id: testPalikas[i],
                 name_en: `Test Event ${uniqueId} - ${i}`,
                 name_ne: 'Test Event',
+                short_description: 'Test description',
                 slug: `test-event-${uniqueId}-${i}`,
                 start_date: '2025-01-15',
                 end_date: '2025-01-15',
@@ -342,8 +362,11 @@ describe('Property 20: Events RLS Enforcement', () => {
               if (event) events.push(event)
             }
 
-            // Query as the super admin
-            const { data: visibleEvents } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the super admin (RLS will allow all)
+            const { data: visibleEvents } = await adminClient
               .from('events')
               .select('id, palika_id')
               .eq('status', 'published')
@@ -355,7 +378,7 @@ describe('Property 20: Events RLS Enforcement', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

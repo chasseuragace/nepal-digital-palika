@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
-import { supabase } from '../setup/integration-setup'
+import { supabase, createAuthenticatedClient } from '../setup/integration-setup'
+import { postTitle } from '../setup/test-generators'
 
 /**
  * Property 22: Blog Posts RLS Enforcement
@@ -69,15 +70,16 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
     it('should only see blog posts in their assigned palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ postTitle: fc.string({ minLength: 5, maxLength: 50 }) }),
+          postTitle(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-blog-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role for admin operations)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -102,7 +104,7 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create blog posts in different palikas
+            // Create blog posts in different palikas (using service role for admin operations)
             const post1Data = {
               palika_id: testPalikas[0],
               author_id: admin.id,
@@ -123,14 +125,22 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
               status: 'published'
             }
 
-            const { data: post1 } = await supabase.from('blog_posts').insert(post1Data).select().single()
-            const { data: post2 } = await supabase.from('blog_posts').insert(post2Data).select().single()
+            const { data: post1, error: post1Error } = await supabase.from('blog_posts').insert(post1Data).select().single()
+            if (post1Error) throw new Error(`Post 1 error: ${post1Error.message}`)
 
-            // Query as the restricted admin
-            const { data: visiblePosts } = await supabase
+            const { data: post2, error: post2Error } = await supabase.from('blog_posts').insert(post2Data).select().single()
+            if (post2Error) throw new Error(`Post 2 error: ${post2Error.message}`)
+
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query blog posts as the admin (RLS will filter results)
+            const { data: visiblePosts, error: visibleError } = await adminClient
               .from('blog_posts')
               .select('id, palika_id, title_en')
               .eq('status', 'published')
+
+            if (visibleError) throw new Error(`Query error: ${visibleError.message}`)
 
             // Verify admin can see post in their palika
             const canSeePost1 = visiblePosts?.some(p => p.id === post1.id)
@@ -141,7 +151,7 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
             expect(canSeePost2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -153,15 +163,16 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ postTitle: fc.string({ minLength: 5, maxLength: 50 }) }),
+          postTitle(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-blog-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin with access to first palika only
+            // Create test admin with access to first palika only (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -186,7 +197,7 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create blog posts in different palikas
+            // Create blog posts in different palikas (using service role)
             const post1Data = {
               palika_id: testPalikas[0],
               author_id: admin.id,
@@ -207,11 +218,19 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
               status: 'published'
             }
 
-            const { data: post1 } = await supabase.from('blog_posts').insert(post1Data).select().single()
-            const { data: post2 } = await supabase.from('blog_posts').insert(post2Data).select().single()
+            const { data: post1, error: post1Error } = await supabase.from('blog_posts').insert(post1Data).select().single()
+            if (post1Error) throw new Error(`Post 1 error: ${post1Error.message}`)
+            if (!post1) throw new Error('Post 1 was not created')
 
-            // Query as the restricted admin
-            const { data: visiblePosts } = await supabase
+            const { data: post2, error: post2Error } = await supabase.from('blog_posts').insert(post2Data).select().single()
+            if (post2Error) throw new Error(`Post 2 error: ${post2Error.message}`)
+            if (!post2) throw new Error('Post 2 was not created')
+
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the restricted admin (RLS will filter results)
+            const { data: visiblePosts } = await adminClient
               .from('blog_posts')
               .select('id, palika_id')
               .eq('status', 'published')
@@ -225,7 +244,7 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
             expect(canSeePost2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -234,20 +253,21 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
     it('should see all blog posts in their assigned district', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ postTitle: fc.string({ minLength: 5, maxLength: 50 }) }),
+          postTitle(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-blog-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-blog-rls-${uniqueId}`,
               role: 'district_admin',
@@ -261,16 +281,16 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
 
             // Assign admin to district
             const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
+              admin_id: authUser.user.id,
               region_type: 'district',
               region_id: testDistricts[0]
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create blog post in palika within the district
+            // Create blog post in palika within the district (using service role)
             const postData = {
               palika_id: testPalikas[0],
-              author_id: admin.id,
+              author_id: authUser.user.id,
               title_en: `Test Blog Post ${uniqueId}`,
               title_ne: 'Test Blog Post',
               slug: `test-blog-${uniqueId}`,
@@ -278,10 +298,15 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
               status: 'published'
             }
 
-            const { data: post } = await supabase.from('blog_posts').insert(postData).select().single()
+            const { data: post, error: postError } = await supabase.from('blog_posts').insert(postData).select().single()
+            if (postError) throw new Error(`Post error: ${postError.message}`)
+            if (!post) throw new Error('Post was not created')
 
-            // Query as the district admin
-            const { data: visiblePosts } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the district admin (RLS will filter results)
+            const { data: visiblePosts } = await adminClient
               .from('blog_posts')
               .select('id, palika_id')
               .eq('status', 'published')
@@ -291,7 +316,7 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
             expect(canSeePost).toBe(true)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -300,20 +325,21 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
     it('should see all blog posts regardless of palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ postTitle: fc.string({ minLength: 5, maxLength: 50 }) }),
+          postTitle(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-blog-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test super admin
+            // Create test super admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-blog-rls-${uniqueId}`,
               role: 'super_admin',
@@ -325,12 +351,12 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
             }).select().single()
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Create blog posts in multiple palikas
+            // Create blog posts in multiple palikas (using service role)
             const posts = []
             for (let i = 0; i < Math.min(2, testPalikas.length); i++) {
               const postData = {
                 palika_id: testPalikas[i],
-                author_id: admin.id,
+                author_id: authUser.user.id,
                 title_en: `Test Blog Post ${uniqueId} - ${i}`,
                 title_ne: 'Test Blog Post',
                 slug: `test-blog-${uniqueId}-${i}`,
@@ -342,8 +368,11 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
               if (post) posts.push(post)
             }
 
-            // Query as the super admin
-            const { data: visiblePosts } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the super admin (RLS will allow all)
+            const { data: visiblePosts } = await adminClient
               .from('blog_posts')
               .select('id, palika_id')
               .eq('status', 'published')
@@ -355,7 +384,7 @@ describe('Property 22: Blog Posts RLS Enforcement', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

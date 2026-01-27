@@ -29,19 +29,19 @@ This implementation plan breaks down the hierarchical multi-tenant admin system 
   - Test that policies compile without errors
   - _Requirements: 8.4, 8.5_
 
-  - [~] 2.1 Write property test for super admin universal access
+  - [ ] 2.1 Write property test for super admin universal access
     - **Property 5: Super Admin Universal Access**
     - **Validates: Requirements 2.3**
 
-  - [~] 2.2 Write property test for province admin hierarchical access
+  - [ ] 2.2 Write property test for province admin hierarchical access
     - **Property 6: Province Admin Hierarchical Access**
     - **Validates: Requirements 2.4, 10.1, 10.2**
 
-  - [~] 2.3 Write property test for district admin hierarchical access
+  - [ ] 2.3 Write property test for district admin hierarchical access
     - **Property 7: District Admin Hierarchical Access**
     - **Validates: Requirements 2.5, 10.3, 10.4**
 
-  - [~] 2.4 Write property test for palika admin limited access
+  - [ ] 2.4 Write property test for palika admin limited access
     - **Property 8: Palika Admin Limited Access**
     - **Validates: Requirements 2.6, 10.5**
 
@@ -60,14 +60,14 @@ This implementation plan breaks down the hierarchical multi-tenant admin system 
     - **Scope**: Tests authenticated admin operations on heritage_sites, events, etc.
     - **Note**: Service role operations are not expected to create audit log entries
 
-  - [~] 3.2 Write property test for admin regions audit logging (authenticated operations only)
+  - [ ] 3.2 Write property test for admin regions audit logging (authenticated operations only)
     - **Property 13: Admin Regions Audit Logging**
     - **Validates: Requirements 4.4**
     - **Scope**: Tests authenticated admin operations on admin_regions table
     - **Note**: Service role operations are not expected to create audit log entries
     - **Status**: Lower priority - RLS policy recursion issue requires deeper architectural changes
 
-  - [~] 3.3 Write property test for admin users audit logging (authenticated operations only)
+  - [ ] 3.3 Write property test for admin users audit logging (authenticated operations only)
     - **Property 14: Admin Users Audit Logging**
     - **Validates: Requirements 4.5**
     - **Scope**: Tests authenticated admin operations on admin_users table
@@ -164,11 +164,11 @@ This implementation plan breaks down the hierarchical multi-tenant admin system 
   - Connect to API endpoints
   - _Requirements: 3.1, 3.2, 3.3_
 
-  - [~] 12.1 Write property test for permission addition grants access
+  - [ ] 12.1 Write property test for permission addition grants access
     - **Property 9: Permission Addition Grants Access**
     - **Validates: Requirements 3.2**
 
-  - [~] 12.2 Write property test for permission removal revokes access
+  - [ ] 12.2 Write property test for permission removal revokes access
     - **Property 10: Permission Removal Revokes Access**
     - **Validates: Requirements 3.3**
 
@@ -179,7 +179,7 @@ This implementation plan breaks down the hierarchical multi-tenant admin system 
   - Add export functionality
   - _Requirements: 7.7, 4.6_
 
-  - [~] 13.1 Write property test for audit log RLS enforcement
+  - [ ] 13.1 Write property test for audit log RLS enforcement
     - **Property 15: Audit Log RLS Enforcement**
     - **Validates: Requirements 4.6**
 
@@ -331,28 +331,28 @@ This implementation plan breaks down the hierarchical multi-tenant admin system 
   - Document any failures and fixes
   - _Requirements: All_
 
-- [~] 26. Run backward compatibility tests
+- [ ] 26. Run backward compatibility tests
   - Verify existing single-palika admins still work
   - Verify legacy palika_id field is respected
   - Verify migration didn't corrupt existing data
   - Test with real production-like data
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [~] 27. Run security audit
+- [ ] 27. Run security audit
   - Verify no unauthorized access is possible
   - Test privilege escalation scenarios
   - Test SQL injection prevention
   - Test RLS policy bypass attempts
   - _Requirements: 6.1-6.10, 9.1-9.7_
 
-- [~] 28. Run performance tests
+- [ ] 28. Run performance tests
   - Test query performance with large datasets
   - Verify indexes are being used
   - Test audit logging performance
   - Optimize slow queries if needed
   - _Requirements: All_
 
-- [~] 29. Final checkpoint - All tests pass
+- [ ] 29. Final checkpoint - All tests pass
   - Ensure all property-based tests pass
   - Ensure all unit tests pass
   - Ensure all security tests pass

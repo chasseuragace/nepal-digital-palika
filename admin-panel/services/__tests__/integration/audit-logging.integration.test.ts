@@ -6,15 +6,23 @@
  * - Property 12: Audit Log Completeness (Requirements 4.1, 4.2, 4.3)
  * - Property 13: Admin Regions Audit Logging (Requirements 4.4)
  * - Property 14: Admin Users Audit Logging (Requirements 4.5)
+ * 
+ * IMPORTANT: These tests use authenticated clients to properly trigger audit logging.
+ * The audit_log_trigger function checks auth.uid() to get the admin ID.
+ * Service role bypasses this, so we must use authenticated clients.
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
-import { supabase } from '../setup/integration-setup'
+import { supabase, createAuthenticatedClient } from '../setup/integration-setup'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 describe('Audit Logging Integration Tests', () => {
   let testAdminId: string
   let testPalikaId: number
+  let testAdminEmail: string
+  let testAdminPassword: string
+  let authenticatedClient: SupabaseClient
 
   beforeAll(async () => {
     // First, create test data if needed
@@ -76,44 +84,42 @@ describe('Audit Logging Integration Tests', () => {
       testPalikaId = existingPalikas[0].id
     }
 
-    // Get or create a test admin user
-    const { data: existingAdmins } = await supabase
-      .from('admin_users')
-      .select('id')
-      .limit(1)
+    // Create a test admin user with unique credentials
+    testAdminEmail = `test-audit-admin-${Date.now()}@example.com`
+    testAdminPassword = 'TestPassword123!'
 
-    if (!existingAdmins || existingAdmins.length === 0) {
-      // Create a test admin user using Supabase Auth
-      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-        email: `test-admin-${Date.now()}@example.com`,
-        password: 'TestPassword123!',
-        email_confirm: true
-      })
+    // Create auth user
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: testAdminEmail,
+      password: testAdminPassword,
+      email_confirm: true
+    })
 
-      if (authError) {
-        throw new Error(`Failed to create auth user: ${authError.message}`)
-      }
-
-      const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .insert({
-          id: authUser.user.id,
-          full_name: 'Test Admin',
-          role: 'super_admin',
-          hierarchy_level: 'national',
-          is_active: true
-        })
-        .select()
-        .single()
-
-      if (adminError) {
-        throw new Error(`Failed to create admin user: ${adminError.message}`)
-      }
-
-      testAdminId = adminUser.id
-    } else {
-      testAdminId = existingAdmins[0].id
+    if (authError) {
+      throw new Error(`Failed to create auth user: ${authError.message}`)
     }
+
+    // Create admin_users record
+    const { data: adminUser, error: adminError } = await supabase
+      .from('admin_users')
+      .insert({
+        id: authUser.user.id,
+        full_name: 'Test Audit Admin',
+        role: 'super_admin',
+        hierarchy_level: 'national',
+        is_active: true
+      })
+      .select()
+      .single()
+
+    if (adminError) {
+      throw new Error(`Failed to create admin user: ${adminError.message}`)
+    }
+
+    testAdminId = adminUser.id
+
+    // Create authenticated client for this admin
+    authenticatedClient = await createAuthenticatedClient(testAdminEmail, testAdminPassword)
   })
 
   afterEach(async () => {
@@ -163,8 +169,8 @@ describe('Audit Logging Integration Tests', () => {
             // Generate a unique slug
             const slug = `test-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
-            // Insert a heritage site (tracked table)
-            const { data: inserted, error } = await supabase
+            // Insert a heritage site using authenticated client (so audit trigger fires)
+            const { data: inserted, error } = await authenticatedClient
               .from('heritage_sites')
               .insert({
                 name_en: `Test Heritage Site ${testData.name_en}`,
@@ -173,6 +179,7 @@ describe('Audit Logging Integration Tests', () => {
                 short_description_ne: 'परीक्षण विवरण',
                 slug: slug,
                 palika_id: testPalikaId,
+                category_id: 1,
                 status: 'published',
                 location: 'POINT(0 0)'
               })
@@ -186,7 +193,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait a moment for trigger to fire
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created
+            // Verify audit log entry was created (use service role to read audit log)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -205,7 +212,7 @@ describe('Audit Logging Integration Tests', () => {
             expect(auditLogs.length).toBeGreaterThan(0)
             
             const auditLog = auditLogs[0]
-            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.admin_id).toBe(testAdminId)
             expect(auditLog.action).toBe('INSERT')
             expect(auditLog.entity_type).toBe('heritage_sites')
             expect(auditLog.entity_id).toBe(inserted.id)
@@ -232,8 +239,8 @@ describe('Audit Logging Integration Tests', () => {
             // Generate a unique slug
             const slug = `test-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
-            // First, insert a heritage site
-            const { data: inserted, error: insertError } = await supabase
+            // First, insert a heritage site using authenticated client
+            const { data: inserted, error: insertError } = await authenticatedClient
               .from('heritage_sites')
               .insert({
                 name_en: 'Original Name',
@@ -242,6 +249,7 @@ describe('Audit Logging Integration Tests', () => {
                 short_description_ne: 'मूल विवरण',
                 slug: slug,
                 palika_id: testPalikaId,
+                category_id: 1,
                 status: 'published',
                 location: 'POINT(0 0)'
               })
@@ -255,8 +263,8 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Update the heritage site
-            const { error: updateError } = await supabase
+            // Update the heritage site using authenticated client
+            const { error: updateError } = await authenticatedClient
               .from('heritage_sites')
               .update({
                 name_en: `Updated ${testData.newName}`,
@@ -271,7 +279,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for update trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created for UPDATE
+            // Verify audit log entry was created for UPDATE (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -290,7 +298,7 @@ describe('Audit Logging Integration Tests', () => {
             expect(auditLogs.length).toBeGreaterThan(0)
             
             const auditLog = auditLogs[0]
-            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.admin_id).toBe(testAdminId)
             expect(auditLog.action).toBe('UPDATE')
             expect(auditLog.entity_type).toBe('heritage_sites')
             expect(auditLog.entity_id).toBe(inserted.id)
@@ -320,8 +328,8 @@ describe('Audit Logging Integration Tests', () => {
             // Generate a unique slug
             const slug = `test-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
-            // First, insert a heritage site
-            const { data: inserted, error: insertError } = await supabase
+            // First, insert a heritage site using authenticated client
+            const { data: inserted, error: insertError } = await authenticatedClient
               .from('heritage_sites')
               .insert({
                 name_en: `Test Heritage Site ${testData.name_en}`,
@@ -330,6 +338,7 @@ describe('Audit Logging Integration Tests', () => {
                 short_description_ne: 'परीक्षण विवरण',
                 slug: slug,
                 palika_id: testPalikaId,
+                category_id: 1,
                 status: 'published',
                 location: 'POINT(0 0)'
               })
@@ -343,8 +352,8 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Delete the heritage site
-            const { error: deleteError } = await supabase
+            // Delete the heritage site using authenticated client
+            const { error: deleteError } = await authenticatedClient
               .from('heritage_sites')
               .delete()
               .eq('id', inserted.id)
@@ -356,7 +365,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for delete trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created for DELETE
+            // Verify audit log entry was created for DELETE (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -375,7 +384,7 @@ describe('Audit Logging Integration Tests', () => {
             expect(auditLogs.length).toBeGreaterThan(0)
             
             const auditLog = auditLogs[0]
-            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.admin_id).toBe(testAdminId)
             expect(auditLog.action).toBe('DELETE')
             expect(auditLog.entity_type).toBe('heritage_sites')
             expect(auditLog.entity_id).toBe(inserted.id)
@@ -406,10 +415,13 @@ describe('Audit Logging Integration Tests', () => {
             regionType: fc.constantFrom('palika' as const)
           }),
           async (testData) => {
-            // Create a unique admin for this test
+            // Create a unique admin for this test with consistent credentials
+            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
+            const adminPassword = 'TestPassword123!'
+
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-              password: 'TestPassword123!',
+              email: adminEmail,
+              password: adminPassword,
               email_confirm: true
             })
 
@@ -417,6 +429,7 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create auth user: ${authError.message}`)
             }
 
+            // Create admin_users record using service role (admin operation)
             const { data: admin, error: adminError } = await supabase
               .from('admin_users')
               .insert({
@@ -434,8 +447,11 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create admin user: ${adminError.message}`)
             }
 
-            // Insert an admin_regions record
-            const { data: inserted, error } = await supabase
+            // Create authenticated client for this admin using the same credentials
+            const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
+
+            // Insert an admin_regions record using authenticated client
+            const { data: inserted, error } = await adminClient
               .from('admin_regions')
               .insert({
                 admin_id: admin.id,
@@ -452,7 +468,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created
+            // Verify audit log entry was created (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -461,7 +477,6 @@ describe('Audit Logging Integration Tests', () => {
               .eq('action', 'INSERT')
               .order('created_at', { ascending: false })
               .limit(1)
-              .single()
 
             if (auditError) {
               throw new Error(`Failed to fetch audit log: ${auditError.message}`)
@@ -469,16 +484,18 @@ describe('Audit Logging Integration Tests', () => {
 
             // Verify audit log entry
             expect(auditLogs).toBeDefined()
-            expect(auditLogs.admin_id).toBeDefined()
-            expect(auditLogs.action).toBe('INSERT')
-            expect(auditLogs.entity_type).toBe('admin_regions')
-            expect(auditLogs.changes).toBeDefined()
-            expect(auditLogs.created_at).toBeDefined()
+            expect(auditLogs.length).toBeGreaterThan(0)
+            const auditLog = auditLogs[0]
+            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.action).toBe('INSERT')
+            expect(auditLog.entity_type).toBe('admin_regions')
+            expect(auditLog.changes).toBeDefined()
+            expect(auditLog.created_at).toBeDefined()
 
             // Verify changes contains the admin_regions data
-            expect(auditLogs.changes).toHaveProperty('admin_id')
-            expect(auditLogs.changes).toHaveProperty('region_type')
-            expect(auditLogs.changes).toHaveProperty('region_id')
+            expect(auditLog.changes).toHaveProperty('admin_id')
+            expect(auditLog.changes).toHaveProperty('region_type')
+            expect(auditLog.changes).toHaveProperty('region_id')
           }
         ),
         { numRuns: 10 }
@@ -492,10 +509,13 @@ describe('Audit Logging Integration Tests', () => {
             regionType: fc.constantFrom('palika' as const)
           }),
           async (testData) => {
-            // Create a unique admin for this test
+            // Create a unique admin for this test with consistent credentials
+            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
+            const adminPassword = 'TestPassword123!'
+
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-              password: 'TestPassword123!',
+              email: adminEmail,
+              password: adminPassword,
               email_confirm: true
             })
 
@@ -503,6 +523,7 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create auth user: ${authError.message}`)
             }
 
+            // Create admin_users record using service role (admin operation)
             const { data: admin, error: adminError } = await supabase
               .from('admin_users')
               .insert({
@@ -520,8 +541,11 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create admin user: ${adminError.message}`)
             }
 
-            // Insert an admin_regions record
-            const { data: inserted, error: insertError } = await supabase
+            // Create authenticated client for this admin using the same credentials
+            const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
+
+            // Insert an admin_regions record using authenticated client
+            const { data: inserted, error: insertError } = await adminClient
               .from('admin_regions')
               .insert({
                 admin_id: admin.id,
@@ -538,8 +562,8 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Update the admin_regions record
-            const { error: updateError } = await supabase
+            // Update the admin_regions record using authenticated client
+            const { error: updateError } = await adminClient
               .from('admin_regions')
               .update({
                 region_type: testData.regionType
@@ -553,7 +577,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for update trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created for UPDATE
+            // Verify audit log entry was created for UPDATE (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -562,7 +586,6 @@ describe('Audit Logging Integration Tests', () => {
               .eq('action', 'UPDATE')
               .order('created_at', { ascending: false })
               .limit(1)
-              .single()
 
             if (auditError) {
               throw new Error(`Failed to fetch audit log: ${auditError.message}`)
@@ -570,15 +593,17 @@ describe('Audit Logging Integration Tests', () => {
 
             // Verify audit log entry
             expect(auditLogs).toBeDefined()
-            expect(auditLogs.admin_id).toBeDefined()
-            expect(auditLogs.action).toBe('UPDATE')
-            expect(auditLogs.entity_type).toBe('admin_regions')
-            expect(auditLogs.changes).toBeDefined()
-            expect(auditLogs.created_at).toBeDefined()
+            expect(auditLogs.length).toBeGreaterThan(0)
+            const auditLog = auditLogs[0]
+            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.action).toBe('UPDATE')
+            expect(auditLog.entity_type).toBe('admin_regions')
+            expect(auditLog.changes).toBeDefined()
+            expect(auditLog.created_at).toBeDefined()
 
             // Verify changes contains both old and new state
-            expect(auditLogs.changes).toHaveProperty('old')
-            expect(auditLogs.changes).toHaveProperty('new')
+            expect(auditLog.changes).toHaveProperty('old')
+            expect(auditLog.changes).toHaveProperty('new')
           }
         ),
         { numRuns: 10 }
@@ -592,10 +617,13 @@ describe('Audit Logging Integration Tests', () => {
             regionType: fc.constantFrom('palika' as const)
           }),
           async (testData) => {
-            // Create a unique admin for this test
+            // Create a unique admin for this test with consistent credentials
+            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
+            const adminPassword = 'TestPassword123!'
+
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-              password: 'TestPassword123!',
+              email: adminEmail,
+              password: adminPassword,
               email_confirm: true
             })
 
@@ -603,6 +631,7 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create auth user: ${authError.message}`)
             }
 
+            // Create admin_users record using service role (admin operation)
             const { data: admin, error: adminError } = await supabase
               .from('admin_users')
               .insert({
@@ -620,8 +649,11 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create admin user: ${adminError.message}`)
             }
 
-            // Insert an admin_regions record
-            const { data: inserted, error: insertError } = await supabase
+            // Create authenticated client for this admin using the same credentials
+            const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
+
+            // Insert an admin_regions record using authenticated client
+            const { data: inserted, error: insertError } = await adminClient
               .from('admin_regions')
               .insert({
                 admin_id: admin.id,
@@ -638,8 +670,8 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Delete the admin_regions record
-            const { error: deleteError } = await supabase
+            // Delete the admin_regions record using authenticated client
+            const { error: deleteError } = await adminClient
               .from('admin_regions')
               .delete()
               .eq('id', inserted.id)
@@ -651,7 +683,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for delete trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created for DELETE
+            // Verify audit log entry was created for DELETE (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -660,7 +692,6 @@ describe('Audit Logging Integration Tests', () => {
               .eq('action', 'DELETE')
               .order('created_at', { ascending: false })
               .limit(1)
-              .single()
 
             if (auditError) {
               throw new Error(`Failed to fetch audit log: ${auditError.message}`)
@@ -668,11 +699,13 @@ describe('Audit Logging Integration Tests', () => {
 
             // Verify audit log entry
             expect(auditLogs).toBeDefined()
-            expect(auditLogs.admin_id).toBeDefined()
-            expect(auditLogs.action).toBe('DELETE')
-            expect(auditLogs.entity_type).toBe('admin_regions')
-            expect(auditLogs.changes).toBeDefined()
-            expect(auditLogs.created_at).toBeDefined()
+            expect(auditLogs.length).toBeGreaterThan(0)
+            const auditLog = auditLogs[0]
+            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.action).toBe('DELETE')
+            expect(auditLog.entity_type).toBe('admin_regions')
+            expect(auditLog.changes).toBeDefined()
+            expect(auditLog.created_at).toBeDefined()
           }
         ),
         { numRuns: 10 }
@@ -694,10 +727,13 @@ describe('Audit Logging Integration Tests', () => {
             hierarchyLevel: fc.constantFrom('palika' as const)
           }),
           async (testData) => {
-            // Create a unique auth user
+            // Create a unique auth user with consistent credentials
+            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
+            const adminPassword = 'TestPassword123!'
+
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-              password: 'TestPassword123!',
+              email: adminEmail,
+              password: adminPassword,
               email_confirm: true
             })
 
@@ -705,7 +741,10 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create auth user: ${authError.message}`)
             }
 
-            // Insert an admin_users record
+            // Create authenticated client for this admin using the same credentials
+            const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
+
+            // Insert an admin_users record using service role (admin operation)
             const { data: inserted, error } = await supabase
               .from('admin_users')
               .insert({
@@ -726,7 +765,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created
+            // Verify audit log entry was created (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -735,7 +774,6 @@ describe('Audit Logging Integration Tests', () => {
               .eq('action', 'INSERT')
               .order('created_at', { ascending: false })
               .limit(1)
-              .single()
 
             if (auditError) {
               throw new Error(`Failed to fetch audit log: ${auditError.message}`)
@@ -743,16 +781,18 @@ describe('Audit Logging Integration Tests', () => {
 
             // Verify audit log entry
             expect(auditLogs).toBeDefined()
-            expect(auditLogs.admin_id).toBeDefined()
-            expect(auditLogs.action).toBe('INSERT')
-            expect(auditLogs.entity_type).toBe('admin_users')
-            expect(auditLogs.entity_id).toBe(inserted.id)
-            expect(auditLogs.changes).toBeDefined()
-            expect(auditLogs.created_at).toBeDefined()
+            expect(auditLogs.length).toBeGreaterThan(0)
+            const auditLog = auditLogs[0]
+            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.action).toBe('INSERT')
+            expect(auditLog.entity_type).toBe('admin_users')
+            expect(auditLog.entity_id).toBe(inserted.id)
+            expect(auditLog.changes).toBeDefined()
+            expect(auditLog.created_at).toBeDefined()
 
             // Verify changes contains the admin_users data
-            expect(auditLogs.changes).toHaveProperty('role')
-            expect(auditLogs.changes).toHaveProperty('hierarchy_level')
+            expect(auditLog.changes).toHaveProperty('role')
+            expect(auditLog.changes).toHaveProperty('hierarchy_level')
           }
         ),
         { numRuns: 10 }
@@ -766,10 +806,13 @@ describe('Audit Logging Integration Tests', () => {
             newRole: fc.constantFrom('palika_admin' as const)
           }),
           async (testData) => {
-            // Create a unique auth user
+            // Create a unique auth user with consistent credentials
+            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
+            const adminPassword = 'TestPassword123!'
+
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-              password: 'TestPassword123!',
+              email: adminEmail,
+              password: adminPassword,
               email_confirm: true
             })
 
@@ -777,7 +820,7 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create auth user: ${authError.message}`)
             }
 
-            // Insert an admin_users record
+            // Insert an admin_users record using service role (admin operation)
             const { data: inserted, error: insertError } = await supabase
               .from('admin_users')
               .insert({
@@ -798,7 +841,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Update the admin_users record
+            // Update the admin_users record using service role (admin operation)
             const { error: updateError } = await supabase
               .from('admin_users')
               .update({
@@ -813,7 +856,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for update trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created for UPDATE
+            // Verify audit log entry was created for UPDATE (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -822,7 +865,6 @@ describe('Audit Logging Integration Tests', () => {
               .eq('action', 'UPDATE')
               .order('created_at', { ascending: false })
               .limit(1)
-              .single()
 
             if (auditError) {
               throw new Error(`Failed to fetch audit log: ${auditError.message}`)
@@ -830,20 +872,22 @@ describe('Audit Logging Integration Tests', () => {
 
             // Verify audit log entry
             expect(auditLogs).toBeDefined()
-            expect(auditLogs.admin_id).toBeDefined()
-            expect(auditLogs.action).toBe('UPDATE')
-            expect(auditLogs.entity_type).toBe('admin_users')
-            expect(auditLogs.entity_id).toBe(inserted.id)
-            expect(auditLogs.changes).toBeDefined()
-            expect(auditLogs.created_at).toBeDefined()
+            expect(auditLogs.length).toBeGreaterThan(0)
+            const auditLog = auditLogs[0]
+            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.action).toBe('UPDATE')
+            expect(auditLog.entity_type).toBe('admin_users')
+            expect(auditLog.entity_id).toBe(inserted.id)
+            expect(auditLog.changes).toBeDefined()
+            expect(auditLog.created_at).toBeDefined()
 
             // Verify changes contains both old and new state
-            expect(auditLogs.changes).toHaveProperty('old')
-            expect(auditLogs.changes).toHaveProperty('new')
-            expect(auditLogs.changes.old).toHaveProperty('role')
-            expect(auditLogs.changes.new).toHaveProperty('role')
-            expect(auditLogs.changes.old.role).toBe('moderator')
-            expect(auditLogs.changes.new.role).toBe(testData.newRole)
+            expect(auditLog.changes).toHaveProperty('old')
+            expect(auditLog.changes).toHaveProperty('new')
+            expect(auditLog.changes.old).toHaveProperty('role')
+            expect(auditLog.changes.new).toHaveProperty('role')
+            expect(auditLog.changes.old.role).toBe('moderator')
+            expect(auditLog.changes.new.role).toBe(testData.newRole)
           }
         ),
         { numRuns: 10 }
@@ -857,10 +901,13 @@ describe('Audit Logging Integration Tests', () => {
             hierarchyLevel: fc.constantFrom('palika' as const)
           }),
           async (testData) => {
-            // Create a unique auth user
+            // Create a unique auth user with consistent credentials
+            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
+            const adminPassword = 'TestPassword123!'
+
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-              password: 'TestPassword123!',
+              email: adminEmail,
+              password: adminPassword,
               email_confirm: true
             })
 
@@ -868,7 +915,7 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create auth user: ${authError.message}`)
             }
 
-            // Insert an admin_users record
+            // Insert an admin_users record using service role (admin operation)
             const { data: inserted, error: insertError } = await supabase
               .from('admin_users')
               .insert({
@@ -889,7 +936,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Delete the admin_users record
+            // Delete the admin_users record using service role (admin operation)
             const { error: deleteError } = await supabase
               .from('admin_users')
               .delete()
@@ -902,7 +949,7 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for delete trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Verify audit log entry was created for DELETE
+            // Verify audit log entry was created for DELETE (use service role to read)
             const { data: auditLogs, error: auditError } = await supabase
               .from('audit_log')
               .select('*')
@@ -911,7 +958,6 @@ describe('Audit Logging Integration Tests', () => {
               .eq('action', 'DELETE')
               .order('created_at', { ascending: false })
               .limit(1)
-              .single()
 
             if (auditError) {
               throw new Error(`Failed to fetch audit log: ${auditError.message}`)
@@ -919,15 +965,17 @@ describe('Audit Logging Integration Tests', () => {
 
             // Verify audit log entry
             expect(auditLogs).toBeDefined()
-            expect(auditLogs.admin_id).toBeDefined()
-            expect(auditLogs.action).toBe('DELETE')
-            expect(auditLogs.entity_type).toBe('admin_users')
-            expect(auditLogs.entity_id).toBe(inserted.id)
-            expect(auditLogs.changes).toBeDefined()
-            expect(auditLogs.created_at).toBeDefined()
+            expect(auditLogs.length).toBeGreaterThan(0)
+            const auditLog = auditLogs[0]
+            expect(auditLog.admin_id).toBeDefined()
+            expect(auditLog.action).toBe('DELETE')
+            expect(auditLog.entity_type).toBe('admin_users')
+            expect(auditLog.entity_id).toBe(inserted.id)
+            expect(auditLog.changes).toBeDefined()
+            expect(auditLog.created_at).toBeDefined()
 
             // Verify changes contains the deleted data
-            expect(auditLogs.changes).toHaveProperty('role')
+            expect(auditLog.changes).toHaveProperty('role')
           }
         ),
         { numRuns: 10 }

@@ -28,7 +28,9 @@ export default defineConfig({
       include: ['services/**/*.ts'],
       exclude: ['services/__tests__/**', 'services/index.ts']
     },
-    // Separate test environments
+    // Run tests sequentially to avoid database conflicts
+    threads: false,
+    singleThread: true,
     testTimeout: 300000, // Longer timeout for integration tests (5 minutes)
   },
   resolve: {

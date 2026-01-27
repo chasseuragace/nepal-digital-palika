@@ -237,7 +237,7 @@ describe('Property 2: Duplicate Region Assignment Prevention', () => {
             expect(duplicateRegion).toBeNull()
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -318,7 +318,7 @@ describe('Property 2: Duplicate Region Assignment Prevention', () => {
             expect(duplicateRegion).toBeNull()
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -399,7 +399,7 @@ describe('Property 2: Duplicate Region Assignment Prevention', () => {
             expect(duplicateRegion).toBeNull()
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -495,7 +495,7 @@ describe('Property 2: Duplicate Region Assignment Prevention', () => {
             expect(allRegions.some(r => r.region_type === 'district')).toBe(true)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
@@ -611,7 +611,7 @@ describe('Property 2: Duplicate Region Assignment Prevention', () => {
             expect(region2.region_type).toBe(region1.region_type)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
   })

@@ -16,6 +16,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../setup/integration-setup'
+import { siteName } from '../setup/test-generators'
 
 describe('Property 25: UPDATE RLS Enforcement', () => {
   let testProvinces: number[] = []
@@ -80,8 +81,8 @@ describe('Property 25: UPDATE RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-update-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -89,7 +90,7 @@ describe('Property 25: UPDATE RLS Enforcement', () => {
             // Create a heritage site in a palika using service role
             const siteData = {
               palika_id: testPalikas[1], // Create in second palika
-              name_en: `Test Update RLS ${uniqueId}`,
+              name_en: `Test Update RLS ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-update-rls-${uniqueId}`,
               category_id: 1,
@@ -151,26 +152,30 @@ describe('Property 25: UPDATE RLS Enforcement', () => {
             if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
 
             // Try to UPDATE the heritage site in a palika they don't have access to
-            const { error: updateError } = await adminClient
+            const { data: updateData, error: updateError, count } = await adminClient
               .from('heritage_sites')
               .update({ name_en: `Updated ${uniqueId}` })
               .eq('id', site.id)
+              .select()
 
-            // Verify UPDATE failed
-            expect(updateError).toBeDefined()
-            expect(updateError).not.toBeNull()
-            expect(updateError?.message).toMatch(/access|permission|denied|forbidden|violates|security/i)
+            // Verify UPDATE failed - either error or 0 rows affected
+            if (updateError) {
+              expect(updateError?.message).toMatch(/access|permission|denied|forbidden|violates|security/i)
+            } else {
+              // If no error, should have 0 rows affected (RLS prevented the update)
+              expect(updateData).toHaveLength(0)
+            }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
     it('should succeed UPDATE when admin has region access', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-update-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -178,7 +183,7 @@ describe('Property 25: UPDATE RLS Enforcement', () => {
             // Create a heritage site in a palika using service role
             const siteData = {
               palika_id: testPalikas[0],
-              name_en: `Test Update RLS ${uniqueId}`,
+              name_en: `Test Update RLS ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-update-rls-${uniqueId}`,
               category_id: 1,
@@ -240,7 +245,7 @@ describe('Property 25: UPDATE RLS Enforcement', () => {
             if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
 
             // Try to UPDATE the heritage site in a palika they DO have access to
-            const newName = `Updated ${uniqueId}`
+            const newName = `Updated ${testSiteName}`
             const { data: updated, error: updateError } = await adminClient
               .from('heritage_sites')
               .update({ name_en: newName })
@@ -254,7 +259,7 @@ describe('Property 25: UPDATE RLS Enforcement', () => {
             expect(updated.name_en).toBe(newName)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

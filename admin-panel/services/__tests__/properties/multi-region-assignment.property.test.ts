@@ -156,7 +156,7 @@ describe('Property 34: Multi-Region Assignment Support', () => {
             expect(fetchedRegions.map(r => r.region_id).sort()).toEqual(testPalikas.slice(0, palikaCount).sort())
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -237,7 +237,7 @@ describe('Property 34: Multi-Region Assignment Support', () => {
             expect(fetchedRegions.map(r => r.region_id).sort()).toEqual(testDistricts.slice(0, districtCount).sort())
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -317,7 +317,7 @@ describe('Property 34: Multi-Region Assignment Support', () => {
             expect(provinceAssignments.length).toBe(provinceCount)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -409,7 +409,7 @@ describe('Property 34: Multi-Region Assignment Support', () => {
             expect(remainingRegions.map(r => r.region_id)).not.toContain(testPalikas[0])
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

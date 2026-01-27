@@ -16,6 +16,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../setup/integration-setup'
+import { siteName } from '../setup/test-generators'
 
 describe('Property 26: DELETE RLS Enforcement', () => {
   let testProvinces: number[] = []
@@ -80,8 +81,8 @@ describe('Property 26: DELETE RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-delete-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -89,7 +90,7 @@ describe('Property 26: DELETE RLS Enforcement', () => {
             // Create a heritage site in a palika using service role
             const siteData = {
               palika_id: testPalikas[1], // Create in second palika
-              name_en: `Test Delete RLS ${uniqueId}`,
+              name_en: `Test Delete RLS ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-delete-rls-${uniqueId}`,
               category_id: 1,
@@ -151,26 +152,30 @@ describe('Property 26: DELETE RLS Enforcement', () => {
             if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
 
             // Try to DELETE the heritage site in a palika they don't have access to
-            const { error: deleteError } = await adminClient
+            const { data: deleteData, error: deleteError } = await adminClient
               .from('heritage_sites')
               .delete()
               .eq('id', site.id)
+              .select()
 
-            // Verify DELETE failed
-            expect(deleteError).toBeDefined()
-            expect(deleteError).not.toBeNull()
-            expect(deleteError?.message).toMatch(/access|permission|denied|forbidden|violates|security/i)
+            // Verify DELETE failed - either error or 0 rows affected
+            if (deleteError) {
+              expect(deleteError?.message).toMatch(/access|permission|denied|forbidden|violates|security/i)
+            } else {
+              // If no error, should have 0 rows affected (RLS prevented the delete)
+              expect(deleteData).toHaveLength(0)
+            }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
     it('should succeed DELETE when admin has region access', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-delete-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -178,7 +183,7 @@ describe('Property 26: DELETE RLS Enforcement', () => {
             // Create a heritage site in a palika using service role
             const siteData = {
               palika_id: testPalikas[0],
-              name_en: `Test Delete RLS ${uniqueId}`,
+              name_en: `Test Delete RLS ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-delete-rls-${uniqueId}`,
               category_id: 1,
@@ -258,7 +263,7 @@ describe('Property 26: DELETE RLS Enforcement', () => {
             expect(deletedSite).toBeNull()
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

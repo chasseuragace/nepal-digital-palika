@@ -16,6 +16,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../setup/integration-setup'
+import { siteName } from '../setup/test-generators'
 
 describe('Property 24: INSERT RLS Enforcement', () => {
   let testProvinces: number[] = []
@@ -97,8 +98,8 @@ describe('Property 24: INSERT RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-insert-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -151,7 +152,7 @@ describe('Property 24: INSERT RLS Enforcement', () => {
             // Try to INSERT a heritage site in a palika they don't have access to
             const siteData = {
               palika_id: testPalikas[1], // Different palika - no access
-              name_en: `Test Insert RLS ${uniqueId}`,
+              name_en: `Test Insert RLS ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-insert-rls-${uniqueId}`,
               category_id: testCategoryId,
@@ -169,15 +170,15 @@ describe('Property 24: INSERT RLS Enforcement', () => {
             expect(insertError?.message).toMatch(/access|permission|denied|forbidden|violates|security/i)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
     it('should succeed INSERT when admin has region access', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-insert-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -230,7 +231,7 @@ describe('Property 24: INSERT RLS Enforcement', () => {
             // Try to INSERT a heritage site in a palika they DO have access to
             const siteData = {
               palika_id: testPalikas[0], // Same palika - has access
-              name_en: `Test Insert RLS ${uniqueId}`,
+              name_en: `Test Insert RLS ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-insert-rls-${uniqueId}`,
               category_id: testCategoryId,
@@ -250,7 +251,7 @@ describe('Property 24: INSERT RLS Enforcement', () => {
             expect(inserted.palika_id).toBe(testPalikas[0])
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

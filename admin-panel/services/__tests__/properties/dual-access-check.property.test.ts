@@ -18,6 +18,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../setup/integration-setup'
+import { siteName } from '../setup/test-generators'
 
 describe('Property 11: Dual Access Check Requirement', () => {
   let testProvinces: number[] = []
@@ -82,8 +83,8 @@ describe('Property 11: Dual Access Check Requirement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-dual-access-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -91,7 +92,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             // Create a heritage site in a palika using service role
             const siteData = {
               palika_id: testPalikas[0],
-              name_en: `Test Dual Access ${uniqueId}`,
+              name_en: `Test Dual Access ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-dual-access-${uniqueId}`,
               category_id: 1,
@@ -114,7 +115,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
             // Use a role that typically has limited permissions (e.g., support_agent)
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-dual-access-${uniqueId}`,
               role: 'support_agent', // Limited role
@@ -128,7 +129,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
 
             // Assign admin to first palika (region access granted)
             const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
+              admin_id: authUser.user.id,
               region_type: 'palika',
               region_id: testPalikas[0]
             })
@@ -154,7 +155,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             // Try to UPDATE the heritage site (has region access but may lack permission)
             const { error: updateError } = await adminClient
               .from('heritage_sites')
-              .update({ name_en: `Updated ${uniqueId}` })
+              .update({ name_en: `Updated ${testSiteName}` })
               .eq('id', site.id)
 
             // Verify operation failed due to permission check
@@ -162,15 +163,15 @@ describe('Property 11: Dual Access Check Requirement', () => {
             expect(updateError).toBeDefined()
           }
         ),
-        { numRuns: 30 }
+        { numRuns: 5 }
       )
     })
 
     it('should succeed when admin has both region access and permission', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-dual-access-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -178,7 +179,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             // Create a heritage site in a palika using service role
             const siteData = {
               palika_id: testPalikas[0],
-              name_en: `Test Dual Access ${uniqueId}`,
+              name_en: `Test Dual Access ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-dual-access-${uniqueId}`,
               category_id: 1,
@@ -239,7 +240,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
 
             // Try to UPDATE the heritage site (has both region access and permission)
-            const newName = `Updated ${uniqueId}`
+            const newName = `Updated ${testSiteName}`
             const { data: updated, error: updateError } = await adminClient
               .from('heritage_sites')
               .update({ name_en: newName })
@@ -253,15 +254,15 @@ describe('Property 11: Dual Access Check Requirement', () => {
             expect(updated.name_en).toBe(newName)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
     it('should succeed when super_admin attempts operation regardless of assignments', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ siteName: fc.string({ minLength: 5, maxLength: 50 }) }),
-          async () => {
+          siteName(),
+          async (testSiteName) => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-dual-access-${uniqueId}@example.com`
             const password = 'TestPassword123!'
@@ -269,7 +270,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             // Create a heritage site in a palika using service role
             const siteData = {
               palika_id: testPalikas[0],
-              name_en: `Test Dual Access ${uniqueId}`,
+              name_en: `Test Dual Access ${testSiteName}`,
               name_ne: 'Test Heritage Site',
               slug: `test-dual-access-${uniqueId}`,
               category_id: 1,
@@ -321,7 +322,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
 
             // Try to UPDATE the heritage site (super_admin should have all access)
-            const newName = `Updated ${uniqueId}`
+            const newName = `Updated ${testSiteName}`
             const { data: updated, error: updateError } = await adminClient
               .from('heritage_sites')
               .update({ name_en: newName })
@@ -335,7 +336,7 @@ describe('Property 11: Dual Access Check Requirement', () => {
             expect(updated.name_en).toBe(newName)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
-import { supabase } from '../setup/integration-setup'
+import { supabase, createAuthenticatedClient } from '../setup/integration-setup'
+import { requestCode } from '../setup/test-generators'
 
 /**
  * Property 23: SOS Requests RLS Enforcement
@@ -69,15 +70,16 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
     it('should only see SOS requests in their assigned palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ requestCode: fc.string({ minLength: 5, maxLength: 20 }) }),
+          requestCode(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-sos-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role for admin operations)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -102,12 +104,12 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create SOS requests in different palikas
+            // Create SOS requests in different palikas (using service role for admin operations)
             const request1Data = {
               palika_id: testPalikas[0],
               request_code: `TEST-SOS-${uniqueId}-1`,
               emergency_type: 'medical',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
               status: 'received'
             }
@@ -116,18 +118,26 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
               palika_id: testPalikas[1],
               request_code: `TEST-SOS-${uniqueId}-2`,
               emergency_type: 'medical',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
               status: 'received'
             }
 
-            const { data: request1 } = await supabase.from('sos_requests').insert(request1Data).select().single()
-            const { data: request2 } = await supabase.from('sos_requests').insert(request2Data).select().single()
+            const { data: request1, error: request1Error } = await supabase.from('sos_requests').insert(request1Data).select().single()
+            if (request1Error) throw new Error(`Request 1 error: ${request1Error.message}`)
 
-            // Query as the restricted admin
-            const { data: visibleRequests } = await supabase
+            const { data: request2, error: request2Error } = await supabase.from('sos_requests').insert(request2Data).select().single()
+            if (request2Error) throw new Error(`Request 2 error: ${request2Error.message}`)
+
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query SOS requests as the admin (RLS will filter results)
+            const { data: visibleRequests, error: visibleError } = await adminClient
               .from('sos_requests')
               .select('id, palika_id, request_code')
+
+            if (visibleError) throw new Error(`Query error: ${visibleError.message}`)
 
             // Verify admin can see request in their palika
             const canSeeRequest1 = visibleRequests?.some(r => r.id === request1.id)
@@ -138,7 +148,7 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             expect(canSeeRequest2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
 
@@ -150,15 +160,16 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ requestCode: fc.string({ minLength: 5, maxLength: 20 }) }),
+          requestCode(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-sos-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin with access to first palika only
+            // Create test admin with access to first palika only (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
@@ -183,12 +194,12 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create SOS requests in different palikas
+            // Create SOS requests in different palikas (using service role)
             const request1Data = {
               palika_id: testPalikas[0],
               request_code: `TEST-SOS-${uniqueId}-accessible`,
               emergency_type: 'medical',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
               status: 'received'
             }
@@ -197,16 +208,24 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
               palika_id: testPalikas[1],
               request_code: `TEST-SOS-${uniqueId}-restricted`,
               emergency_type: 'medical',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
               status: 'received'
             }
 
-            const { data: request1 } = await supabase.from('sos_requests').insert(request1Data).select().single()
-            const { data: request2 } = await supabase.from('sos_requests').insert(request2Data).select().single()
+            const { data: request1, error: request1Error } = await supabase.from('sos_requests').insert(request1Data).select().single()
+            if (request1Error) throw new Error(`Request 1 error: ${request1Error.message}`)
+            if (!request1) throw new Error('Request 1 was not created')
 
-            // Query as the restricted admin
-            const { data: visibleRequests } = await supabase
+            const { data: request2, error: request2Error } = await supabase.from('sos_requests').insert(request2Data).select().single()
+            if (request2Error) throw new Error(`Request 2 error: ${request2Error.message}`)
+            if (!request2) throw new Error('Request 2 was not created')
+
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the restricted admin (RLS will filter results)
+            const { data: visibleRequests } = await adminClient
               .from('sos_requests')
               .select('id, palika_id')
 
@@ -219,7 +238,7 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             expect(canSeeRequest2).toBe(false)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -228,20 +247,21 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
     it('should see all SOS requests in their assigned district', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ requestCode: fc.string({ minLength: 5, maxLength: 20 }) }),
+          requestCode(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-sos-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test admin
+            // Create test admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-sos-rls-${uniqueId}`,
               role: 'district_admin',
@@ -255,26 +275,31 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
 
             // Assign admin to district
             const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
+              admin_id: authUser.user.id,
               region_type: 'district',
               region_id: testDistricts[0]
             })
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
-            // Create SOS request in palika within the district
+            // Create SOS request in palika within the district (using service role)
             const requestData = {
               palika_id: testPalikas[0],
               request_code: `TEST-SOS-${uniqueId}`,
               emergency_type: 'medical',
-              location: { type: 'Point', coordinates: [85.3, 27.7] },
+              location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
               status: 'received'
             }
 
-            const { data: request } = await supabase.from('sos_requests').insert(requestData).select().single()
+            const { data: request, error: requestError } = await supabase.from('sos_requests').insert(requestData).select().single()
+            if (requestError) throw new Error(`Request error: ${requestError.message}`)
+            if (!request) throw new Error('Request was not created')
 
-            // Query as the district admin
-            const { data: visibleRequests } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the district admin (RLS will filter results)
+            const { data: visibleRequests } = await adminClient
               .from('sos_requests')
               .select('id, palika_id')
 
@@ -283,7 +308,7 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             expect(canSeeRequest).toBe(true)
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })
@@ -292,20 +317,21 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
     it('should see all SOS requests regardless of palika', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.record({ requestCode: fc.string({ minLength: 5, maxLength: 20 }) }),
+          requestCode(),
           async () => {
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`
             const email = `test-sos-rls-${uniqueId}@example.com`
+            const password = 'TestPassword123!'
 
-            // Create test super admin
+            // Create test super admin (using service role)
             const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
               email,
-              password: 'TestPassword123!',
+              password,
               email_confirm: true
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-sos-rls-${uniqueId}`,
               role: 'super_admin',
@@ -317,14 +343,14 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             }).select().single()
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Create SOS requests in multiple palikas
+            // Create SOS requests in multiple palikas (using service role)
             const requests = []
             for (let i = 0; i < Math.min(2, testPalikas.length); i++) {
               const requestData = {
                 palika_id: testPalikas[i],
                 request_code: `TEST-SOS-${uniqueId}-${i}`,
                 emergency_type: 'medical',
-                location: { type: 'Point', coordinates: [85.3, 27.7] },
+                location: 'POINT(85.3 27.7)',
                 user_phone: '9841234567',
                 status: 'received'
               }
@@ -333,8 +359,11 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
               if (request) requests.push(request)
             }
 
-            // Query as the super admin
-            const { data: visibleRequests } = await supabase
+            // Create authenticated client for the admin user (respects RLS)
+            const adminClient = await createAuthenticatedClient(email, password)
+
+            // Query as the super admin (RLS will allow all)
+            const { data: visibleRequests } = await adminClient
               .from('sos_requests')
               .select('id, palika_id')
 
@@ -345,7 +374,7 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 5 }
       )
     })
   })

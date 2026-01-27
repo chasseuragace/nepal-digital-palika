@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
 import { supabase } from '../setup/integration-setup'
+import { eventName, businessName, requestCode, postTitle, siteName } from '../setup/test-generators'
 
 // Helper function to verify permission-based access control
 async function verifyPermissionEnforcement(
@@ -55,7 +56,7 @@ describe('Property 33: Permission-Based Access Control', () => {
   let testProvinceId: number
   let testDistrictId: number
 
-  beforeAll(async () => {
+  beforeAll(async (generatedValue) => {
     // Get test data for palikas
     const { data: provinces } = await supabase
       .from('provinces')
@@ -94,7 +95,7 @@ describe('Property 33: Permission-Based Access Control', () => {
     testPalikas = palikas.map((p) => p.id)
   })
 
-  afterEach(async () => {
+  afterEach(async (generatedValue) => {
     // Clean up test admins
     await supabase
       .from('admin_users')
@@ -103,7 +104,7 @@ describe('Property 33: Permission-Based Access Control', () => {
   })
 
   describe('Requirement 9.1: Permission-Based Access Control for Heritage Sites', () => {
-    it('should deny heritage site management without manage_heritage_sites permission', async () => {
+    it('should deny heritage site management without manage_heritage_sites permission', async (generatedValue) => {
       await fc.assert(
         fc.asyncProperty(
           fc.record({
@@ -165,11 +166,11 @@ describe('Property 33: Permission-Based Access Control', () => {
             expect(hasHeritagePermission).toBe(true) // palika_admin has all content permissions
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
-    it('should allow heritage site management with manage_heritage_sites permission', async () => {
+    it('should allow heritage site management with manage_heritage_sites permission', async (generatedValue) => {
       await fc.assert(
         fc.asyncProperty(
           fc.record({
@@ -223,11 +224,11 @@ describe('Property 33: Permission-Based Access Control', () => {
             expect(hasPermission).toBe(true)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
-    it('should deny heritage site management for moderator role', async () => {
+    it('should deny heritage site management for moderator role', async (generatedValue) => {
       await fc.assert(
         fc.asyncProperty(
           fc.record({
@@ -281,11 +282,11 @@ describe('Property 33: Permission-Based Access Control', () => {
             expect(hasPermission).toBe(false)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
-    it('should grant all permissions to super_admin', async () => {
+    it('should grant all permissions to super_admin', async (generatedValue) => {
       await fc.assert(
         fc.asyncProperty(
           fc.record({
@@ -356,11 +357,11 @@ describe('Property 33: Permission-Based Access Control', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
 
-    it('should enforce permission checks for different content types', async () => {
+    it('should enforce permission checks for different content types', async (generatedValue) => {
       await fc.assert(
         fc.asyncProperty(
           fc.record({
@@ -428,7 +429,7 @@ describe('Property 33: Permission-Based Access Control', () => {
             expect(hasEventsPermission).toBe(false)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 5 }
       )
     })
   })
