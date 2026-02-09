@@ -27,7 +27,7 @@ export function useRoles(): UseQueryResult<Role[], Error> {
   })
 }
 
-export function useRole(id: string): UseQueryResult<Role, Error> {
+export function useRole(id: number): UseQueryResult<Role, Error> {
   return useQuery({
     queryKey: ['role', id],
     queryFn: () => apiClient.getRole(id),
@@ -43,7 +43,7 @@ export function usePermissions(): UseQueryResult<Permission[], Error> {
   })
 }
 
-export function useRolePermissions(roleId: string): UseQueryResult<Permission[], Error> {
+export function useRolePermissions(roleId: number): UseQueryResult<Permission[], Error> {
   return useQuery({
     queryKey: ['role-permissions', roleId],
     queryFn: () => apiClient.getRolePermissions(roleId),
@@ -55,6 +55,38 @@ export function useRegions(): UseQueryResult<Region[], Error> {
   return useQuery({
     queryKey: ['regions'],
     queryFn: () => apiClient.getRegions(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useProvinces(): UseQueryResult<Region[], Error> {
+  return useQuery({
+    queryKey: ['provinces'],
+    queryFn: () => apiClient.getProvinces(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useDistricts(): UseQueryResult<Region[], Error> {
+  return useQuery({
+    queryKey: ['districts'],
+    queryFn: () => apiClient.getDistricts(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function usePalikas(): UseQueryResult<Region[], Error> {
+  return useQuery({
+    queryKey: ['palikas'],
+    queryFn: () => apiClient.getPalikas(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAdminsByRole(roleId: number): UseQueryResult<Admin[], Error> {
+  return useQuery({
+    queryKey: ['admins-by-role', roleId],
+    queryFn: () => apiClient.getAdminsByRole(roleId),
     staleTime: 5 * 60 * 1000,
   })
 }

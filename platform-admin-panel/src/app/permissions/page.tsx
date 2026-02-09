@@ -5,23 +5,23 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
 import { Plus, Edit2, Trash2 } from 'lucide-react'
-
-const permissions = [
-  { id: '1', name: 'manage_heritage_sites', resource: 'heritage_site', action: 'manage', roles: 4 },
-  { id: '2', name: 'manage_events', resource: 'event', action: 'manage', roles: 4 },
-  { id: '3', name: 'manage_businesses', resource: 'business', action: 'manage', roles: 3 },
-  { id: '4', name: 'manage_blog_posts', resource: 'blog_post', action: 'manage', roles: 3 },
-  { id: '5', name: 'manage_users', resource: 'user', action: 'manage', roles: 2 },
-  { id: '6', name: 'manage_admins', resource: 'admin', action: 'manage', roles: 1 },
-  { id: '7', name: 'manage_sos', resource: 'sos_request', action: 'manage', roles: 3 },
-  { id: '8', name: 'manage_support', resource: 'support_ticket', action: 'manage', roles: 2 },
-  { id: '9', name: 'moderate_content', resource: 'content', action: 'moderate', roles: 4 },
-  { id: '10', name: 'view_analytics', resource: 'analytics', action: 'view', roles: 5 },
-  { id: '11', name: 'manage_categories', resource: 'category', action: 'manage', roles: 1 },
-  { id: '12', name: 'send_notifications', resource: 'notification', action: 'send', roles: 2 },
-]
+import { usePermissions } from '@/lib/hooks'
 
 export default function PermissionsPage() {
+  const { data: permissions, isLoading, error } = usePermissions()
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">Error loading permissions: {error.message}</p>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
   return (
     <AdminLayout>
       <div className="p-6 space-y-6">
@@ -44,39 +44,43 @@ export default function PermissionsPage() {
               <TableHead>
                 <TableRow>
                   <TableHeader>Permission Name</TableHeader>
-                  <TableHeader>Resource</TableHeader>
-                  <TableHeader>Action</TableHeader>
-                  <TableHeader>Roles</TableHeader>
+                  <TableHeader>Created</TableHeader>
                   <TableHeader>Actions</TableHeader>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {permissions.map((permission) => (
-                  <TableRow key={permission.id}>
-                    <TableCell className="font-medium">{permission.name}</TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                        {permission.resource}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                        {permission.action}
-                      </span>
-                    </TableCell>
-                    <TableCell>{permission.roles}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                          <Edit2 className="w-4 h-4 text-slate-600" />
-                        </button>
-                        <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-8 text-slate-500">
+                      Loading permissions...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : permissions && permissions.length > 0 ? (
+                  permissions.map((permission) => (
+                    <TableRow key={permission.id}>
+                      <TableCell className="font-medium">{permission.name}</TableCell>
+                      <TableCell className="text-sm text-slate-600">
+                        {new Date(permission.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                            <Edit2 className="w-4 h-4 text-slate-600" />
+                          </button>
+                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-8 text-slate-500">
+                      No permissions found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>

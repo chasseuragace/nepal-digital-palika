@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 interface TableProps {
   children: ReactNode
   className?: string
+  colSpan?: number
 }
 
 export function Table({ children, className }: TableProps) {
@@ -48,9 +49,9 @@ export function TableHeader({ children, className }: TableProps) {
   )
 }
 
-export function TableCell({ children, className }: TableProps) {
+export function TableCell({ children, className, colSpan }: TableProps) {
   return (
-    <td className={cn('px-6 py-4 text-slate-900', className)}>
+    <td colSpan={colSpan} className={cn('px-6 py-4 text-slate-900', className)}>
       {children}
     </td>
   )

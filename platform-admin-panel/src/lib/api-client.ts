@@ -196,6 +196,35 @@ export const apiClient = {
     return data as Region[]
   },
 
+  getRegions: async () => {
+    try {
+      const [provinces, districts, palikas] = await Promise.all([
+        apiClient.getProvinces(),
+        apiClient.getDistricts(),
+        apiClient.getPalikas(),
+      ])
+      
+      return [
+        ...provinces.map(p => ({ ...p, type: 'province' as const })),
+        ...districts.map(d => ({ ...d, type: 'district' as const })),
+        ...palikas.map(p => ({ ...p, type: 'palika' as const })),
+      ]
+    } catch (error) {
+      console.error('Error fetching regions:', error)
+      throw error
+    }
+  },
+
+  getAdminsByRole: async (roleId: number) => {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('role', roleId)
+    
+    if (error) throw error
+    return data as Admin[]
+  },
+
   // Audit Log
   getAuditLog: async (limit?: number) => {
     let query = supabase

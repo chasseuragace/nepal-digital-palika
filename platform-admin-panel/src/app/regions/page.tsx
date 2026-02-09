@@ -5,18 +5,42 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
 import { Edit2 } from 'lucide-react'
+import { useProvinces, useDistricts, usePalikas } from '@/lib/hooks'
+import { useState } from 'react'
 
-const regions = [
-  { id: '1', name: 'Koshi Province', type: 'Province', districts: 2, palikas: 2, admins: 1 },
-  { id: '2', name: 'Madhesh Province', type: 'Province', districts: 1, palikas: 1, admins: 1 },
-  { id: '3', name: 'Bagmati Province', type: 'Province', districts: 3, palikas: 3, admins: 2 },
-  { id: '4', name: 'Gandaki Province', type: 'Province', districts: 2, palikas: 2, admins: 1 },
-  { id: '5', name: 'Lumbini Province', type: 'Province', districts: 1, palikas: 0, admins: 0 },
-  { id: '6', name: 'Karnali Province', type: 'Province', districts: 0, palikas: 0, admins: 0 },
-  { id: '7', name: 'Sudurpashchim Province', type: 'Province', districts: 0, palikas: 0, admins: 0 },
-]
+type RegionType = 'provinces' | 'districts' | 'palikas'
 
 export default function RegionsPage() {
+  const [activeTab, setActiveTab] = useState<RegionType>('provinces')
+  const { data: provinces, isLoading: provincesLoading, error: provincesError } = useProvinces()
+  const { data: districts, isLoading: districtsLoading, error: districtsError } = useDistricts()
+  const { data: palikas, isLoading: palikasLoading, error: palikasError } = usePalikas()
+
+  const getActiveData = () => {
+    switch (activeTab) {
+      case 'provinces':
+        return { data: provinces, isLoading: provincesLoading, error: provincesError }
+      case 'districts':
+        return { data: districts, isLoading: districtsLoading, error: districtsError }
+      case 'palikas':
+        return { data: palikas, isLoading: palikasLoading, error: palikasError }
+    }
+  }
+
+  const { data, isLoading, error } = getActiveData()
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">Error loading regions: {error.message}</p>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
   return (
     <AdminLayout>
       <div className="p-6 space-y-6">
@@ -28,14 +52,35 @@ export default function RegionsPage() {
 
         {/* Tabs */}
         <div className="flex gap-4 border-b border-slate-200">
-          <button className="px-4 py-2 border-b-2 border-blue-600 text-blue-600 font-medium">
-            Provinces
+          <button
+            onClick={() => setActiveTab('provinces')}
+            className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+              activeTab === 'provinces'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Provinces ({provinces?.length || 0})
           </button>
-          <button className="px-4 py-2 text-slate-600 hover:text-slate-900">
-            Districts
+          <button
+            onClick={() => setActiveTab('districts')}
+            className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+              activeTab === 'districts'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Districts ({districts?.length || 0})
           </button>
-          <button className="px-4 py-2 text-slate-600 hover:text-slate-900">
-            Palikas
+          <button
+            onClick={() => setActiveTab('palikas')}
+            className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+              activeTab === 'palikas'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Palikas ({palikas?.length || 0})
           </button>
         </div>
 
@@ -45,33 +90,41 @@ export default function RegionsPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeader>Name</TableHeader>
-                  <TableHeader>Type</TableHeader>
-                  <TableHeader>Districts</TableHeader>
-                  <TableHeader>Palikas</TableHeader>
-                  <TableHeader>Admins</TableHeader>
+                  <TableHeader>Name (English)</TableHeader>
+                  <TableHeader>Name (Nepali)</TableHeader>
+                  <TableHeader>Created</TableHeader>
                   <TableHeader>Actions</TableHeader>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {regions.map((region) => (
-                  <TableRow key={region.id}>
-                    <TableCell className="font-medium">{region.name}</TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                        {region.type}
-                      </span>
-                    </TableCell>
-                    <TableCell>{region.districts}</TableCell>
-                    <TableCell>{region.palikas}</TableCell>
-                    <TableCell>{region.admins}</TableCell>
-                    <TableCell>
-                      <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                        <Edit2 className="w-4 h-4 text-slate-600" />
-                      </button>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                      Loading {activeTab}...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : data && data.length > 0 ? (
+                  data.map((region) => (
+                    <TableRow key={region.id}>
+                      <TableCell className="font-medium">{region.name_en}</TableCell>
+                      <TableCell className="text-slate-600">{region.name_ne || '-'}</TableCell>
+                      <TableCell className="text-sm text-slate-600">
+                        {new Date(region.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                          <Edit2 className="w-4 h-4 text-slate-600" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                      No {activeTab} found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
