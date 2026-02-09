@@ -2,43 +2,44 @@ import { supabase } from './supabase'
 
 export interface Admin {
   id: string
-  email: string
-  first_name: string
-  last_name: string
+  full_name: string
   role: string
-  region_id?: string
+  palika_id?: number
+  province_id?: number
+  district_id?: number
+  is_active: boolean
   created_at: string
   updated_at: string
 }
 
 export interface Role {
-  id: string
+  id: number
   name: string
   description?: string
   created_at: string
 }
 
 export interface Permission {
-  id: string
+  id: number
   name: string
   description?: string
   created_at: string
 }
 
 export interface Region {
-  id: string
-  name: string
-  type: string
-  parent_id?: string
+  id: number
+  name_en: string
+  name_ne?: string
+  type: 'province' | 'district' | 'palika'
   created_at: string
 }
 
 export interface AuditLog {
-  id: string
-  user_id: string
+  id: number
+  admin_id: string
   action: string
   entity_type: string
-  entity_id: string
+  entity_id?: string
   changes?: Record<string, any>
   created_at: string
 }
@@ -109,7 +110,7 @@ export const apiClient = {
     return data as Role[]
   },
 
-  getRole: async (id: string) => {
+  getRole: async (id: number) => {
     const { data, error } = await supabase
       .from('roles')
       .select('*')
@@ -131,7 +132,7 @@ export const apiClient = {
     return result as Role
   },
 
-  updateRole: async (id: string, data: Partial<Role>) => {
+  updateRole: async (id: number, data: Partial<Role>) => {
     const { data: result, error } = await supabase
       .from('roles')
       .update(data)
@@ -154,7 +155,7 @@ export const apiClient = {
     return data as Permission[]
   },
 
-  getRolePermissions: async (roleId: string) => {
+  getRolePermissions: async (roleId: number) => {
     const { data, error } = await supabase
       .from('role_permissions')
       .select('permissions(*)')
@@ -164,10 +165,10 @@ export const apiClient = {
     return data?.map((rp: any) => rp.permissions) as Permission[]
   },
 
-  // Regions
-  getRegions: async () => {
+  // Regions (Provinces, Districts, Palikas)
+  getProvinces: async () => {
     const { data, error } = await supabase
-      .from('regions')
+      .from('provinces')
       .select('*')
       .order('created_at', { ascending: false })
     
@@ -175,22 +176,24 @@ export const apiClient = {
     return data as Region[]
   },
 
-  assignAdminToRegion: async (adminId: string, regionId: string) => {
-    const { error } = await supabase
-      .from('admin_regions')
-      .insert([{ admin_id: adminId, region_id: regionId }])
+  getDistricts: async () => {
+    const { data, error } = await supabase
+      .from('districts')
+      .select('*')
+      .order('created_at', { ascending: false })
     
     if (error) throw error
+    return data as Region[]
   },
 
-  removeAdminFromRegion: async (adminId: string, regionId: string) => {
-    const { error } = await supabase
-      .from('admin_regions')
-      .delete()
-      .eq('admin_id', adminId)
-      .eq('region_id', regionId)
+  getPalikas: async () => {
+    const { data, error } = await supabase
+      .from('palikas')
+      .select('*')
+      .order('created_at', { ascending: false })
     
     if (error) throw error
+    return data as Region[]
   },
 
   // Audit Log
@@ -212,55 +215,70 @@ export const apiClient = {
 
   // Dashboard Stats
   getDashboardStats: async () => {
-    // Get total admins
-    const { count: totalAdmins } = await supabase
-      .from('admin_users')
-      .select('*', { count: 'exact', head: true })
-    
-    // Get active roles
-    const { data: roles } = await supabase
-      .from('roles')
-      .select('*')
-    
-    // Get permissions
-    const { count: permissionsCount } = await supabase
-      .from('permissions')
-      .select('*', { count: 'exact', head: true })
-    
-    // Get regions
-    const { count: regionsCount } = await supabase
-      .from('regions')
-      .select('*', { count: 'exact', head: true })
-    
-    // Get admins by role
-    const { data: adminsByRole } = await supabase
-      .from('admin_users')
-      .select('role')
-    
-    const adminsByRoleGrouped = adminsByRole?.reduce((acc: any, admin: any) => {
-      const existing = acc.find((item: any) => item.role === admin.role)
-      if (existing) {
-        existing.count++
-      } else {
-        acc.push({ role: admin.role, count: 1 })
+    try {
+      // Get total admins
+      const { count: totalAdmins } = await supabase
+        .from('admin_users')
+        .select('*', { count: 'exact', head: true })
+      
+      // Get active roles
+      const { data: roles } = await supabase
+        .from('roles')
+        .select('*')
+      
+      // Get permissions
+      const { count: permissionsCount } = await supabase
+        .from('permissions')
+        .select('*', { count: 'exact', head: true })
+      
+      // Get regions (provinces + districts + palikas)
+      const { count: provincesCount } = await supabase
+        .from('provinces')
+        .select('*', { count: 'exact', head: true })
+      
+      const { count: districtsCount } = await supabase
+        .from('districts')
+        .select('*', { count: 'exact', head: true })
+      
+      const { count: palikasCount } = await supabase
+        .from('palikas')
+        .select('*', { count: 'exact', head: true })
+      
+      const totalRegions = (provincesCount || 0) + (districtsCount || 0) + (palikasCount || 0)
+      
+      // Get admins by role
+      const { data: adminsByRole } = await supabase
+        .from('admin_users')
+        .select('role')
+      
+      const adminsByRoleGrouped = adminsByRole?.reduce((acc: any, admin: any) => {
+        const existing = acc.find((item: any) => item.role === admin.role)
+        if (existing) {
+          existing.count++
+        } else {
+          acc.push({ role: admin.role, count: 1 })
+        }
+        return acc
+      }, []) || []
+
+      // Get recent activity
+      const { data: recentActivity } = await supabase
+        .from('audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3)
+
+      return {
+        total_admins: totalAdmins || 0,
+        active_roles: roles?.length || 0,
+        permissions: permissionsCount || 0,
+        regions: totalRegions,
+        admins_by_role: adminsByRoleGrouped,
+        recent_activity: recentActivity as AuditLog[],
       }
-      return acc
-    }, []) || []
-
-    // Get recent activity
-    const { data: recentActivity } = await supabase
-      .from('audit_log')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(3)
-
-    return {
-      total_admins: totalAdmins || 0,
-      active_roles: roles?.length || 0,
-      permissions: permissionsCount || 0,
-      regions: regionsCount || 0,
-      admins_by_role: adminsByRoleGrouped,
-      recent_activity: recentActivity as AuditLog[],
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error)
+      throw error
     }
   },
 }

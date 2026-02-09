@@ -14,8 +14,7 @@ export default function AdminsPage() {
   const [roleFilter, setRoleFilter] = useState('all')
 
   const filteredAdmins = admins?.filter((admin) => {
-    const matchesSearch = admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${admin.first_name} ${admin.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = admin.full_name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = roleFilter === 'all' || admin.role === roleFilter
     return matchesSearch && matchesRole
   }) || []
@@ -76,7 +75,6 @@ export default function AdminsPage() {
               <TableHead>
                 <TableRow>
                   <TableHeader>Name</TableHeader>
-                  <TableHeader>Email</TableHeader>
                   <TableHeader>Role</TableHeader>
                   <TableHeader>Created</TableHeader>
                   <TableHeader>Actions</TableHeader>
@@ -99,9 +97,8 @@ export default function AdminsPage() {
                   filteredAdmins.map((admin) => (
                     <TableRow key={admin.id}>
                       <TableCell className="font-medium">
-                        {admin.first_name} {admin.last_name}
+                        {admin.full_name}
                       </TableCell>
-                      <TableCell>{admin.email}</TableCell>
                       <TableCell>
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                           {admin.role.replace(/_/g, ' ')}
