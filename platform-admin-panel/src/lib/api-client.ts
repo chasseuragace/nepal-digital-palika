@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+import { supabase } from './supabase'
 
 export interface Admin {
   id: string
@@ -43,77 +43,224 @@ export interface AuditLog {
   created_at: string
 }
 
-async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`
-  
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`)
-  }
-
-  return response.json()
-}
-
 export const apiClient = {
   // Admins
-  getAdmins: () => fetchAPI<Admin[]>('/api/admins'),
-  getAdmin: (id: string) => fetchAPI<Admin>(`/api/admins/${id}`),
-  createAdmin: (data: Partial<Admin>) => fetchAPI<Admin>('/api/admins/create', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  updateAdmin: (id: string, data: Partial<Admin>) => fetchAPI<Admin>(`/api/admins/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  deleteAdmin: (id: string) => fetchAPI<void>(`/api/admins/${id}/delete`, {
-    method: 'DELETE',
-  }),
+  getAdmins: async () => {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as Admin[]
+  },
+
+  getAdmin: async (id: string) => {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data as Admin
+  },
+
+  createAdmin: async (data: Partial<Admin>) => {
+    const { data: result, error } = await supabase
+      .from('admin_users')
+      .insert([data])
+      .select()
+      .single()
+    
+    if (error) throw error
+    return result as Admin
+  },
+
+  updateAdmin: async (id: string, data: Partial<Admin>) => {
+    const { data: result, error } = await supabase
+      .from('admin_users')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return result as Admin
+  },
+
+  deleteAdmin: async (id: string) => {
+    const { error } = await supabase
+      .from('admin_users')
+      .delete()
+      .eq('id', id)
+    
+    if (error) throw error
+  },
 
   // Roles
-  getRoles: () => fetchAPI<Role[]>('/api/roles'),
-  getRole: (id: string) => fetchAPI<Role>(`/api/roles/${id}`),
-  createRole: (data: Partial<Role>) => fetchAPI<Role>('/api/roles', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  updateRole: (id: string, data: Partial<Role>) => fetchAPI<Role>(`/api/roles/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
+  getRoles: async () => {
+    const { data, error } = await supabase
+      .from('roles')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as Role[]
+  },
+
+  getRole: async (id: string) => {
+    const { data, error } = await supabase
+      .from('roles')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data as Role
+  },
+
+  createRole: async (data: Partial<Role>) => {
+    const { data: result, error } = await supabase
+      .from('roles')
+      .insert([data])
+      .select()
+      .single()
+    
+    if (error) throw error
+    return result as Role
+  },
+
+  updateRole: async (id: string, data: Partial<Role>) => {
+    const { data: result, error } = await supabase
+      .from('roles')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return result as Role
+  },
 
   // Permissions
-  getPermissions: () => fetchAPI<Permission[]>('/api/permissions'),
-  getRolePermissions: (roleId: string) => fetchAPI<Permission[]>(`/api/roles/${roleId}/permissions`),
+  getPermissions: async () => {
+    const { data, error } = await supabase
+      .from('permissions')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as Permission[]
+  },
+
+  getRolePermissions: async (roleId: string) => {
+    const { data, error } = await supabase
+      .from('role_permissions')
+      .select('permissions(*)')
+      .eq('role_id', roleId)
+    
+    if (error) throw error
+    return data?.map((rp: any) => rp.permissions) as Permission[]
+  },
 
   // Regions
-  getRegions: () => fetchAPI<Region[]>('/api/regions'),
-  assignAdminToRegion: (adminId: string, regionId: string) => fetchAPI<void>('/api/regions/assign-admin', {
-    method: 'POST',
-    body: JSON.stringify({ admin_id: adminId, region_id: regionId }),
-  }),
-  removeAdminFromRegion: (adminId: string, regionId: string) => fetchAPI<void>('/api/regions/remove-admin', {
-    method: 'POST',
-    body: JSON.stringify({ admin_id: adminId, region_id: regionId }),
-  }),
+  getRegions: async () => {
+    const { data, error } = await supabase
+      .from('regions')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as Region[]
+  },
+
+  assignAdminToRegion: async (adminId: string, regionId: string) => {
+    const { error } = await supabase
+      .from('admin_regions')
+      .insert([{ admin_id: adminId, region_id: regionId }])
+    
+    if (error) throw error
+  },
+
+  removeAdminFromRegion: async (adminId: string, regionId: string) => {
+    const { error } = await supabase
+      .from('admin_regions')
+      .delete()
+      .eq('admin_id', adminId)
+      .eq('region_id', regionId)
+    
+    if (error) throw error
+  },
 
   // Audit Log
-  getAuditLog: (limit?: number) => fetchAPI<AuditLog[]>(`/api/audit-log${limit ? `?limit=${limit}` : ''}`),
+  getAuditLog: async (limit?: number) => {
+    let query = supabase
+      .from('audit_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (limit) {
+      query = query.limit(limit)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    return data as AuditLog[]
+  },
 
   // Dashboard Stats
-  getDashboardStats: () => fetchAPI<{
-    total_admins: number
-    active_roles: number
-    permissions: number
-    regions: number
-    admins_by_role: Array<{ role: string; count: number }>
-    recent_activity: AuditLog[]
-  }>('/api/dashboard/stats'),
+  getDashboardStats: async () => {
+    // Get total admins
+    const { count: totalAdmins } = await supabase
+      .from('admin_users')
+      .select('*', { count: 'exact', head: true })
+    
+    // Get active roles
+    const { data: roles } = await supabase
+      .from('roles')
+      .select('*')
+    
+    // Get permissions
+    const { count: permissionsCount } = await supabase
+      .from('permissions')
+      .select('*', { count: 'exact', head: true })
+    
+    // Get regions
+    const { count: regionsCount } = await supabase
+      .from('regions')
+      .select('*', { count: 'exact', head: true })
+    
+    // Get admins by role
+    const { data: adminsByRole } = await supabase
+      .from('admin_users')
+      .select('role')
+    
+    const adminsByRoleGrouped = adminsByRole?.reduce((acc: any, admin: any) => {
+      const existing = acc.find((item: any) => item.role === admin.role)
+      if (existing) {
+        existing.count++
+      } else {
+        acc.push({ role: admin.role, count: 1 })
+      }
+      return acc
+    }, []) || []
+
+    // Get recent activity
+    const { data: recentActivity } = await supabase
+      .from('audit_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(3)
+
+    return {
+      total_admins: totalAdmins || 0,
+      active_roles: roles?.length || 0,
+      permissions: permissionsCount || 0,
+      regions: regionsCount || 0,
+      admins_by_role: adminsByRoleGrouped,
+      recent_activity: recentActivity as AuditLog[],
+    }
+  },
 }
