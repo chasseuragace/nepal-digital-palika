@@ -5,43 +5,33 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
 import { Plus, Edit2, Trash2 } from 'lucide-react'
-
-const admins = [
-  {
-    id: '1',
-    name: 'Raj Poudel',
-    email: 'raj@nepaltourism.dev',
-    role: 'super_admin',
-    region: 'National',
-    status: 'Active',
-  },
-  {
-    id: '2',
-    name: 'Hari Sharma',
-    email: 'hari@nepaltourism.dev',
-    role: 'province_admin',
-    region: 'Bagmati Province',
-    status: 'Active',
-  },
-  {
-    id: '3',
-    name: 'Priya Thapa',
-    email: 'priya@nepaltourism.dev',
-    role: 'district_admin',
-    region: 'Kathmandu District',
-    status: 'Active',
-  },
-  {
-    id: '4',
-    name: 'Sunita Gurung',
-    email: 'sunita@nepaltourism.dev',
-    role: 'palika_admin',
-    region: 'Kathmandu Metropolitan',
-    status: 'Active',
-  },
-]
+import { useAdmins } from '@/lib/hooks'
+import { useState } from 'react'
 
 export default function AdminsPage() {
+  const { data: admins, isLoading, error } = useAdmins()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
+
+  const filteredAdmins = admins?.filter((admin) => {
+    const matchesSearch = admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      `${admin.first_name} ${admin.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesRole = roleFilter === 'all' || admin.role === roleFilter
+    return matchesSearch && matchesRole
+  }) || []
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">Error loading admins: {error.message}</p>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
   return (
     <AdminLayout>
       <div className="p-6 space-y-6">
@@ -62,19 +52,20 @@ export default function AdminsPage() {
           <input
             type="text"
             placeholder="Search admins..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <select className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>All Roles</option>
-            <option>Super Admin</option>
-            <option>Province Admin</option>
-            <option>District Admin</option>
-            <option>Palika Admin</option>
-          </select>
-          <select className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Inactive</option>
+          <select 
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Roles</option>
+            <option value="super_admin">Super Admin</option>
+            <option value="province_admin">Province Admin</option>
+            <option value="district_admin">District Admin</option>
+            <option value="palika_admin">Palika Admin</option>
           </select>
         </div>
 
@@ -87,39 +78,51 @@ export default function AdminsPage() {
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Email</TableHeader>
                   <TableHeader>Role</TableHeader>
-                  <TableHeader>Region</TableHeader>
-                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Created</TableHeader>
                   <TableHeader>Actions</TableHeader>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {admins.map((admin) => (
-                  <TableRow key={admin.id}>
-                    <TableCell className="font-medium">{admin.name}</TableCell>
-                    <TableCell>{admin.email}</TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                        {admin.role.replace('_', ' ')}
-                      </span>
-                    </TableCell>
-                    <TableCell>{admin.region}</TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                        {admin.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                          <Edit2 className="w-4 h-4 text-slate-600" />
-                        </button>
-                        <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                      Loading admins...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredAdmins.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                      No admins found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredAdmins.map((admin) => (
+                    <TableRow key={admin.id}>
+                      <TableCell className="font-medium">
+                        {admin.first_name} {admin.last_name}
+                      </TableCell>
+                      <TableCell>{admin.email}</TableCell>
+                      <TableCell>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                          {admin.role.replace(/_/g, ' ')}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600">
+                        {new Date(admin.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                            <Edit2 className="w-4 h-4 text-slate-600" />
+                          </button>
+                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
