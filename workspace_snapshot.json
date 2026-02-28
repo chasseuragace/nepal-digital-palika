@@ -1,0 +1,186 @@
+{
+  "id": "nepal-digital-palika-with-analysis",
+  "name": "Nepal Digital Palika: Admin Platform + Git Analysis",
+  "map_type": "local",
+  "map_subtype": "ide",
+  "project": {
+    "name": "Nepal Digital Palika",
+    "path": "/Users/ajaydahal/Downloads/older/Nepal_Digital_Tourism_Infrastructure_Documentation",
+    "repo": "https://github.com/chasseuragace/nepal-digital-palika.git",
+    "branches": ["main", "document_analysis"],
+    "commit_count": 11,
+    "last_commit": "bc54a5d - Revisiting branch, uncommitted changes, committed to work on documentation branch"
+  },
+  "state": {
+    "last_action": "Completed git ingestion pipeline integration with schedules repo",
+    "current_objective": "Use git analysis to understand project health and guide Phase 2 fixes",
+    "system_status": "✅ STABLE - Database schema operational, admin panel live with real data, 238/255 tests passing (93.3%), git analysis pipeline active",
+    "ingestion_status": "✅ COMPLETE - 11 commits successfully analyzed via schedules repo",
+    "blockers": [
+      "17 failing tests identified (4+4+6+3) - RLS issues, FK constraints, edge cases, test data generation"
+    ],
+    "next_steps": [
+      "1. Use git metrics to understand code change patterns",
+      "2. Analyze test failures in context of commit history",
+      "3. Fix RLS recursion issue (priority HIGH)",
+      "4. Fix FK constraint on audit_log (priority HIGH)",
+      "5. Debug permission edge cases (priority MEDIUM)",
+      "6. Improve test generators (priority MEDIUM)"
+    ]
+  },
+  "git_analysis": {
+    "status": "✅ INTEGRATED",
+    "integration_system": "Schedules repo engineering intelligence pipeline",
+    "integration_date": "2026-02-28",
+    "ingestion_metrics": {
+      "commits_analyzed": 11,
+      "branches": 1,
+      "total_insertions": 71996,
+      "total_deletions": 6804,
+      "churn_ratio": 0.086,
+      "health_assessment": "Healthy - low deletion ratio indicates controlled code changes"
+    },
+    "available_analysis_queries": [
+      "Daily commit metrics (SELECT DATE(committed_at), COUNT(*) FROM activities WHERE repo_name LIKE '%nepal%' GROUP BY DATE...)",
+      "Churn trends (SELECT SUM(insertions), SUM(deletions) per time period)",
+      "Author contributions (SELECT author_login, COUNT(*) GROUP BY author_login)",
+      "File change patterns (from commit messages and stats)",
+      "Code velocity trending (commits per day over time)"
+    ],
+    "next_analysis_steps": [
+      "Build Layer 1: Daily metrics aggregation table",
+      "Build Layer 2: Risk detection rules (inactivity spikes, deletion spikes, etc.)",
+      "Build Layer 3: Engineering Health Index (0-100 composite score)",
+      "Correlate test failures with commit patterns"
+    ]
+  },
+  "history": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T13:15:00Z",
+    "git_analysis_added": "2026-02-28T13:00:00Z",
+    "visit_count": 1,
+    "milestone_pushes": [
+      "2026-02-28: Pushed main branch to GitHub",
+      "2026-02-28: Pushed document_analysis branch to GitHub",
+      "2026-02-28: Successfully integrated into schedules git analysis pipeline"
+    ]
+  },
+  "context": {
+    "relevant_files": [
+      ".kiro/specs/ - Specification documents (requirements, design, tasks)",
+      "supabase/migrations/ - 15 database migrations (schema + seeding)",
+      "platform-admin-panel/ - React TypeScript admin panel",
+      "database/ - Database utilities, type definitions, test fixtures",
+      "docs/ - Architecture diagrams, implementation plans, quick reference",
+      "mindstate.json - Project identity, thesis, architecture, and progress",
+      "workspace_snapshot.json - Current project state and inventory"
+    ],
+    "key_documents": [
+      "README.md - Project overview",
+      "ARCHITECTURE_DIAGRAM.md - Visual system architecture",
+      "IMPLEMENTATION_PLAN.md - Detailed implementation roadmap",
+      "FINAL_SESSION_REPORT.md - Latest session summary with test analysis",
+      "SESSION_SUMMARY_FINAL.md - Phase 1 completion report",
+      "QUICK_REFERENCE.md - Developer quick start",
+      "TEST_SESSION_ANALYSIS.md - Detailed analysis of 17 failing tests"
+    ],
+    "environment_vars": {
+      "SUPABASE_URL": "required - Supabase project URL",
+      "SUPABASE_ANON_KEY": "required - Supabase anonymous key",
+      "SUPABASE_SERVICE_ROLE_KEY": "required - Supabase service role key (for migrations)",
+      "DATABASE_URL": "required - PostgreSQL connection string"
+    },
+    "dependencies": [
+      "Node.js 18+ runtime",
+      "Supabase (PostgreSQL + Auth + RLS)",
+      "React 18+ (admin panel frontend)",
+      "TypeScript 5.x",
+      "Vitest (test framework)",
+      "React Query (data fetching)",
+      "Git (for analysis pipeline integration)"
+    ]
+  },
+  "project_structure": {
+    "root_docs": {
+      "README.md": "Project overview and setup instructions",
+      "ARCHITECTURE_DIAGRAM.md": "System architecture with layers",
+      "IMPLEMENTATION_PLAN.md": "Detailed implementation roadmap",
+      "FINAL_SESSION_REPORT.md": "Session completion report with metrics",
+      "mindstate.json": "Project identity and progress tracking",
+      "workspace_snapshot.json": "Current project state"
+    },
+    "supabase": {
+      "migrations": "15 SQL migrations for schema + seeding",
+      "types": "Generated Supabase types"
+    },
+    "platform-admin-panel": {
+      "src": "React + TypeScript source code",
+      "components": "Reusable UI components",
+      "pages": "Admin dashboard pages (Admins, Roles, Permissions, Regions, Audit Log)",
+      "utils": "Helper functions and constants"
+    }
+  },
+  "current_architecture": {
+    "database_layer": {
+      "provider": "Supabase PostgreSQL",
+      "status": "✅ STABLE - All migrations applied, 372 palikas seeded",
+      "rls_enforcement": "✅ OPERATIONAL",
+      "tables_count": "8 core tables (geographic, admin, role, content, audit)"
+    },
+    "admin_panel": {
+      "framework": "React 18 + TypeScript + Supabase client",
+      "status": "✅ OPERATIONAL with real data integration",
+      "features": ["Admin Management", "Roles & Permissions", "Regional Oversight", "Audit Log Viewer"]
+    },
+    "git_analysis": {
+      "system": "Schedules repo engineering intelligence pipeline",
+      "status": "✅ NEW - OPERATIONAL",
+      "data_storage": "PostgreSQL activities table (separate database from project database)",
+      "ingestion_method": "POST /ingest endpoint with repos and commit limit"
+    }
+  },
+  "testing_status": {
+    "framework": "Vitest",
+    "total_tests": 255,
+    "passing": 238,
+    "failing": 17,
+    "pass_rate": "93.3%",
+    "last_run": "2026-01-27",
+    "test_logs_location": "test-logs/session_20260127_124848.log",
+    "analysis_document": "TEST_SESSION_ANALYSIS.md"
+  },
+  "deployment_readiness": {
+    "database_schema": "✅ READY - All migrations clean, data seeded",
+    "admin_panel": "✅ READY - Functional with real data",
+    "tests": "🟡 BLOCKING - 17 tests failing (must fix before production)",
+    "documentation": "✅ COMPLETE - Comprehensive specs and reports",
+    "git_analysis": "✅ READY - Successfully integrated with schedules pipeline"
+  },
+  "integration_with_schedules_repo": {
+    "status": "✅ COMPLETE",
+    "integration_date": "2026-02-28",
+    "data_flow": "Nepal Digital commits → GitHub API → Express /ingest endpoint → PostgreSQL activities table",
+    "available_tools": [
+      "Daily metrics aggregation (Layer 1 ready)",
+      "Risk detection rules (Layer 2 in progress)",
+      "Engineering health scoring (Layer 3 in progress)",
+      "Custom SQL analytics queries"
+    ],
+    "schedules_docs_reference": [
+      "/Volumes/shared_code/schedules/QUICK_START.md - Fast setup guide",
+      "/Volumes/shared_code/schedules/NEPAL_DIGITAL_SETUP.md - Detailed technical setup",
+      "/Volumes/shared_code/schedules/ARCHITECTURE.md - System architecture diagrams",
+      "/Volumes/shared_code/schedules/INGESTION_FLOW.md - Complete data flow explanation",
+      "/Volumes/shared_code/schedules/INGESTION_INDEX.md - Documentation index"
+    ]
+  },
+  "team_handoff_notes": {
+    "resumability_score": "🟢 EXCELLENT",
+    "for_aaush": "Project is stable and now integrated with git analysis. Can resume immediately. Read FINAL_SESSION_REPORT.md for context, then tackle the 17 failing tests. Use git analysis metrics to understand code patterns and risk areas.",
+    "time_estimate_to_100_percent": "10-14 hours (includes test fixes + optimization)",
+    "new_capability": "Now have git metrics to guide development decisions (commit patterns, churn ratios, velocity trends)"
+  },
+  "snapshot_version": "1.1",
+  "generated_at": "2026-02-28T13:15:00Z",
+  "snapshot_creator_notes": "Successfully integrated Nepal Digital into schedules repo's git ingestion pipeline. 11 commits analyzed with healthy metrics (0.086 churn ratio). Pushed both main and document_analysis branches to GitHub. Project ready for Phase 2 work with git analysis support."
+}
