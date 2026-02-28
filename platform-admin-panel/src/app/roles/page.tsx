@@ -7,6 +7,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@
 import { Plus, Edit2, Trash2 } from 'lucide-react'
 import { useRoles } from '@/lib/hooks'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export default function RolesPage() {
   const { data: roles, isLoading, error } = useRoles()
@@ -91,9 +92,11 @@ export default function RolesPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                            <Edit2 className="w-4 h-4 text-slate-600" />
-                          </button>
+                          <Link href={`/roles/${role.id}`}>
+                            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                              <Edit2 className="w-4 h-4 text-slate-600" />
+                            </button>
+                          </Link>
                           <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>

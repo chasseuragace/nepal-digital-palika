@@ -7,6 +7,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@
 import { Plus, Edit2, Trash2 } from 'lucide-react'
 import { useAdmins } from '@/lib/hooks'
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function AdminsPage() {
   const { data: admins, isLoading, error } = useAdmins()
@@ -109,9 +110,11 @@ export default function AdminsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                            <Edit2 className="w-4 h-4 text-slate-600" />
-                          </button>
+                          <Link href={`/admins/${admin.id}`}>
+                            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                              <Edit2 className="w-4 h-4 text-slate-600" />
+                            </button>
+                          </Link>
                           <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
