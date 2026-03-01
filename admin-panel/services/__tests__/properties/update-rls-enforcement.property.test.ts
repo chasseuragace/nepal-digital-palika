@@ -238,11 +238,16 @@ describe('Property 25: UPDATE RLS Enforcement', () => {
             })
 
             // Sign in as the admin
-            const { error: signInError } = await adminClient.auth.signInWithPassword({
+            const { data: signInData, error: signInError } = await adminClient.auth.signInWithPassword({
               email,
               password
             })
             if (signInError) throw new Error(`Sign in error: ${signInError.message}`)
+
+            // CRITICAL: Set the session to establish RLS auth context
+            if (signInData.session) {
+              await adminClient.auth.setSession(signInData.session)
+            }
 
             // Try to UPDATE the heritage site in a palika they DO have access to
             const newName = `Updated ${testSiteName}`
