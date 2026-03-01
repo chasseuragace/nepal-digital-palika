@@ -91,11 +91,36 @@ DROP POLICY IF EXISTS "approval_notes_author_modify" ON public.approval_notes;
 -- 6. ENABLE ROW LEVEL SECURITY
 -- ============================================================
 
+-- Note: businesses table RLS is already enabled by migration 024
 ALTER TABLE public.business_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.approval_workflows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.approval_notes ENABLE ROW LEVEL SECURITY;
 
--- Note: businesses table RLS is already enabled by migration 024
+-- ============================================================
+-- 6.5 ADD MISSING BUSINESSES POLICIES (owner + public read)
+-- ============================================================
+
+-- Policy: Business owner can read/write only their own businesses
+DROP POLICY IF EXISTS "businesses_owner_access" ON public.businesses;
+CREATE POLICY "businesses_owner_access" ON public.businesses
+  FOR ALL
+  USING (
+    auth.uid() = owner_user_id
+    OR owner_user_id IS NULL -- Draft businesses with no owner
+  )
+  WITH CHECK (
+    auth.uid() = owner_user_id
+    OR owner_user_id IS NULL
+  );
+
+-- Policy: Public can read published businesses
+DROP POLICY IF EXISTS "businesses_public_read" ON public.businesses;
+CREATE POLICY "businesses_public_read" ON public.businesses
+  FOR SELECT
+  USING (
+    is_published = true
+    AND status = 'approved'
+  );
 
 -- ============================================================
 -- 7. RLS POLICIES - BUSINESS_IMAGES TABLE
