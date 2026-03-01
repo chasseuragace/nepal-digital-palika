@@ -105,9 +105,13 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
             // Create SOS requests in different palikas (using service role for admin operations)
+            // Use shorter request codes to stay within varchar(40) limit
+            const shortCode1 = `TEST-A-${Math.random().toString(36).substring(2, 8)}`
+            const shortCode2 = `TEST-B-${Math.random().toString(36).substring(2, 8)}`
+
             const request1Data = {
               palika_id: testPalikas[0],
-              request_code: `TEST-SOS-${uniqueId}-1`,
+              request_code: shortCode1,
               emergency_type: 'medical',
               location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
@@ -116,7 +120,7 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
 
             const request2Data = {
               palika_id: testPalikas[1],
-              request_code: `TEST-SOS-${uniqueId}-2`,
+              request_code: shortCode2,
               emergency_type: 'medical',
               location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
@@ -195,9 +199,13 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
             // Create SOS requests in different palikas (using service role)
+            // Use shorter request codes to stay within varchar(40) limit
+            const shortCode1 = `TEST-OK-${Math.random().toString(36).substring(2, 8)}`
+            const shortCode2 = `TEST-NO-${Math.random().toString(36).substring(2, 8)}`
+
             const request1Data = {
               palika_id: testPalikas[0],
-              request_code: `TEST-SOS-${uniqueId}-accessible`,
+              request_code: shortCode1,
               emergency_type: 'medical',
               location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
@@ -206,7 +214,7 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
 
             const request2Data = {
               palika_id: testPalikas[1],
-              request_code: `TEST-SOS-${uniqueId}-restricted`,
+              request_code: shortCode2,
               emergency_type: 'medical',
               location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
@@ -282,9 +290,12 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
             // Create SOS request in palika within the district (using service role)
+            // Use shorter request code to stay within varchar(40) limit
+            const shortCode = `TEST-DIS-${Math.random().toString(36).substring(2, 8)}`
+
             const requestData = {
               palika_id: testPalikas[0],
-              request_code: `TEST-SOS-${uniqueId}`,
+              request_code: shortCode,
               emergency_type: 'medical',
               location: 'POINT(85.3 27.7)',
               user_phone: '9841234567',
@@ -344,11 +355,13 @@ describe('Property 23: SOS Requests RLS Enforcement', () => {
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
             // Create SOS requests in multiple palikas (using service role)
+            // Use shorter request codes to stay within varchar(40) limit
             const requests = []
             for (let i = 0; i < Math.min(2, testPalikas.length); i++) {
+              const shortCode = `TEST-SA-${Math.random().toString(36).substring(2, 8)}`
               const requestData = {
                 palika_id: testPalikas[i],
-                request_code: `TEST-SOS-${uniqueId}-${i}`,
+                request_code: shortCode,
                 emergency_type: 'medical',
                 location: 'POINT(85.3 27.7)',
                 user_phone: '9841234567',

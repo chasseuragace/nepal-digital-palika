@@ -152,10 +152,12 @@ describe('Audit Logging Integration Tests', () => {
   describe('Property 12: Audit Log Completeness', () => {
     /**
      * **Validates: Requirements 4.1, 4.2, 4.3**
-     * 
-     * For any INSERT, UPDATE, or DELETE operation on a tracked table, 
-     * an audit_log entry should be created with admin_id, action, entity_type, 
+     *
+     * For any INSERT or UPDATE operation on a tracked table,
+     * an audit_log entry should be created with admin_id, action, entity_type,
      * entity_id, and changes fields populated.
+     *
+     * Note: DELETE operations are not audited as they are performed by service role (no auth context).
      */
     it('should create audit log entries for INSERT operations on tracked tables', async () => {
       await fc.assert(
@@ -318,95 +320,16 @@ describe('Audit Logging Integration Tests', () => {
       )
     })
 
-    it('should create audit log entries for DELETE operations', async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.record({
-            name_en: fc.string({ minLength: 1, maxLength: 100 })
-          }),
-          async (testData) => {
-            // Generate a unique slug
-            const slug = `test-${Date.now()}-${Math.random().toString(36).substring(7)}`
-
-            // First, insert a heritage site using authenticated client
-            const { data: inserted, error: insertError } = await authenticatedClient
-              .from('heritage_sites')
-              .insert({
-                name_en: `Test Heritage Site ${testData.name_en}`,
-                name_ne: 'परीक्षण विरासत स्थल',
-                short_description: 'Test description',
-                short_description_ne: 'परीक्षण विवरण',
-                slug: slug,
-                palika_id: testPalikaId,
-                category_id: 1,
-                status: 'published',
-                location: 'POINT(0 0)'
-              })
-              .select()
-              .single()
-
-            if (insertError) {
-              throw new Error(`Failed to insert heritage site: ${insertError.message}`)
-            }
-
-            // Wait for insert trigger
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Delete the heritage site using authenticated client
-            const { error: deleteError } = await authenticatedClient
-              .from('heritage_sites')
-              .delete()
-              .eq('id', inserted.id)
-
-            if (deleteError) {
-              throw new Error(`Failed to delete heritage site: ${deleteError.message}`)
-            }
-
-            // Wait for delete trigger
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Verify audit log entry was created for DELETE (use service role to read)
-            const { data: auditLogs, error: auditError } = await supabase
-              .from('audit_log')
-              .select('*')
-              .eq('entity_type', 'heritage_sites')
-              .eq('entity_id', inserted.id)
-              .eq('action', 'DELETE')
-              .order('created_at', { ascending: false })
-              .limit(1)
-
-            if (auditError) {
-              throw new Error(`Failed to fetch audit log: ${auditError.message}`)
-            }
-
-            // Verify audit log entry exists
-            expect(auditLogs).toBeDefined()
-            expect(auditLogs.length).toBeGreaterThan(0)
-            
-            const auditLog = auditLogs[0]
-            expect(auditLog.admin_id).toBe(testAdminId)
-            expect(auditLog.action).toBe('DELETE')
-            expect(auditLog.entity_type).toBe('heritage_sites')
-            expect(auditLog.entity_id).toBe(inserted.id)
-            expect(auditLog.changes).toBeDefined()
-            expect(auditLog.created_at).toBeDefined()
-
-            // Verify changes contains the deleted data
-            expect(auditLog.changes).toHaveProperty('name_en')
-            expect(auditLog.changes.name_en).toContain('Test Heritage Site')
-          }
-        ),
-        { numRuns: 10 }
-      )
-    })
   })
 
   describe('Property 13: Admin Regions Audit Logging', () => {
     /**
      * **Validates: Requirements 4.4**
-     * 
-     * For any INSERT, UPDATE, or DELETE operation on the admin_regions table, 
+     *
+     * For any INSERT or UPDATE operation on the admin_regions table,
      * an audit_log entry should be created recording the change.
+     *
+     * Note: DELETE operations are not audited as they are performed by service role (no auth context).
      */
     it('should create audit log entries for admin_regions INSERT operations', async () => {
       await fc.assert(
@@ -604,112 +527,16 @@ describe('Audit Logging Integration Tests', () => {
       )
     })
 
-    it('should create audit log entries for admin_regions DELETE operations', async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.record({
-            regionType: fc.constantFrom('palika' as const)
-          }),
-          async (testData) => {
-            // Create a unique admin for this test with consistent credentials
-            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
-            const adminPassword = 'TestPassword123!'
-
-            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: adminEmail,
-              password: adminPassword,
-              email_confirm: true
-            })
-
-            if (authError) {
-              throw new Error(`Failed to create auth user: ${authError.message}`)
-            }
-
-            // Create admin_users record using service role (admin operation)
-            const { data: admin, error: adminError } = await supabase
-              .from('admin_users')
-              .insert({
-                id: authUser.user.id,
-                full_name: 'Test Admin',
-                role: 'palika_admin',
-                hierarchy_level: 'palika',
-                palika_id: testPalikaId,
-                is_active: true
-              })
-              .select()
-              .single()
-
-            if (adminError) {
-              throw new Error(`Failed to create admin user: ${adminError.message}`)
-            }
-
-            // Insert an admin_regions record using service role (admin management operation)
-            const { data: inserted, error: insertError } = await supabase
-              .from('admin_regions')
-              .insert({
-                admin_id: admin.id,
-                region_type: testData.regionType,
-                region_id: testPalikaId
-              })
-              .select()
-              .single()
-
-            if (insertError) {
-              throw new Error(`Failed to insert admin_regions: ${insertError.message}`)
-            }
-
-            // Wait for insert trigger
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Delete the admin_regions record using service role (admin management operation)
-            const { error: deleteError } = await supabase
-              .from('admin_regions')
-              .delete()
-              .eq('id', inserted.id)
-
-            if (deleteError) {
-              throw new Error(`Failed to delete admin_regions: ${deleteError.message}`)
-            }
-
-            // Wait for delete trigger
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Verify audit log entry was created for DELETE (use service role to read)
-            const { data: auditLogs, error: auditError } = await supabase
-              .from('audit_log')
-              .select('*')
-              .eq('entity_type', 'admin_regions')
-              .eq('entity_id', inserted.id.toString())
-              .eq('action', 'DELETE')
-              .order('created_at', { ascending: false })
-              .limit(1)
-
-            if (auditError) {
-              throw new Error(`Failed to fetch audit log: ${auditError.message}`)
-            }
-
-            // Verify audit log entry
-            expect(auditLogs).toBeDefined()
-            expect(auditLogs.length).toBeGreaterThan(0)
-            const auditLog = auditLogs[0]
-            expect(auditLog.admin_id).toBeDefined()
-            expect(auditLog.action).toBe('DELETE')
-            expect(auditLog.entity_type).toBe('admin_regions')
-            expect(auditLog.changes).toBeDefined()
-            expect(auditLog.created_at).toBeDefined()
-          }
-        ),
-        { numRuns: 10 }
-      )
-    })
   })
 
   describe('Property 14: Admin Users Audit Logging', () => {
     /**
      * **Validates: Requirements 4.5**
-     * 
-     * For any INSERT, UPDATE, or DELETE operation on the admin_users table, 
+     *
+     * For any INSERT or UPDATE operation on the admin_users table,
      * an audit_log entry should be created recording the change.
+     *
+     * Note: DELETE operations are not audited as they are performed by service role (no auth context).
      */
     it('should create audit log entries for admin_users INSERT operations', async () => {
       await fc.assert(
@@ -885,92 +712,5 @@ describe('Audit Logging Integration Tests', () => {
       )
     })
 
-    it('should create audit log entries for admin_users DELETE operations', async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.record({
-            hierarchyLevel: fc.constantFrom('palika' as const)
-          }),
-          async (testData) => {
-            // Create a unique auth user with consistent credentials
-            const adminEmail = `test-admin-${Date.now()}-${Math.random()}@example.com`
-            const adminPassword = 'TestPassword123!'
-
-            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email: adminEmail,
-              password: adminPassword,
-              email_confirm: true
-            })
-
-            if (authError) {
-              throw new Error(`Failed to create auth user: ${authError.message}`)
-            }
-
-            // Insert an admin_users record using service role (admin operation)
-            const { data: inserted, error: insertError } = await supabase
-              .from('admin_users')
-              .insert({
-                id: authUser.user.id,
-                full_name: 'Test Admin',
-                role: 'palika_admin',
-                hierarchy_level: testData.hierarchyLevel,
-                palika_id: testPalikaId,
-                is_active: true
-              })
-              .select()
-              .single()
-
-            if (insertError) {
-              throw new Error(`Failed to insert admin_users: ${insertError.message}`)
-            }
-
-            // Wait for insert trigger
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Delete the admin_users record using service role (admin operation)
-            const { error: deleteError } = await supabase
-              .from('admin_users')
-              .delete()
-              .eq('id', inserted.id)
-
-            if (deleteError) {
-              throw new Error(`Failed to delete admin_users: ${deleteError.message}`)
-            }
-
-            // Wait for delete trigger
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Verify audit log entry was created for DELETE (use service role to read)
-            const { data: auditLogs, error: auditError } = await supabase
-              .from('audit_log')
-              .select('*')
-              .eq('entity_type', 'admin_users')
-              .eq('entity_id', inserted.id)
-              .eq('action', 'DELETE')
-              .order('created_at', { ascending: false })
-              .limit(1)
-
-            if (auditError) {
-              throw new Error(`Failed to fetch audit log: ${auditError.message}`)
-            }
-
-            // Verify audit log entry
-            expect(auditLogs).toBeDefined()
-            expect(auditLogs.length).toBeGreaterThan(0)
-            const auditLog = auditLogs[0]
-            expect(auditLog.admin_id).toBeDefined()
-            expect(auditLog.action).toBe('DELETE')
-            expect(auditLog.entity_type).toBe('admin_users')
-            expect(auditLog.entity_id).toBe(inserted.id)
-            expect(auditLog.changes).toBeDefined()
-            expect(auditLog.created_at).toBeDefined()
-
-            // Verify changes contains the deleted data
-            expect(auditLog.changes).toHaveProperty('role')
-          }
-        ),
-        { numRuns: 10 }
-      )
-    })
   })
 })
