@@ -357,7 +357,7 @@ describe('Stakeholder Value: Central Government', () => {
   });
 
   describe('Value: National Competitiveness', () => {
-    it('✅ should modernize Nepal's digital tourism presence', async () => {
+    it("✅ should modernize Nepal's digital tourism presence", async () => {
       // Professional platform ready
       const { data: heritage } = await supabase
         .from('heritage_sites')
