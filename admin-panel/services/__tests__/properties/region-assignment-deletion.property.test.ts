@@ -166,8 +166,11 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
 
             if (deleteError) throw new Error(`Failed to delete admin_regions: ${deleteError.message}`)
 
+            // Refresh session to clear auth cache after RLS policy changes
+            await adminClient.auth.refreshSession()
+
             // Wait a moment for the change to propagate
-            await new Promise(resolve => setTimeout(resolve, 200))
+            await new Promise(resolve => setTimeout(resolve, 100))
 
             // Verify admin can NO LONGER access the site AFTER deletion
             const { data: visibleAfter, error: errorAfter } = await adminClient
@@ -284,8 +287,9 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
 
             if (deleteError) throw new Error(`Failed to delete admin_regions: ${deleteError.message}`)
 
-            // Wait a moment
-            await new Promise(resolve => setTimeout(resolve, 200))
+            // Refresh session after deletion
+            await adminClient.auth.refreshSession()
+            await new Promise(resolve => setTimeout(resolve, 100))
 
             // Verify admin cannot access the site
             const { data: visibleAfterDelete } = await adminClient
@@ -305,8 +309,9 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
 
             if (reassignError) throw new Error(`Failed to reassign region: ${reassignError.message}`)
 
-            // Wait a moment
-            await new Promise(resolve => setTimeout(resolve, 200))
+            // Refresh session after re-assignment
+            await adminClient.auth.refreshSession()
+            await new Promise(resolve => setTimeout(resolve, 100))
 
             // Verify admin can access the site again
             const { data: visibleAfterReassign, error: errorAfterReassign } = await adminClient

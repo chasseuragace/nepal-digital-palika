@@ -12,8 +12,9 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
 import { createClient } from '@supabase/supabase-js'
+import { createAuthenticatedClient } from '../setup/integration-setup'
 
-// Create service role client for audit logging (bypasses RLS)
+// Create service role client for admin operations (setup and cleanup)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
@@ -166,10 +167,13 @@ describe('Property 12: Audit Log Completeness', () => {
           regionType: fc.constantFrom('palika' as const)
         }),
         async (testData) => {
-          // Create a unique admin for this test
+          // Create a unique super admin for this test (required for admin_regions INSERT)
+          const adminPassword = 'TestPassword123!'
+          const adminEmail = `test-audit-admin-${Date.now()}-${Math.random()}@example.com`
+
           const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-            email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-            password: 'TestPassword123!',
+            email: adminEmail,
+            password: adminPassword,
             email_confirm: true
           })
 
@@ -181,10 +185,9 @@ describe('Property 12: Audit Log Completeness', () => {
             .from('admin_users')
             .insert({
               id: authUser.user.id,
-              full_name: 'Test Admin',
-              role: 'palika_admin',
-              hierarchy_level: 'palika',
-              palika_id: testPalikaId,
+              full_name: 'Test Super Admin',
+              role: 'super_admin',
+              hierarchy_level: 'national',
               is_active: true
             })
             .select()
@@ -194,8 +197,11 @@ describe('Property 12: Audit Log Completeness', () => {
             throw new Error(`Failed to create admin user: ${adminError.message}`)
           }
 
-          // Insert an admin_regions record (tracked table)
-          const { data: inserted, error } = await supabase
+          // Create authenticated client as the super admin user for audit logging
+          const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
+
+          // Insert an admin_regions record using authenticated super_admin client
+          const { data: inserted, error } = await adminClient
             .from('admin_regions')
             .insert({
               admin_id: admin.id,
@@ -206,7 +212,7 @@ describe('Property 12: Audit Log Completeness', () => {
             .single()
 
           if (error) {
-            throw new Error(`Failed to insert admin_regions: ${error.message}`)
+            throw new Error(`Failed to insert heritage_sites: ${error.message}`)
           }
 
           // Wait a moment for trigger to fire
@@ -264,10 +270,13 @@ describe('Property 12: Audit Log Completeness', () => {
           regionType: fc.constantFrom('palika' as const)
         }),
         async (testData) => {
-          // Create a unique admin for this test
+          // Create a unique super admin for this test (required for admin_regions UPDATE)
+          const adminPassword = 'TestPassword123!'
+          const adminEmail = `test-audit-admin-${Date.now()}-${Math.random()}@example.com`
+
           const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-            email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-            password: 'TestPassword123!',
+            email: adminEmail,
+            password: adminPassword,
             email_confirm: true
           })
 
@@ -279,10 +288,9 @@ describe('Property 12: Audit Log Completeness', () => {
             .from('admin_users')
             .insert({
               id: authUser.user.id,
-              full_name: 'Test Admin',
-              role: 'palika_admin',
-              hierarchy_level: 'palika',
-              palika_id: testPalikaId,
+              full_name: 'Test Super Admin',
+              role: 'super_admin',
+              hierarchy_level: 'national',
               is_active: true
             })
             .select()
@@ -292,8 +300,11 @@ describe('Property 12: Audit Log Completeness', () => {
             throw new Error(`Failed to create admin user: ${adminError.message}`)
           }
 
-          // Insert an admin_regions record
-          const { data: inserted, error: insertError } = await supabase
+          // Create authenticated client as the super admin user for audit logging
+          const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
+
+          // Insert an admin_regions record using authenticated super_admin client
+          const { data: inserted, error: insertError } = await adminClient
             .from('admin_regions')
             .insert({
               admin_id: admin.id,
@@ -310,8 +321,8 @@ describe('Property 12: Audit Log Completeness', () => {
           // Wait for insert trigger
           await new Promise(resolve => setTimeout(resolve, 200))
 
-          // Update the admin_regions record
-          const { error: updateError } = await supabase
+          // Update the admin_regions record using authenticated super_admin client
+          const { error: updateError } = await adminClient
             .from('admin_regions')
             .update({
               region_type: testData.regionType
@@ -376,10 +387,13 @@ describe('Property 12: Audit Log Completeness', () => {
           regionType: fc.constantFrom('palika' as const)
         }),
         async (testData) => {
-          // Create a unique admin for this test
+          // Create a unique super admin for this test (required for admin_regions DELETE)
+          const adminPassword = 'TestPassword123!'
+          const adminEmail = `test-audit-admin-${Date.now()}-${Math.random()}@example.com`
+
           const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-            email: `test-admin-${Date.now()}-${Math.random()}@example.com`,
-            password: 'TestPassword123!',
+            email: adminEmail,
+            password: adminPassword,
             email_confirm: true
           })
 
@@ -391,10 +405,9 @@ describe('Property 12: Audit Log Completeness', () => {
             .from('admin_users')
             .insert({
               id: authUser.user.id,
-              full_name: 'Test Admin',
-              role: 'palika_admin',
-              hierarchy_level: 'palika',
-              palika_id: testPalikaId,
+              full_name: 'Test Super Admin',
+              role: 'super_admin',
+              hierarchy_level: 'national',
               is_active: true
             })
             .select()
@@ -404,8 +417,11 @@ describe('Property 12: Audit Log Completeness', () => {
             throw new Error(`Failed to create admin user: ${adminError.message}`)
           }
 
-          // Insert an admin_regions record
-          const { data: inserted, error: insertError } = await supabase
+          // Create authenticated client as the super admin user for audit logging
+          const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
+
+          // Insert an admin_regions record using authenticated super_admin client
+          const { data: inserted, error: insertError } = await adminClient
             .from('admin_regions')
             .insert({
               admin_id: admin.id,
@@ -422,8 +438,8 @@ describe('Property 12: Audit Log Completeness', () => {
           // Wait for insert trigger
           await new Promise(resolve => setTimeout(resolve, 200))
 
-          // Delete the admin_regions record
-          const { error: deleteError } = await supabase
+          // Delete the admin_regions record using authenticated super_admin client
+          const { error: deleteError } = await adminClient
             .from('admin_regions')
             .delete()
             .eq('id', inserted.id)

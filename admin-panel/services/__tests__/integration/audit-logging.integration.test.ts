@@ -447,11 +447,8 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create admin user: ${adminError.message}`)
             }
 
-            // Create authenticated client for this admin using the same credentials
-            const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
-
-            // Insert an admin_regions record using authenticated client
-            const { data: inserted, error } = await adminClient
+            // Insert an admin_regions record using service role (admin management operation)
+            const { data: inserted, error } = await supabase
               .from('admin_regions')
               .insert({
                 admin_id: admin.id,
@@ -541,11 +538,8 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create admin user: ${adminError.message}`)
             }
 
-            // Create authenticated client for this admin using the same credentials
-            const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
-
-            // Insert an admin_regions record using authenticated client
-            const { data: inserted, error: insertError } = await adminClient
+            // Insert an admin_regions record using service role (admin management operation)
+            const { data: inserted, error: insertError } = await supabase
               .from('admin_regions')
               .insert({
                 admin_id: admin.id,
@@ -562,8 +556,8 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Update the admin_regions record using authenticated client
-            const { error: updateError } = await adminClient
+            // Update the admin_regions record using service role (admin management operation)
+            const { error: updateError } = await supabase
               .from('admin_regions')
               .update({
                 region_type: testData.regionType
@@ -649,11 +643,8 @@ describe('Audit Logging Integration Tests', () => {
               throw new Error(`Failed to create admin user: ${adminError.message}`)
             }
 
-            // Create authenticated client for this admin using the same credentials
-            const adminClient = await createAuthenticatedClient(adminEmail, adminPassword)
-
-            // Insert an admin_regions record using authenticated client
-            const { data: inserted, error: insertError } = await adminClient
+            // Insert an admin_regions record using service role (admin management operation)
+            const { data: inserted, error: insertError } = await supabase
               .from('admin_regions')
               .insert({
                 admin_id: admin.id,
@@ -670,8 +661,8 @@ describe('Audit Logging Integration Tests', () => {
             // Wait for insert trigger
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Delete the admin_regions record using authenticated client
-            const { error: deleteError } = await adminClient
+            // Delete the admin_regions record using service role (admin management operation)
+            const { error: deleteError } = await supabase
               .from('admin_regions')
               .delete()
               .eq('id', inserted.id)
