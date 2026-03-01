@@ -78,10 +78,8 @@ CREATE INDEX IF NOT EXISTS idx_approval_notes_author ON public.approval_notes(au
 -- 5. DROP EXISTING CONFLICTING POLICIES
 -- ============================================================
 
-DROP POLICY IF EXISTS "businesses_public_read" ON public.businesses;
-DROP POLICY IF EXISTS "businesses_palika_staff_access" ON public.businesses;
-DROP POLICY IF EXISTS "businesses_super_admin_all" ON public.businesses;
-DROP POLICY IF EXISTS "businesses_owner_access" ON public.businesses;
+-- Note: businesses table policies are handled by migration 024
+-- We only drop and recreate policies for new tables (business_images, approval_workflows, approval_notes)
 DROP POLICY IF EXISTS "business_images_owner_access" ON public.business_images;
 DROP POLICY IF EXISTS "business_images_palika_staff" ON public.business_images;
 DROP POLICY IF EXISTS "business_images_public_read" ON public.business_images;
@@ -93,58 +91,11 @@ DROP POLICY IF EXISTS "approval_notes_author_modify" ON public.approval_notes;
 -- 6. ENABLE ROW LEVEL SECURITY
 -- ============================================================
 
-ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.approval_workflows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.approval_notes ENABLE ROW LEVEL SECURITY;
 
--- ============================================================
--- 6. RLS POLICIES - BUSINESSES TABLE
--- ============================================================
-
--- Policy 1: Business owner can read/write only their own businesses
-CREATE POLICY "businesses_owner_access" ON public.businesses
-  FOR ALL
-  USING (
-    auth.uid() = owner_user_id
-    OR owner_user_id IS NULL -- Draft businesses with no owner
-  )
-  WITH CHECK (
-    auth.uid() = owner_user_id
-    OR owner_user_id IS NULL
-  );
-
--- Policy 2: Palika staff can read/write businesses in their palika
-CREATE POLICY "businesses_palika_staff_access" ON public.businesses
-  FOR ALL
-  USING (
-    palika_id IN (
-      SELECT palika_id FROM public.admin_users
-      WHERE id = auth.uid()
-    )
-    OR get_user_role() = 'super_admin'
-  )
-  WITH CHECK (
-    palika_id IN (
-      SELECT palika_id FROM public.admin_users
-      WHERE id = auth.uid()
-    )
-    OR get_user_role() = 'super_admin'
-  );
-
--- Policy 3: Public can read published businesses
-CREATE POLICY "businesses_public_read" ON public.businesses
-  FOR SELECT
-  USING (
-    is_published = true
-    AND status = 'approved'
-  );
-
--- Policy 4: Super admin can do everything
-CREATE POLICY "businesses_super_admin_all" ON public.businesses
-  FOR ALL
-  USING (get_user_role() = 'super_admin')
-  WITH CHECK (get_user_role() = 'super_admin');
+-- Note: businesses table RLS is already enabled by migration 024
 
 -- ============================================================
 -- 7. RLS POLICIES - BUSINESS_IMAGES TABLE
@@ -166,14 +117,24 @@ CREATE POLICY "business_images_owner_access" ON public.business_images
     )
   );
 
--- Palika staff can manage
+-- Palika staff can manage (using admin_regions for access control, not just palika_id)
 CREATE POLICY "business_images_palika_staff" ON public.business_images
   FOR ALL
   USING (
-    business_id IN (
-      SELECT id FROM public.businesses b
-      WHERE b.palika_id IN (
-        SELECT palika_id FROM public.admin_users WHERE id = auth.uid()
+    public.get_user_role() = 'super_admin' OR (
+      business_id IN (
+        SELECT id FROM public.businesses b
+        WHERE public.user_has_access_to_palika(b.palika_id) AND
+              public.user_has_permission('manage_businesses')
+      )
+    )
+  )
+  WITH CHECK (
+    public.get_user_role() = 'super_admin' OR (
+      business_id IN (
+        SELECT id FROM public.businesses b
+        WHERE public.user_has_access_to_palika(b.palika_id) AND
+              public.user_has_permission('manage_businesses')
       )
     )
   );
@@ -192,42 +153,40 @@ CREATE POLICY "business_images_public_read" ON public.business_images
 -- 8. RLS POLICIES - APPROVAL_WORKFLOWS TABLE
 -- ============================================================
 
--- Palika admin can read/write their workflows
+-- Palika admin can read/write their workflows (using admin_regions for access control)
 CREATE POLICY "approval_workflows_palika_admin" ON public.approval_workflows
   FOR ALL
   USING (
-    palika_id IN (
-      SELECT palika_id FROM public.admin_users WHERE id = auth.uid()
-    )
-    OR get_user_role() = 'super_admin'
+    public.get_user_role() = 'super_admin' OR
+    public.user_has_access_to_palika(palika_id)
   )
   WITH CHECK (
-    palika_id IN (
-      SELECT palika_id FROM public.admin_users WHERE id = auth.uid()
-    )
-    OR get_user_role() = 'super_admin'
+    public.get_user_role() = 'super_admin' OR
+    public.user_has_access_to_palika(palika_id)
   );
 
 -- ============================================================
 -- 9. RLS POLICIES - APPROVAL_NOTES TABLE
 -- ============================================================
 
--- Palika staff can read/write notes for their businesses
+-- Palika staff can read/write notes for their businesses (using admin_regions for access control)
 CREATE POLICY "approval_notes_palika_staff" ON public.approval_notes
   FOR ALL
   USING (
-    business_id IN (
-      SELECT id FROM public.businesses b
-      WHERE b.palika_id IN (
-        SELECT palika_id FROM public.admin_users WHERE id = auth.uid()
+    public.get_user_role() = 'super_admin' OR (
+      business_id IN (
+        SELECT id FROM public.businesses b
+        WHERE public.user_has_access_to_palika(b.palika_id) AND
+              public.user_has_permission('manage_businesses')
       )
     )
   )
   WITH CHECK (
-    business_id IN (
-      SELECT id FROM public.businesses b
-      WHERE b.palika_id IN (
-        SELECT palika_id FROM public.admin_users WHERE id = auth.uid()
+    public.get_user_role() = 'super_admin' OR (
+      business_id IN (
+        SELECT id FROM public.businesses b
+        WHERE public.user_has_access_to_palika(b.palika_id) AND
+              public.user_has_permission('manage_businesses')
       )
     )
   );
@@ -235,7 +194,7 @@ CREATE POLICY "approval_notes_palika_staff" ON public.approval_notes
 -- Super admin can read all
 CREATE POLICY "approval_notes_super_admin_read" ON public.approval_notes
   FOR SELECT
-  USING (get_user_role() = 'super_admin');
+  USING (public.get_user_role() = 'super_admin');
 
 -- ============================================================
 -- 10. TRIGGER: Update updated_at on business changes
