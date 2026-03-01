@@ -1,0 +1,266 @@
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  align-items: center;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: white;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin: 0 0 2rem 0;
+}
+
+.detailsBox {
+  background: #f9f9f9;
+  border-left: 4px solid #0066cc;
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.detailsBox h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #1a1a1a;
+}
+
+.detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.detail:last-child {
+  border-bottom: none;
+}
+
+.detail strong {
+  color: #1a1a1a;
+}
+
+.detail span {
+  color: #666;
+}
+
+.code {
+  font-family: monospace;
+  background: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+}
+
+.statusBadge {
+  display: inline-block;
+  background: #ffc107;
+  color: #856404;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.successBox {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.successBox h3 {
+  margin: 0 0 0.5rem 0;
+  color: #155724;
+  font-size: 1.1rem;
+}
+
+.successBox p {
+  margin: 0;
+  color: #155724;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.infoBox {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  border: 1px solid #bee5eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.infoBox h3 {
+  margin: 0 0 0.5rem 0;
+  color: #0c5460;
+  font-size: 1.1rem;
+}
+
+.infoBox p {
+  margin: 0;
+  color: #0c5460;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.nextStepsBox {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.nextStepsBox h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #1a1a1a;
+}
+
+.nextStepsBox ol {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.nextStepsBox li {
+  margin-bottom: 0.5rem;
+}
+
+.helpBox {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.helpBox h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #856404;
+}
+
+.helpBox p {
+  margin: 0 0 0.75rem 0;
+  color: #856404;
+  font-size: 0.95rem;
+}
+
+.link {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.primaryButton {
+  background: #0066cc;
+  color: white;
+}
+
+.primaryButton:hover {
+  background: #0052a3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.secondaryButton {
+  background: white;
+  color: #0066cc;
+  border: 1px solid #0066cc;
+}
+
+.secondaryButton:hover {
+  background: #f0f7ff;
+  transform: translateY(-2px);
+}
+
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 2rem 1.5rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,201 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin: 0 0 2rem 0;
+}
+
+.formSection {
+  margin-bottom: 2rem;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.select:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.warningBox {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.warningBox h3 {
+  margin: 0 0 0.5rem 0;
+  color: #856404;
+  font-size: 1rem;
+}
+
+.warningBox p {
+  margin: 0.5rem 0;
+  color: #856404;
+  font-size: 0.95rem;
+}
+
+.successBox {
+  background: #d4edda;
+  border: 1px solid #28a745;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.successBox h3 {
+  margin: 0 0 0.5rem 0;
+  color: #155724;
+  font-size: 1rem;
+}
+
+.successBox p {
+  margin: 0.5rem 0;
+  color: #155724;
+  font-size: 0.95rem;
+}
+
+.info {
+  font-size: 0.9rem !important;
+}
+
+.errorBox {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  color: #721c24;
+  font-size: 0.95rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.primaryButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #0052a3;
+}
+
+.primaryButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.secondaryButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: white;
+  color: #0066cc;
+  border: 1px solid #0066cc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.secondaryButton:hover {
+  background: #f0f7ff;
+}
+
+.helpText {
+  background: #f9f9f9;
+  border-left: 4px solid #0066cc;
+  padding: 1rem;
+  border-radius: 0 4px 4px 0;
+}
+
+.helpText h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+}
+
+.helpText ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.helpText li {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.link {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.spinner {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
