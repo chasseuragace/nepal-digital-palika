@@ -225,7 +225,11 @@ SELECT r.id, p.id
 FROM public.roles r
 CROSS JOIN public.permissions p
 WHERE
-  (r.name = 'district_admin' AND p.name IN (
+  (r.name = 'palika_admin' AND p.name IN (
+    'manage_heritage_sites', 'manage_events', 'manage_blog_posts',
+    'manage_businesses', 'manage_sos', 'moderate_content'
+  ))
+  OR (r.name = 'district_admin' AND p.name IN (
     'manage_heritage_sites', 'manage_events', 'manage_blog_posts',
     'manage_businesses', 'manage_sos', 'moderate_content'
   ))
