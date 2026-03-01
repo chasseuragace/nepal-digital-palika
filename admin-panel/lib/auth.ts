@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase'
+import { supabase, supabaseAdmin } from './supabase'
 
 export interface AdminUser {
   id: string
@@ -11,8 +11,8 @@ export interface AdminUser {
 
 export async function authenticateAdmin(email: string, password: string): Promise<AdminUser | null> {
   try {
-    // Authenticate using Supabase Auth
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+    // Authenticate using Supabase Auth (with anon key)
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })

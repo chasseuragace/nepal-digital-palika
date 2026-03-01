@@ -20,11 +20,11 @@ async function seedAdminUsers() {
   const { data: palikaData, error: palikaError } = await supabaseAdmin
     .from('palikas')
     .select('id, name_en')
-    .eq('code', 'KTM-001')
+    .eq('code', 'D28-MT01')
     .single();
 
   if (palikaError || !palikaData) {
-    console.error('❌ Could not find Kathmandu palika (KTM-001). Run geographic seeding first.');
+    console.error('❌ Could not find Kathmandu palika (D28-MT01). Run geographic seeding first.');
     return;
   }
 

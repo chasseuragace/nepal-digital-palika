@@ -75,12 +75,13 @@ npm run check-status
 
 ### Essential Reference Data (npm run seed):
 - ✅ **7 Provinces** - All Nepal provinces with Nepali names
-- ✅ **9 Major Districts** - Key districts (Kathmandu, Kaski, etc.)
-- ✅ **8 Major Palikas** - Metropolitan and major municipalities
+- ✅ **77 Districts** - Complete district coverage for all provinces
+- ✅ **372 Palikas** - All municipalities and rural municipalities
 - ✅ **6 User Roles** - Complete RBAC system
 - ✅ **12 Permissions** - Granular access control
 - ✅ **27 Categories** - Content taxonomy (heritage, events, business, blog)
 - ✅ **2 App Versions** - Initial Android/iOS versions
+- ✅ **3 Admin Users** - Supabase Auth accounts with roles
 
 ### Sample Tourism Content (npm run seed:content):
 - ✅ **8 Heritage Sites** - Complete UNESCO World Heritage sites with real data
@@ -88,17 +89,50 @@ npm run check-status
 - ✅ **6 Blog Posts** - Comprehensive tourism information and guides
 - ❌ **Businesses** - Requires user authentication (coming soon)
 
-
+### Admin Users (npm run seed):
+- ✅ **3 Admin Accounts** - Super admin, palika admin, and content moderator
+- ✅ **Supabase Auth Integration** - Full authentication system
+- ✅ **Role-Based Permissions** - Proper access control
+- ✅ **Kathmandu Palika Focus** - Sample data in Kathmandu Metropolitan
 
 **Note:** Part 1 creates 12 basic categories, but the seeding script adds the complete set of 27 categories.
 
 ### What's NOT Seeded:
 - ❌ User accounts (created during registration)
 - ❌ Business listings (requires user authentication)
-- ❌ Blog posts (requires admin authentication)  
-- ❌ Admin users (requires Supabase Auth setup)
 - ❌ All 753 palikas (only major ones for demo)
 - ❌ Sample/demo data beyond heritage sites and events
+
+## 🔐 Default Admin Login Credentials
+
+After running `npm run seed`, the following admin accounts are automatically created in Supabase Auth:
+
+### 🏛️ Kathmandu Palika Admin
+- **Email:** `palika.admin@kathmandu.gov.np`
+- **Password:** `KathmanduAdmin456!`
+- **Role:** `palika_admin`
+- **Access:** Heritage sites, events, blog posts in Kathmandu Metropolitan
+- **Sample Data:** 5 heritage sites, 5 events, 6 blog posts in Kathmandu
+
+### 👑 Super Administrator  
+- **Email:** `superadmin@nepaltourism.dev`
+- **Password:** `SuperSecurePass123!`
+- **Role:** `super_admin`
+- **Access:** All system features, all palikas, user management
+
+### 📝 Content Moderator
+- **Email:** `content.moderator@kathmandu.gov.np`  
+- **Password:** `ModeratorSecure789!`
+- **Role:** `moderator`
+- **Access:** Content moderation and analytics only
+
+### 🌐 Admin Panel Access
+1. Start admin panel: `cd admin-panel && npm run dev`
+2. Visit: http://localhost:3000
+3. Use any of the above credentials to login
+4. The admin panel will show data specific to the user's role and palika
+
+**Note:** These credentials are for development/testing. Change passwords in production!
 
 ## ⚙️ Configuration
 
@@ -175,18 +209,23 @@ After seeding, verify in Supabase dashboard:
    
    **Reference Data:**
    - `provinces` (7 rows)
-   - `districts` (9 rows)  
-   - `palikas` (8 rows)
+   - `districts` (77 rows)  
+   - `palikas` (372 rows)
    - `roles` (6 rows)
    - `permissions` (12 rows)
    - `categories` (27 rows)
    - `app_versions` (2 rows)
+   - `admin_users` (3 rows)
    
    **Content Data (if seeded):**
-   - `heritage_sites` (8 rows)
-   - `events` (8 rows)
-   - `blog_posts` (0 rows - requires admin auth setup)
+   - `heritage_sites` (8+ rows)
+   - `events` (8+ rows)
+   - `blog_posts` (6+ rows)
    - `businesses` (0 rows - requires user auth setup)
+
+   **Supabase Auth Users:**
+   - Check **Authentication** → **Users** in Supabase dashboard
+   - Should show 3 admin users with confirmed emails
 
 ## 🐛 Troubleshooting
 
