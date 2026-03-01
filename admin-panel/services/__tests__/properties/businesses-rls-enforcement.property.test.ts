@@ -101,7 +101,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-businesses-rls-${uniqueId}`,
               role: 'palika_admin',
@@ -110,12 +110,12 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               district_id: null,
               palika_id: testPalikas[0],
               is_active: true
-            }).select().single()
+            })
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Assign admin to first palika
+            // Assign admin to first palika (use authUser.user.id directly, as RLS may block .select() on admin_users)
             const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
+              admin_id: authUser.user.id,
               region_type: 'palika',
               region_id: testPalikas[0]
             })
@@ -197,7 +197,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
+            const { error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-businesses-rls-${uniqueId}`,
               role: 'palika_admin',
@@ -206,12 +206,12 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               district_id: null,
               palika_id: testPalikas[0],
               is_active: true
-            }).select().single()
+            })
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Assign admin to first palika only
+            // Assign admin to first palika only (use authUser.user.id directly, as RLS may block .select() on admin_users)
             const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
+              admin_id: authUser.user.id,
               region_type: 'palika',
               region_id: testPalikas[0]
             })
@@ -299,10 +299,10 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               district_id: testDistricts[0],
               palika_id: null,
               is_active: true
-            }).select().single()
+            })
             if (adminError) throw new Error(`Admin error: ${adminError.message}`)
 
-            // Assign admin to district
+            // Assign admin to district (use authUser.user.id directly, as RLS may block .select() on admin_users)
             const { error: regionError } = await supabase.from('admin_regions').insert({
               admin_id: authUser.user.id,
               region_type: 'district',
