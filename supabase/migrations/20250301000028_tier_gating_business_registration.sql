@@ -1,82 +1,12 @@
 -- Tier-Based Feature Gating: Business Registration & Verification
 -- Created: 2026-03-01
 -- Purpose: Enable citizen self-service business registration with verification workflow
+-- NOTE: businesses table columns are added in migration _027
 
 -- ============================================================
--- 1. BUSINESSES TABLE
+-- 1. BUSINESSES TABLE - ALREADY EXISTS (columns added in _027)
 -- ============================================================
-
-CREATE TABLE IF NOT EXISTS public.businesses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  palika_id INTEGER NOT NULL REFERENCES public.palikas(id) ON DELETE RESTRICT,
-  owner_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-
-  -- Basic Info
-  business_name VARCHAR(255) NOT NULL,
-  business_name_ne VARCHAR(255),
-  business_type VARCHAR(50),
-  category VARCHAR(100),
-  entity_type VARCHAR(50), -- 'homestay', 'producer', 'artisan', 'service'
-
-  -- Contact Info
-  contact_phone VARCHAR(20) NOT NULL,
-  contact_email VARCHAR(255),
-  contact_website VARCHAR(255),
-
-  -- Location
-  address TEXT NOT NULL,
-  ward_number INTEGER,
-  coordinates JSONB, -- {lat: number, lng: number}
-  location GEOGRAPHY(POINT, 4326),
-
-  -- Details
-  description TEXT,
-  description_ne TEXT,
-  operating_hours JSONB, -- {monday: "9-5", tuesday: "9-5", ...}
-  is_24_7 BOOLEAN DEFAULT false,
-  languages_spoken TEXT[] DEFAULT '{}',
-
-  -- Media
-  featured_image_url VARCHAR(512),
-  images JSONB DEFAULT '[]'::jsonb, -- Array of image URLs
-
-  -- Business Details
-  price_range JSONB, -- {min: number, max: number}
-  facilities JSONB DEFAULT '{}'::jsonb, -- {wifi: true, parking: true, ...}
-  owner_info JSONB, -- {name, phone, email, id_type, id_number}
-
-  -- Status & Verification
-  status VARCHAR(50) DEFAULT 'draft', -- draft, pending_review, approved, rejected, archived
-  verification_status VARCHAR(50) DEFAULT 'pending', -- pending, approved, rejected
-  reviewer_feedback TEXT,
-  reviewer_id UUID REFERENCES public.admin_users(id) ON DELETE SET NULL,
-
-  -- Visibility
-  is_published BOOLEAN DEFAULT false,
-  is_featured BOOLEAN DEFAULT false,
-  view_count INTEGER DEFAULT 0,
-
-  -- Metadata
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  published_at TIMESTAMP WITH TIME ZONE,
-
-  CONSTRAINT business_name_not_empty CHECK (char_length(business_name) > 0),
-  CONSTRAINT contact_phone_not_empty CHECK (char_length(contact_phone) > 0)
-);
-
--- Create spatial index for location queries
-CREATE INDEX IF NOT EXISTS idx_businesses_location ON public.businesses USING GIST(location);
-
--- Create indexes for common queries
-CREATE INDEX IF NOT EXISTS idx_businesses_palika ON public.businesses(palika_id);
-CREATE INDEX IF NOT EXISTS idx_businesses_status ON public.businesses(status);
-CREATE INDEX IF NOT EXISTS idx_businesses_verification ON public.businesses(verification_status);
-CREATE INDEX IF NOT EXISTS idx_businesses_owner ON public.businesses(owner_user_id);
-CREATE INDEX IF NOT EXISTS idx_businesses_created ON public.businesses(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_businesses_published ON public.businesses(is_published, palika_id);
+-- See migration _027 for businesses table structure and indexes
 
 -- ============================================================
 -- 2. BUSINESS IMAGES TABLE (Optional - for separate image management)
@@ -145,7 +75,22 @@ CREATE INDEX IF NOT EXISTS idx_approval_notes_business ON public.approval_notes(
 CREATE INDEX IF NOT EXISTS idx_approval_notes_author ON public.approval_notes(author_id);
 
 -- ============================================================
--- 5. ENABLE ROW LEVEL SECURITY
+-- 5. DROP EXISTING CONFLICTING POLICIES
+-- ============================================================
+
+DROP POLICY IF EXISTS "businesses_public_read" ON public.businesses;
+DROP POLICY IF EXISTS "businesses_palika_staff_access" ON public.businesses;
+DROP POLICY IF EXISTS "businesses_super_admin_all" ON public.businesses;
+DROP POLICY IF EXISTS "businesses_owner_access" ON public.businesses;
+DROP POLICY IF EXISTS "business_images_owner_access" ON public.business_images;
+DROP POLICY IF EXISTS "business_images_palika_staff" ON public.business_images;
+DROP POLICY IF EXISTS "business_images_public_read" ON public.business_images;
+DROP POLICY IF EXISTS "approval_workflows_palika_admin" ON public.approval_workflows;
+DROP POLICY IF EXISTS "approval_notes_read" ON public.approval_notes;
+DROP POLICY IF EXISTS "approval_notes_author_modify" ON public.approval_notes;
+
+-- ============================================================
+-- 6. ENABLE ROW LEVEL SECURITY
 -- ============================================================
 
 ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
@@ -316,7 +261,19 @@ CREATE TRIGGER trg_business_updated_at
 
 CREATE OR REPLACE FUNCTION audit_business_changes()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_changes JSONB;
 BEGIN
+  -- Calculate changes only for UPDATE operations
+  IF TG_OP = 'UPDATE' THEN
+    v_changes := (
+      SELECT jsonb_object_agg(key, value)
+      FROM jsonb_each(row_to_json(NEW)::jsonb - row_to_json(OLD)::jsonb)
+    );
+  ELSE
+    v_changes := NULL;
+  END IF;
+
   INSERT INTO public.audit_log (
     admin_id,
     operation_type,
@@ -332,11 +289,8 @@ BEGIN
     COALESCE(NEW.id, OLD.id),
     CASE WHEN TG_OP = 'UPDATE' OR TG_OP = 'DELETE' THEN row_to_json(OLD) ELSE NULL END,
     CASE WHEN TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN row_to_json(NEW) ELSE NULL END,
-    CASE
-      WHEN TG_OP = 'UPDATE' THEN jsonb_object_agg(key, value)
-      ELSE NULL
-    END
-  ) FROM jsonb_each(row_to_json(NEW)::jsonb - row_to_json(COALESCE(OLD, row(NULL::public.businesses)))::jsonb);
+    v_changes
+  );
 
   RETURN COALESCE(NEW, OLD);
 END;

@@ -16,6 +16,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
   let testProvinces: number[] = []
   let testDistricts: number[] = []
   let testPalikas: number[] = []
+  let testCategoryId: number | null = null
 
   beforeAll(async () => {
     // Get test provinces
@@ -46,6 +47,33 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
     }
     if (palikas.length < 2) throw new Error('Not enough palikas')
     testPalikas = palikas.map(p => p.id)
+
+    // Get or create a test category for heritage_sites
+    const { data: categories } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('entity_type', 'heritage_site')
+      .limit(1)
+
+    if (categories && categories.length > 0) {
+      testCategoryId = categories[0].id
+    } else {
+      // Create a test category if none exists
+      const { data: newCategory } = await supabase
+        .from('categories')
+        .insert({
+          entity_type: 'heritage_site',
+          name_en: 'Test Heritage Category',
+          name_ne: 'परीक्षण विरासत श्रेणी',
+          slug: 'test-heritage-category'
+        })
+        .select()
+        .single()
+      if (newCategory) {
+        testCategoryId = newCategory.id
+      }
+    }
+    if (!testCategoryId) throw new Error('Could not get or create category for heritage sites')
   })
 
   afterEach(async () => {
@@ -112,7 +140,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               short_description: 'Test description',
               short_description_ne: 'परीक्षण विवरण',
               slug: `test-heritage-${uniqueId}-1`,
-              category_id: 1,
+              category_id: testCategoryId,
               location: 'POINT(85.3 27.7)',
               status: 'published'
             }
@@ -124,7 +152,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               short_description: 'Test description',
               short_description_ne: 'परीक्षण विवरण',
               slug: `test-heritage-${uniqueId}-2`,
-              category_id: 1,
+              category_id: testCategoryId,
               location: 'POINT(85.3 27.7)',
               status: 'published'
             }
@@ -209,7 +237,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               name_en: `Test Heritage Site ${uniqueId} - Accessible`,
               name_ne: 'Test Heritage Site',
               slug: `test-heritage-${uniqueId}-accessible`,
-              category_id: 1,
+              category_id: testCategoryId,
               location: 'POINT(85.3 27.7)',
               status: 'published'
             }
@@ -219,7 +247,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               name_en: `Test Heritage Site ${uniqueId} - Restricted`,
               name_ne: 'Test Heritage Site',
               slug: `test-heritage-${uniqueId}-restricted`,
-              category_id: 1,
+              category_id: testCategoryId,
               location: 'POINT(85.3 27.7)',
               status: 'published'
             }
@@ -299,7 +327,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               name_en: `Test Heritage Site ${uniqueId}`,
               name_ne: 'Test Heritage Site',
               slug: `test-heritage-${uniqueId}`,
-              category_id: 1,
+              category_id: testCategoryId,
               location: 'POINT(85.3 27.7)',
               status: 'published'
             }
@@ -365,7 +393,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
                 name_en: `Test Heritage Site ${uniqueId} - ${i}`,
                 name_ne: 'Test Heritage Site',
                 slug: `test-heritage-${uniqueId}-${i}`,
-                category_id: 1,
+                category_id: testCategoryId,
                 location: 'POINT(85.3 27.7)',
                 status: 'published'
               }
