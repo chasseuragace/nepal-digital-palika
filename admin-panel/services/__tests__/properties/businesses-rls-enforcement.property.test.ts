@@ -17,6 +17,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
   let testDistricts: number[] = []
   let testPalikas: number[] = []
   let testUserId: string = ''
+  let testBusinessTypeId: number | null = null
 
   beforeAll(async () => {
     // Get test provinces
@@ -47,6 +48,42 @@ describe('Property 21: Businesses RLS Enforcement', () => {
     }
     if (palikas.length < 2) throw new Error('Not enough palikas')
     testPalikas = palikas.map(p => p.id)
+
+    // Get or create a business type category
+    const { data: categories, error: categoriesError } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('entity_type', 'business')
+      .limit(1)
+
+    if (categoriesError) {
+      console.error('Error fetching categories:', categoriesError)
+    }
+
+    if (categories && categories.length > 0) {
+      testBusinessTypeId = categories[0].id
+    } else {
+      // Create a test business type category if none exists
+      const uniqueSlug = `test-business-type-${Date.now()}`
+      const { data: newCategory, error: createError } = await supabase
+        .from('categories')
+        .insert({
+          entity_type: 'business',
+          name_en: 'Test Business Category',
+          name_ne: 'परीक्षण व्यवसाय श्रेणी',
+          slug: uniqueSlug
+        })
+        .select()
+        .single()
+      if (createError) {
+        console.error('Error creating business type category:', createError)
+        throw new Error(`Failed to create category: ${createError.message}`)
+      }
+      if (newCategory) {
+        testBusinessTypeId = newCategory.id
+      }
+    }
+    if (!testBusinessTypeId) throw new Error('Could not get or create business type category')
 
     // Create a test user for business owner
     const { data: authUser } = await supabase.auth.admin.createUser({
@@ -127,7 +164,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               owner_user_id: testUserId,
               business_name: `Test Business ${uniqueId} - Palika 1`,
               slug: `test-business-${uniqueId}-1`,
-              business_type_id: 1,
+              business_type_id: testBusinessTypeId!,
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
@@ -141,7 +178,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               owner_user_id: testUserId,
               business_name: `Test Business ${uniqueId} - Palika 2`,
               slug: `test-business-${uniqueId}-2`,
-              business_type_id: 1,
+              business_type_id: testBusinessTypeId!,
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
@@ -150,17 +187,41 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               verification_status: 'verified'
             }
 
-            const { data: business1 } = await supabase.from('businesses').insert(business1Data).select().single()
-            const { data: business2 } = await supabase.from('businesses').insert(business2Data).select().single()
+            const { data: business1, error: business1Error } = await supabase.from('businesses').insert(business1Data).select().single()
+            if (business1Error) throw new Error(`Business 1 insert error: ${business1Error.message}`)
+            if (!business1) throw new Error('Business 1 was not created (no data returned)')
+
+            const { data: business2, error: business2Error } = await supabase.from('businesses').insert(business2Data).select().single()
+            if (business2Error) throw new Error(`Business 2 insert error: ${business2Error.message}`)
+            if (!business2) throw new Error('Business 2 was not created (no data returned)')
 
             // Create authenticated client for the admin user (respects RLS)
             const adminClient = await createAuthenticatedClient(email, password)
 
+            // DEBUG: Call debug function to trace RLS evaluation
+            const { data: debugResult, error: debugError } = await adminClient.rpc('debug_businesses_admin_read', {
+              palika_id_param: testPalikas[0]
+            })
+            if (debugError) {
+              console.error('DEBUG ERROR:', debugError)
+            } else {
+              console.log('DEBUG BUSINESS RLS (Palika Admin Test 1):', JSON.stringify(debugResult, null, 2))
+            }
+
             // Query as the restricted admin (RLS will filter results)
-            const { data: visibleBusinesses } = await adminClient
+            const { data: visibleBusinesses, error: queryError } = await adminClient
               .from('businesses')
               .select('id, palika_id, business_name')
               .eq('verification_status', 'verified')
+
+            // Log query results and error
+            if (queryError) {
+              console.error('QUERY ERROR:', queryError)
+            }
+            console.log('VISIBLE BUSINESSES COUNT:', visibleBusinesses?.length || 0)
+            console.log('VISIBLE BUSINESS IDS:', visibleBusinesses?.map(b => b.id) || [])
+            console.log('EXPECTED BUSINESS ID:', business1?.id)
+            console.log('EXPECTED BUSINESS PALIKA:', business1?.palika_id)
 
             // Verify admin can see business in their palika
             const canSeeBusiness1 = visibleBusinesses?.some(b => b.id === business1.id)
@@ -223,7 +284,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               owner_user_id: testUserId,
               business_name: `Test Business ${uniqueId} - Accessible`,
               slug: `test-business-${uniqueId}-accessible`,
-              business_type_id: 1,
+              business_type_id: testBusinessTypeId!,
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
@@ -237,7 +298,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               owner_user_id: testUserId,
               business_name: `Test Business ${uniqueId} - Restricted`,
               slug: `test-business-${uniqueId}-restricted`,
-              business_type_id: 1,
+              business_type_id: testBusinessTypeId!,
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
@@ -246,11 +307,26 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               verification_status: 'verified'
             }
 
-            const { data: business1 } = await supabase.from('businesses').insert(business1Data).select().single()
-            const { data: business2 } = await supabase.from('businesses').insert(business2Data).select().single()
+            const { data: business1, error: business1Error } = await supabase.from('businesses').insert(business1Data).select().single()
+            if (business1Error) throw new Error(`Business 1 insert error: ${business1Error.message}`)
+            if (!business1) throw new Error('Business 1 was not created (no data returned)')
+
+            const { data: business2, error: business2Error } = await supabase.from('businesses').insert(business2Data).select().single()
+            if (business2Error) throw new Error(`Business 2 insert error: ${business2Error.message}`)
+            if (!business2) throw new Error('Business 2 was not created (no data returned)')
 
             // Create authenticated client for the admin user (respects RLS)
             const adminClient = await createAuthenticatedClient(email, password)
+
+            // DEBUG: Call debug function to trace RLS evaluation
+            const { data: debugResult, error: debugError } = await adminClient.rpc('debug_businesses_admin_read', {
+              palika_id_param: testPalikas[0]
+            })
+            if (debugError) {
+              console.error('DEBUG ERROR:', debugError)
+            } else {
+              console.log('DEBUG BUSINESS RLS (Palika Admin Test 2):', JSON.stringify(debugResult, null, 2))
+            }
 
             // Query as the restricted admin (RLS will filter results)
             const { data: visibleBusinesses } = await adminClient
@@ -316,7 +392,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               owner_user_id: testUserId,
               business_name: `Test Business ${uniqueId}`,
               slug: `test-business-${uniqueId}`,
-              business_type_id: 1,
+              business_type_id: testBusinessTypeId!,
               phone: '9841234567',
               ward_number: 1,
               address: 'Test Address',
@@ -325,10 +401,22 @@ describe('Property 21: Businesses RLS Enforcement', () => {
               verification_status: 'verified'
             }
 
-            const { data: business } = await supabase.from('businesses').insert(businessData).select().single()
+            const { data: business, error: businessError } = await supabase.from('businesses').insert(businessData).select().single()
+            if (businessError) throw new Error(`Business insert error: ${businessError.message}`)
+            if (!business) throw new Error('Business was not created (no data returned)')
 
             // Create authenticated client for the admin user (respects RLS)
             const adminClient = await createAuthenticatedClient(email, password)
+
+            // DEBUG: Call debug function to trace RLS evaluation
+            const { data: debugResult, error: debugError } = await adminClient.rpc('debug_businesses_admin_read', {
+              palika_id_param: testPalikas[0]
+            })
+            if (debugError) {
+              console.error('DEBUG ERROR:', debugError)
+            } else {
+              console.log('DEBUG BUSINESS RLS (District Admin Test):', JSON.stringify(debugResult, null, 2))
+            }
 
             // Query as the district admin (RLS will filter results)
             const { data: visibleBusinesses } = await adminClient
@@ -384,7 +472,7 @@ describe('Property 21: Businesses RLS Enforcement', () => {
                 owner_user_id: testUserId,
                 business_name: `Test Business ${uniqueId} - ${i}`,
                 slug: `test-business-${uniqueId}-${i}`,
-                business_type_id: 1,
+                business_type_id: testBusinessTypeId!,
                 phone: '9841234567',
                 ward_number: 1,
                 address: 'Test Address',
