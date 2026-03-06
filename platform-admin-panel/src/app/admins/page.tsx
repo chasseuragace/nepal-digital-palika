@@ -43,12 +43,43 @@ export default function AdminsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [expandedAdmins, setExpandedAdmins] = useState<Set<string>>(new Set())
+  const [deleteDialog, setDeleteDialog] = useState<{ id: string; name: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const filteredAdmins = admins?.filter((admin) => {
     const matchesSearch = admin.full_name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = roleFilter === 'all' || admin.role === roleFilter
     return matchesSearch && matchesRole
   }) || []
+
+  const handleDeleteClick = (admin: Admin) => {
+    setDeleteDialog({ id: admin.id, name: admin.full_name })
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog) return
+
+    try {
+      setIsDeleting(true)
+      const response = await fetch(`/api/admins/${deleteDialog.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        alert(`Error: ${data.error || 'Failed to delete admin'}`)
+        return
+      }
+
+      // Refetch admins list
+      window.location.reload()
+    } catch (err) {
+      alert(`Error: ${err instanceof Error ? err.message : 'Failed to delete admin'}`)
+    } finally {
+      setIsDeleting(false)
+      setDeleteDialog(null)
+    }
+  }
 
   if (error) {
     return (
@@ -167,7 +198,10 @@ export default function AdminsPage() {
                               <Edit2 className="w-4 h-4 text-slate-600" />
                             </button>
                           </Link>
-                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                          <button
+                            onClick={() => handleDeleteClick(admin)}
+                            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          >
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
                         </div>
@@ -179,6 +213,42 @@ export default function AdminsPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        {deleteDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="max-w-md w-full mx-4">
+              <CardHeader>
+                <h2 className="text-xl font-semibold text-slate-900">Delete Admin</h2>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-slate-700">
+                  Are you sure you want to delete <strong>{deleteDialog.name}</strong>?
+                </p>
+                <p className="text-sm text-slate-600">
+                  This action will permanently remove the admin account. This cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setDeleteDialog(null)}
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </AdminLayout>
   )
