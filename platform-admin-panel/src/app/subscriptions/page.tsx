@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -37,46 +36,36 @@ interface PalikaWithTier {
 }
 
 async function fetchTiers() {
-  const { data, error } = await supabase
-    .from('subscription_tiers')
-    .select(`
-      id,
-      name,
-      display_name,
-      cost_per_year,
-      tier_features(
-        feature_id,
-        features(id, code, display_name, category)
-      )
-    `)
-    .order('cost_per_year', { ascending: true })
-
-  if (error) throw error
+  const response = await fetch('/api/subscriptions/tiers')
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to fetch tiers')
+  }
+  const { data } = await response.json()
   return data as SubscriptionTier[]
 }
 
 async function fetchPalikas() {
-  const { data, error } = await supabase
-    .from('palikas')
-    .select(`
-      id,
-      name,
-      subscription_tier_id,
-      subscription_tiers(id, name, display_name)
-    `)
-    .order('name', { ascending: true })
-
-  if (error) throw error
+  const response = await fetch('/api/subscriptions/palikas')
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to fetch palikas')
+  }
+  const { data } = await response.json()
   return data as PalikaWithTier[]
 }
 
 async function updatePalikaTier(palikaId: string, tierId: string) {
-  const { error } = await supabase
-    .from('palikas')
-    .update({ subscription_tier_id: tierId })
-    .eq('id', palikaId)
+  const response = await fetch('/api/subscriptions/palikas', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ palikaId, tierId }),
+  })
 
-  if (error) throw error
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to update tier')
+  }
 }
 
 export default function SubscriptionsPage() {
