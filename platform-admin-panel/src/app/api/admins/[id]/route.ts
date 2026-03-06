@@ -31,7 +31,8 @@ export async function GET(
 
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data, error } = await serviceClient
+    // Fetch admin with palika relations
+    const { data: admin, error } = await serviceClient
       .from('admin_users')
       .select(`
         id,
@@ -63,6 +64,14 @@ export async function GET(
         { error: error.message },
         { status: 500 }
       )
+    }
+
+    // Fetch email from auth.users
+    const { data: { user }, error: authError } = await serviceClient.auth.admin.getUserById(id)
+
+    const data = {
+      ...admin,
+      email: user?.email || 'N/A'
     }
 
     return NextResponse.json({ data }, { status: 200 })

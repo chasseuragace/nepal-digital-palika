@@ -139,6 +139,7 @@ export default function AdminsPage() {
               <TableHead>
                 <TableRow>
                   <TableHeader>Name</TableHeader>
+                  <TableHeader>Email</TableHeader>
                   <TableHeader>Role</TableHeader>
                   <TableHeader>Permissions</TableHeader>
                   <TableHeader>Location</TableHeader>
@@ -149,13 +150,13 @@ export default function AdminsPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                       Loading admins...
                     </TableCell>
                   </TableRow>
                 ) : filteredAdmins.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                       No admins found
                     </TableCell>
                   </TableRow>
@@ -164,6 +165,9 @@ export default function AdminsPage() {
                     <TableRow key={admin.id}>
                       <TableCell className="font-medium">
                         {admin.full_name}
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600">
+                        {admin.email || 'N/A'}
                       </TableCell>
                       <TableCell>
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">

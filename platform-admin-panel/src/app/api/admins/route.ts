@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
 
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data, error } = await serviceClient
+    // Fetch admins with palika relations
+    const { data: admins, error } = await serviceClient
       .from('admin_users')
       .select(`
         id,
@@ -52,6 +53,17 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Fetch emails from auth.users
+    const { data: { users }, error: authError } = await serviceClient.auth.admin.listUsers()
+
+    const emailMap = new Map(users?.map(u => [u.id, u.email]) || [])
+
+    // Enrich admin data with emails
+    const data = admins?.map(admin => ({
+      ...admin,
+      email: emailMap.get(admin.id) || 'N/A'
+    })) || []
 
     return NextResponse.json({ data }, { status: 200 })
   } catch (error) {
