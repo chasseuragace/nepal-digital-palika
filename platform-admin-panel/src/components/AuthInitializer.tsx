@@ -32,20 +32,20 @@ export function AuthInitializer() {
           return
         }
 
-        // Fetch admin user data
+        // Fetch admin user data (id = auth.users.id)
         const { data: adminUser } = await supabase
           .from('admin_users')
-          .select('id, auth_id, full_name, email, role, palika_id, created_at')
-          .eq('auth_id', session.user.id)
+          .select('id, full_name, role, palika_id, created_at')
+          .eq('id', session.user.id)
           .single()
 
         if (mounted) {
-          if (adminUser) {
+          if (adminUser && session.user.email) {
             setUser({
               id: adminUser.id,
-              auth_id: adminUser.auth_id,
+              auth_id: adminUser.id,
               full_name: adminUser.full_name,
-              email: adminUser.email,
+              email: session.user.email,
               role: adminUser.role,
               palika_id: adminUser.palika_id,
               created_at: adminUser.created_at,
@@ -80,16 +80,16 @@ export function AuthInitializer() {
       } else {
         const { data: adminUser } = await supabase
           .from('admin_users')
-          .select('id, auth_id, full_name, email, role, palika_id, created_at')
-          .eq('auth_id', session.user.id)
+          .select('id, full_name, role, palika_id, created_at')
+          .eq('id', session.user.id)
           .single()
 
-        if (adminUser) {
+        if (adminUser && session.user.email) {
           setUser({
             id: adminUser.id,
-            auth_id: adminUser.auth_id,
+            auth_id: adminUser.id,
             full_name: adminUser.full_name,
-            email: adminUser.email,
+            email: session.user.email,
             role: adminUser.role,
             palika_id: adminUser.palika_id,
             created_at: adminUser.created_at,

@@ -15,11 +15,11 @@ export async function authenticateAdmin(email: string, password: string): Promis
     throw new Error('Invalid email or password')
   }
 
-  // Fetch admin user record
+  // Fetch admin user record (id = auth.users.id)
   const { data: adminUser, error: dbError } = await supabase
     .from('admin_users')
-    .select('id, auth_id, full_name, email, role, palika_id, created_at')
-    .eq('auth_id', authData.user.id)
+    .select('id, full_name, role, palika_id, created_at')
+    .eq('id', authData.user.id)
     .single()
 
   if (dbError || !adminUser) {
@@ -30,9 +30,9 @@ export async function authenticateAdmin(email: string, password: string): Promis
 
   return {
     id: adminUser.id,
-    auth_id: adminUser.auth_id,
+    auth_id: adminUser.id,
     full_name: adminUser.full_name,
-    email: adminUser.email,
+    email: authData.user.email || '',
     role: adminUser.role,
     palika_id: adminUser.palika_id,
     created_at: adminUser.created_at,

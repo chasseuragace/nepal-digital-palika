@@ -18,6 +18,7 @@ scene
         - quest 2 
             - logginig in to hre admin panel 
             [/Users/ajaydahal/Downloads/older/Nepal_Digital_Tourism_Infrastructure_Documentation/platform-admin-panel]
+
                 - run palika admin runner script 
                 - login with teh credentials 
         - quest 3 
@@ -38,4 +39,6 @@ scene
 
 - gap : no login screen to login in the first place 
     - fix immediately 
+    - capture the credentials here ,
+    - also mention the credentials data source ,which seed does the system use 
          
