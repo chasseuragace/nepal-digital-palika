@@ -14,16 +14,15 @@ interface FormData {
   password: string
   confirm_password: string
   full_name: string
-  role: 'super_admin' | 'province_admin' | 'district_admin' | 'palika_admin'
+  role: 'palika_admin'
   palika_id: number | null
 }
 
+// Only Palika Admin is supported in the platform admin panel
+// Business model defines subscriptions at palika level only
 const ROLE_OPTIONS = [
-  { value: 'super_admin', label: 'Super Admin (National)', requiresPalika: false },
-  { value: 'province_admin', label: 'Province Admin', requiresPalika: false },
-  { value: 'district_admin', label: 'District Admin', requiresPalika: false },
   { value: 'palika_admin', label: 'Palika Admin', requiresPalika: true },
-]
+] as const
 
 export default function CreateAdminPage() {
   const router = useRouter()
@@ -38,7 +37,7 @@ export default function CreateAdminPage() {
     password: '',
     confirm_password: '',
     full_name: '',
-    role: 'palika_admin',
+    role: 'palika_admin', // Fixed: Only Palika Admin supported per business model
     palika_id: null,
   })
 
@@ -82,14 +81,9 @@ export default function CreateAdminPage() {
       setError('Full name is required')
       return false
     }
-    if (!formData.role) {
-      setError('Role is required')
-      return false
-    }
-
-    const roleRequiresPalika = ROLE_OPTIONS.find(r => r.value === formData.role)?.requiresPalika
-    if (roleRequiresPalika && !formData.palika_id) {
-      setError('Palika is required for this role')
+    // Palika assignment is always required for Palika Admin role
+    if (!formData.palika_id) {
+      setError('Palika assignment is required')
       return false
     }
 
@@ -139,9 +133,6 @@ export default function CreateAdminPage() {
     }
   }
 
-  const selectedRole = ROLE_OPTIONS.find(r => r.value === formData.role)
-  const requiresPalika = selectedRole?.requiresPalika
-
   return (
     <AdminLayout>
       <div className="p-6 space-y-6">
@@ -153,8 +144,8 @@ export default function CreateAdminPage() {
         </Link>
 
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Create New Admin</h1>
-          <p className="text-slate-600 mt-1">Add a new administrator to the platform</p>
+          <h1 className="text-3xl font-bold text-slate-900">Create Palika Admin</h1>
+          <p className="text-slate-600 mt-1">Create a super-admin user for a new Palika subscription. This user will manage that Palika's content, staff, and features.</p>
         </div>
 
         {error && (
@@ -203,40 +194,31 @@ export default function CreateAdminPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Role *
+                  Role (Fixed)
+                </label>
+                <div className="px-4 py-2 border border-slate-200 rounded-lg bg-slate-50">
+                  <span className="text-slate-700 font-medium">Palika Admin</span>
+                  <p className="text-xs text-slate-500 mt-1">Each Palika needs one admin user. This role can manage all content and staff in their assigned Palika.</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Assign to Palika *
                 </label>
                 <select
-                  value={formData.role}
-                  onChange={(e) => handleInputChange('role', e.target.value)}
+                  value={formData.palika_id || ''}
+                  onChange={(e) => handleInputChange('palika_id', e.target.value ? parseInt(e.target.value) : null)}
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {ROLE_OPTIONS.map(role => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
+                  <option value="">Select a Palika</option>
+                  {palikas.map(palika => (
+                    <option key={palika.id} value={palika.id}>
+                      {palika.name_en}
                     </option>
                   ))}
                 </select>
               </div>
-
-              {requiresPalika && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Assign to Palika *
-                  </label>
-                  <select
-                    value={formData.palika_id || ''}
-                    onChange={(e) => handleInputChange('palika_id', e.target.value ? parseInt(e.target.value) : null)}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select a Palika</option>
-                    {palikas.map(palika => (
-                      <option key={palika.id} value={palika.id}>
-                        {palika.name_en}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
             </CardContent>
           </Card>
 
