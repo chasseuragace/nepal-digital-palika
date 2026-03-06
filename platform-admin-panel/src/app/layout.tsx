@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { QueryProvider } from '@/lib/query-provider'
+import { AuthInitializer } from '@/components/AuthInitializer'
+import { AuthLoadingScreen } from '@/components/AuthLoadingScreen'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -18,7 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <AuthInitializer />
+          <AuthLoadingScreen />
+          {children}
+        </QueryProvider>
       </body>
     </html>
   )

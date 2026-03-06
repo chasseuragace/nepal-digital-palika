@@ -17,6 +17,7 @@ scene
                 - test that palika and platform admin data has been seeded 
         - quest 2 
             - logginig in to hre admin panel 
+            [/Users/ajaydahal/Downloads/older/Nepal_Digital_Tourism_Infrastructure_Documentation/platform-admin-panel]
                 - run palika admin runner script 
                 - login with teh credentials 
         - quest 3 
@@ -29,4 +30,12 @@ scene
     - npn run dev on platform admin panel 
         - cant logout 
     - subscription tier management screen are not done in the ui 
+
+- next steps 
+    - implement the minimal ui for aayush to polish 
+    - make sure the functionality in ui is working 
+    - 
+
+- gap : no login screen to login in the first place 
+    - fix immediately 
          
