@@ -8,12 +8,12 @@ import { createClient } from '@supabase/supabase-js'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const id = params.id
+    const { id } = await params
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
@@ -82,12 +82,12 @@ export async function GET(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const id = params.id
+    const { id } = await params
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
