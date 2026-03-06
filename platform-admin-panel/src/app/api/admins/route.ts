@@ -28,7 +28,21 @@ export async function GET(request: NextRequest) {
         role,
         palika_id,
         is_active,
-        created_at
+        created_at,
+        palikas(
+          id,
+          name_en,
+          district_id,
+          districts(
+            id,
+            name_en,
+            province_id,
+            provinces(
+              id,
+              name_en
+            )
+          )
+        )
       `)
       .order('created_at', { ascending: false })
 

@@ -7,6 +7,20 @@ export interface Admin {
   palika_id?: number | null
   is_active?: boolean
   created_at: string
+  palikas?: {
+    id: number
+    name_en: string
+    district_id: number
+    districts: {
+      id: number
+      name_en: string
+      province_id: number
+      provinces: {
+        id: number
+        name_en: string
+      }
+    }
+  } | null
 }
 
 export interface Role {

@@ -77,6 +77,7 @@ export default function AdminsPage() {
                 <TableRow>
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Role</TableHeader>
+                  <TableHeader>Location</TableHeader>
                   <TableHeader>Created</TableHeader>
                   <TableHeader>Actions</TableHeader>
                 </TableRow>
@@ -84,13 +85,13 @@ export default function AdminsPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                       Loading admins...
                     </TableCell>
                   </TableRow>
                 ) : filteredAdmins.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                       No admins found
                     </TableCell>
                   </TableRow>
@@ -104,6 +105,21 @@ export default function AdminsPage() {
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                           {admin.role.replace(/_/g, ' ')}
                         </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600">
+                        {admin.palikas ? (
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-slate-900">{admin.palikas.name_en}</div>
+                            <div className="text-xs text-slate-500">
+                              {admin.palikas.districts?.name_en}
+                              {admin.palikas.districts?.provinces && (
+                                <>, {admin.palikas.districts.provinces.name_en}</>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">Not assigned</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
                         {new Date(admin.created_at).toLocaleDateString()}
