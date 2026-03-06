@@ -150,6 +150,14 @@ describe('Property 33: Permission-Based Access Control', () => {
               throw new Error(`Failed to create admin: ${error.message}`)
             }
 
+            // Assign admin to palika in admin_regions table
+            const { error: regionError } = await supabase.from('admin_regions').insert({
+              admin_id: authUser.user.id,
+              region_type: 'palika',
+              region_id: testPalikas[0]
+            })
+            if (regionError) throw new Error(`Region error: ${regionError.message}`)
+
             expect(admin).toBeDefined()
             expect(admin.role).toBe('palika_admin')
 
@@ -216,6 +224,14 @@ describe('Property 33: Permission-Based Access Control', () => {
               throw new Error(`Failed to create admin: ${error.message}`)
             }
 
+            // Assign admin to palika in admin_regions table
+            const { error: regionError } = await supabase.from('admin_regions').insert({
+              admin_id: authUser.user.id,
+              region_type: 'palika',
+              region_id: testPalikas[0]
+            })
+            if (regionError) throw new Error(`Region error: ${regionError.message}`)
+
             expect(admin).toBeDefined()
             expect(admin.role).toBe('palika_admin')
 
@@ -273,6 +289,14 @@ describe('Property 33: Permission-Based Access Control', () => {
             if (error) {
               throw new Error(`Failed to create admin: ${error.message}`)
             }
+
+            // Assign admin to palika in admin_regions table
+            const { error: regionError } = await supabase.from('admin_regions').insert({
+              admin_id: authUser.user.id,
+              region_type: 'palika',
+              region_id: testPalikas[0]
+            })
+            if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
             expect(admin).toBeDefined()
             expect(admin.role).toBe('moderator')
@@ -406,6 +430,14 @@ describe('Property 33: Permission-Based Access Control', () => {
             if (error) {
               throw new Error(`Failed to create admin: ${error.message}`)
             }
+
+            // Assign admin to palika in admin_regions table
+            const { error: regionError } = await supabase.from('admin_regions').insert({
+              admin_id: authUser.user.id,
+              region_type: 'palika',
+              region_id: testPalikas[0]
+            })
+            if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
             expect(admin).toBeDefined()
             expect(admin.role).toBe('content_editor')
