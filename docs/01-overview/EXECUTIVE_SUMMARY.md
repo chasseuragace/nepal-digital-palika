@@ -199,6 +199,3 @@ For detailed information, please refer to:
 - **IMPLEMENTATION_ROADMAP.md** – Phased rollout and risk mitigation
 
 ---
-
-**Contact & Questions**  
-[Your organization details here]

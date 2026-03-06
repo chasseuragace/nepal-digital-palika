@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Users,
@@ -11,8 +11,10 @@ import {
   FileText,
   Settings,
   LogOut,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/lib/auth-store'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -20,12 +22,20 @@ const navigation = [
   { name: 'Roles', href: '/roles', icon: Shield },
   { name: 'Permissions', href: '/permissions', icon: Lock },
   { name: 'Regions', href: '/regions', icon: MapPin },
+  { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard },
   { name: 'Audit Log', href: '/audit-log', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export function Sidebar() {
+  const router = useRouter()
   const pathname = usePathname()
+  const { logout } = useAuthStore()
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
+  }
 
   return (
     <div className="w-64 bg-slate-900 text-white h-screen flex flex-col">
@@ -60,7 +70,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t border-slate-700">
-        <button className="flex items-center gap-3 w-full px-4 py-2 text-slate-300 hover:bg-slate-800 rounded-lg transition-colors">
+        <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-2 text-slate-300 hover:bg-slate-800 rounded-lg transition-colors">
           <LogOut className="w-5 h-5" />
           <span>Logout</span>
         </button>

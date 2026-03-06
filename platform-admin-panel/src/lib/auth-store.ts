@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { supabase } from './supabase'
 import { AdminUser } from './types'
 
 interface AuthStore {
@@ -6,7 +7,7 @@ interface AuthStore {
   isLoading: boolean
   setUser: (user: AdminUser | null) => void
   setLoading: (loading: boolean) => void
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -14,5 +15,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isLoading: true,
   setUser: (user) => set({ user }),
   setLoading: (isLoading) => set({ isLoading }),
-  logout: () => set({ user: null }),
+  logout: async () => {
+    try {
+      await supabase.auth.signOut()
+    } catch {
+      // ignore server errors — always log out locally
+    }
+    set({ user: null })
+  },
 }))

@@ -3,7 +3,7 @@
     "supabase": {
       "type": "http",
       "url": "http://127.0.0.1:54321/mcp?project_ref=adbkciyjlbtbunjswior&read_only=false&features=database,docs,debugging,development",
-      "disabled": false,
+      "disabled": true,
       "autoApprove": [
         "list_tables",
         "describe_table",
