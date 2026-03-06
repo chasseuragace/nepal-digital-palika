@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         full_name,
-        email,
         role,
         palika_id,
         is_active,

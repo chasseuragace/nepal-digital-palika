@@ -3,14 +3,10 @@ import { supabase } from './supabase'
 export interface Admin {
   id: string
   full_name: string
-  email?: string
   role: string
-  palika_id?: number
-  province_id?: number
-  district_id?: number
+  palika_id?: number | null
   is_active?: boolean
   created_at: string
-  updated_at?: string
 }
 
 export interface Role {
