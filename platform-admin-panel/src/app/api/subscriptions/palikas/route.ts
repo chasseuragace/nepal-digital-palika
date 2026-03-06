@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
       .from('palikas')
       .select(`
         id,
-        name,
+        name_en,
         subscription_tier_id,
         subscription_tiers(id, name, display_name)
       `)
-      .order('name', { ascending: true })
+      .order('name_en', { ascending: true })
 
     if (error) {
       return NextResponse.json(

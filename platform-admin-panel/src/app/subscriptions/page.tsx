@@ -25,8 +25,8 @@ interface SubscriptionTier {
 }
 
 interface PalikaWithTier {
-  id: string
-  name: string
+  id: number
+  name_en: string
   subscription_tier_id: string | null
   subscription_tiers: {
     id: string
@@ -92,7 +92,7 @@ export default function SubscriptionsPage() {
 
   const [searchTerm, setSearchTerm] = useState('')
   const filteredPalikas = palikas?.filter((palika) =>
-    palika.name.toLowerCase().includes(searchTerm.toLowerCase())
+    palika.name_en.toLowerCase().includes(searchTerm.toLowerCase())
   ) || []
 
   if (tiersError || palikaError) {
@@ -199,7 +199,7 @@ export default function SubscriptionsPage() {
                       const currentTier = tiers?.find((t) => t.id === palika.subscription_tier_id)
                       return (
                         <TableRow key={palika.id}>
-                          <TableCell className="font-medium">{palika.name}</TableCell>
+                          <TableCell className="font-medium">{palika.name_en}</TableCell>
                           <TableCell>
                             {palika.subscription_tiers ? (
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
