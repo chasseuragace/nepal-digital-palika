@@ -4,15 +4,45 @@ import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
-import { useAdmins } from '@/lib/hooks'
+import { Plus, Edit2, Trash2, ChevronDown } from 'lucide-react'
+import { useAdmins, useRolePermissions } from '@/lib/hooks'
 import { useState } from 'react'
 import Link from 'next/link'
+import { Admin } from '@/lib/api-client'
+
+// Helper component to display permissions for an admin
+function AdminPermissionsCell({ admin }: { admin: Admin }) {
+  const rolePermissionMap: Record<string, string[]> = {
+    super_admin: ['All Permissions', 'National Scope'],
+    province_admin: ['Manage Province', 'View Districts', 'Manage Staff'],
+    district_admin: ['Manage District', 'View Palikas', 'Manage Staff'],
+    palika_admin: ['Manage Palika', 'Manage Content', 'Manage Staff'],
+    moderator: ['Moderate Content', 'View Analytics'],
+  }
+
+  const permissions = rolePermissionMap[admin.role] || ['View Only']
+
+  return (
+    <div className="space-y-1">
+      {permissions.slice(0, 2).map((perm, idx) => (
+        <span key={idx} className="inline-block bg-purple-100 text-purple-700 rounded-full text-xs px-2 py-1 mr-1">
+          {perm}
+        </span>
+      ))}
+      {permissions.length > 2 && (
+        <span className="inline-block bg-slate-100 text-slate-600 rounded-full text-xs px-2 py-1">
+          +{permissions.length - 2} more
+        </span>
+      )}
+    </div>
+  )
+}
 
 export default function AdminsPage() {
   const { data: admins, isLoading, error } = useAdmins()
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
+  const [expandedAdmins, setExpandedAdmins] = useState<Set<string>>(new Set())
 
   const filteredAdmins = admins?.filter((admin) => {
     const matchesSearch = admin.full_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,10 +71,12 @@ export default function AdminsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Admins</h1>
             <p className="text-slate-600 mt-1">Manage platform administrators and their roles</p>
           </div>
-          <Button variant="primary" size="lg">
-            <Plus className="w-5 h-5 mr-2" />
-            New Admin
-          </Button>
+          <Link href="/admins/new">
+            <Button variant="primary" size="lg">
+              <Plus className="w-5 h-5 mr-2" />
+              New Admin
+            </Button>
+          </Link>
         </div>
 
         {/* Filters */}
@@ -77,6 +109,7 @@ export default function AdminsPage() {
                 <TableRow>
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Role</TableHeader>
+                  <TableHeader>Permissions</TableHeader>
                   <TableHeader>Location</TableHeader>
                   <TableHeader>Created</TableHeader>
                   <TableHeader>Actions</TableHeader>
@@ -85,13 +118,13 @@ export default function AdminsPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                       Loading admins...
                     </TableCell>
                   </TableRow>
                 ) : filteredAdmins.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                       No admins found
                     </TableCell>
                   </TableRow>
@@ -105,6 +138,9 @@ export default function AdminsPage() {
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                           {admin.role.replace(/_/g, ' ')}
                         </span>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <AdminPermissionsCell admin={admin} />
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
                         {admin.palikas ? (
