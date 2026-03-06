@@ -255,70 +255,19 @@ export const apiClient = {
 
   // Dashboard Stats
   getDashboardStats: async () => {
-    try {
-      // Get total admins
-      const { count: totalAdmins } = await supabase
-        .from('admin_users')
-        .select('*', { count: 'exact', head: true })
-      
-      // Get active roles
-      const { data: roles } = await supabase
-        .from('roles')
-        .select('*')
-      
-      // Get permissions
-      const { count: permissionsCount } = await supabase
-        .from('permissions')
-        .select('*', { count: 'exact', head: true })
-      
-      // Get regions (provinces + districts + palikas)
-      const { count: provincesCount } = await supabase
-        .from('provinces')
-        .select('*', { count: 'exact', head: true })
-      
-      const { count: districtsCount } = await supabase
-        .from('districts')
-        .select('*', { count: 'exact', head: true })
-      
-      const { count: palikasCount } = await supabase
-        .from('palikas')
-        .select('*', { count: 'exact', head: true })
-      
-      const totalRegions = (provincesCount || 0) + (districtsCount || 0) + (palikasCount || 0)
-      
-      // Get admins by role
-      const { data: adminsByRole } = await supabase
-        .from('admin_users')
-        .select('role')
-      
-      const adminsByRoleGrouped = adminsByRole?.reduce((acc: any, admin: any) => {
-        const existing = acc.find((item: any) => item.role === admin.role)
-        if (existing) {
-          existing.count++
-        } else {
-          acc.push({ role: admin.role, count: 1 })
-        }
-        return acc
-      }, []) || []
-
-      // Get recent activity
-      const { data: recentActivity } = await supabase
-        .from('audit_log')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(3)
-
-      return {
-        total_admins: totalAdmins || 0,
-        active_roles: roles?.length || 0,
-        permissions: permissionsCount || 0,
-        regions: totalRegions,
-        admins_by_role: adminsByRoleGrouped,
-        recent_activity: recentActivity as AuditLog[],
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error)
-      throw error
+    const response = await fetch('/api/stats')
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to fetch stats')
+    }
+    const { data } = await response.json()
+    return {
+      total_admins: data.total_admins,
+      active_roles: data.active_roles,
+      permissions: data.permissions,
+      regions: data.regions,
+      admins_by_role: data.admins_by_role,
+      recent_activity: data.recent_activity as AuditLog[],
     }
   },
 }
