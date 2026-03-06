@@ -203,3 +203,212 @@ export async function createTestAdminWithRegion(
 
   return admin
 }
+
+/**
+ * Helper to create a palika_admin for testing
+ * Automatically fetches province/district from the palika
+ *
+ * @param palikaId The palika to assign admin to
+ * @param email Admin email
+ * @param password Admin password
+ * @param fullName Admin name
+ * @returns Created admin object
+ */
+export async function createPalikaAdminForTest(
+  palikaId: number,
+  email: string,
+  password: string,
+  fullName: string
+) {
+  // Fetch palika to get district_id
+  const { data: palika, error: palikaError } = await supabase
+    .from('palikas')
+    .select('district_id')
+    .eq('id', palikaId)
+    .single()
+
+  if (palikaError || !palika) {
+    throw new Error(`Failed to fetch palika: ${palikaError?.message}`)
+  }
+
+  // Fetch district to get province_id
+  const { data: district, error: districtError } = await supabase
+    .from('districts')
+    .select('province_id')
+    .eq('id', palika.district_id)
+    .single()
+
+  if (districtError || !district) {
+    throw new Error(`Failed to fetch district: ${districtError?.message}`)
+  }
+
+  return createTestAdminWithRegion(
+    email,
+    password,
+    fullName,
+    'palika_admin',
+    'palika',
+    palikaId,
+    'palika'
+  )
+}
+
+/**
+ * Helper to create a district_admin for testing
+ * Automatically fetches province from the district
+ *
+ * @param districtId The district to assign admin to
+ * @param email Admin email
+ * @param password Admin password
+ * @param fullName Admin name
+ * @returns Created admin object
+ */
+export async function createDistrictAdminForTest(
+  districtId: number,
+  email: string,
+  password: string,
+  fullName: string
+) {
+  // Fetch district to get province_id
+  const { data: district, error: districtError } = await supabase
+    .from('districts')
+    .select('province_id')
+    .eq('id', districtId)
+    .single()
+
+  if (districtError || !district) {
+    throw new Error(`Failed to fetch district: ${districtError?.message}`)
+  }
+
+  return createTestAdminWithRegion(
+    email,
+    password,
+    fullName,
+    'district_admin',
+    'district',
+    districtId,
+    'district'
+  )
+}
+
+/**
+ * Helper to create a province_admin for testing
+ *
+ * @param provinceId The province to assign admin to
+ * @param email Admin email
+ * @param password Admin password
+ * @param fullName Admin name
+ * @returns Created admin object
+ */
+export async function createProvinceAdminForTest(
+  provinceId: number,
+  email: string,
+  password: string,
+  fullName: string
+) {
+  return createTestAdminWithRegion(
+    email,
+    password,
+    fullName,
+    'province_admin',
+    'province',
+    provinceId,
+    'province'
+  )
+}
+
+/**
+ * Helper to create a super_admin for testing
+ * Super admins don't have region assignments
+ *
+ * @param email Admin email
+ * @param password Admin password
+ * @param fullName Admin name
+ * @returns Created admin object
+ */
+export async function createSuperAdminForTest(
+  email: string,
+  password: string,
+  fullName: string
+) {
+  // Step 1: Create auth user
+  const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true
+  })
+
+  if (authError || !authUser.user) {
+    throw new Error(`Failed to create auth user: ${authError?.message}`)
+  }
+
+  // Step 2: Create admin_users record (no region assignment for super_admin)
+  const { data: admin, error: adminError } = await supabase
+    .from('admin_users')
+    .insert({
+      id: authUser.user.id,
+      full_name: fullName,
+      role: 'super_admin',
+      hierarchy_level: 'national',
+      is_active: true
+    })
+    .select()
+    .single()
+
+  if (adminError || !admin) {
+    // Cleanup on failure
+    await supabase.auth.admin.deleteUser(authUser.user.id)
+    throw new Error(`Failed to create admin profile: ${adminError?.message}`)
+  }
+
+  return admin
+}
+
+/**
+ * Helper to create a moderator for testing
+ * Moderators are palika-level with limited permissions
+ *
+ * @param palikaId The palika to assign moderator to
+ * @param email Admin email
+ * @param password Admin password
+ * @param fullName Admin name
+ * @returns Created admin object
+ */
+export async function createModeratorForTest(
+  palikaId: number,
+  email: string,
+  password: string,
+  fullName: string
+) {
+  // Fetch palika to get district_id
+  const { data: palika, error: palikaError } = await supabase
+    .from('palikas')
+    .select('district_id')
+    .eq('id', palikaId)
+    .single()
+
+  if (palikaError || !palika) {
+    throw new Error(`Failed to fetch palika: ${palikaError?.message}`)
+  }
+
+  // Fetch district to get province_id
+  const { data: district, error: districtError } = await supabase
+    .from('districts')
+    .select('province_id')
+    .eq('id', palika.district_id)
+    .single()
+
+  if (districtError || !district) {
+    throw new Error(`Failed to fetch district: ${districtError?.message}`)
+  }
+
+  return createTestAdminWithRegion(
+    email,
+    password,
+    fullName,
+    'moderator',
+    'palika',
+    palikaId,
+    'palika'
+  )
+}

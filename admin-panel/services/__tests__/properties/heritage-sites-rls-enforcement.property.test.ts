@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import fc from 'fast-check'
-import { supabase, createAuthenticatedClient } from '../setup/integration-setup'
+import {
+  supabase,
+  createAuthenticatedClient,
+  createPalikaAdminForTest,
+  createDistrictAdminForTest,
+  createSuperAdminForTest
+} from '../setup/integration-setup'
 import { siteName } from '../setup/test-generators'
 
 /**
@@ -108,33 +114,8 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test admin (using service role for admin operations)
-            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email,
-              password,
-              email_confirm: true
-            })
-            if (authError) throw new Error(`Auth error: ${authError.message}`)
-
-            const { error: adminError } = await supabase.from('admin_users').insert({
-              id: authUser.user.id,
-              full_name: `test-heritage-rls-${uniqueId}`,
-              role: 'palika_admin',
-              hierarchy_level: 'palika',
-              province_id: testProvinceId,
-              district_id: testDistrictId,
-              palika_id: testPalikas[0],
-              is_active: true
-            })
-            if (adminError) throw new Error(`Admin error: ${adminError.message}`)
-
-            // Assign admin to first palika (use authUser.user.id directly, as RLS may block .select() on admin_users)
-            const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: authUser.user.id,
-              region_type: 'palika',
-              region_id: testPalikas[0]
-            })
-            if (regionError) throw new Error(`Region error: ${regionError.message}`)
+            // Create test admin using helper (handles all 3 steps: auth + admin_users + admin_regions)
+            await createPalikaAdminForTest(testPalikas[0], email, password, `test-heritage-rls-${uniqueId}`)
 
             // Create heritage sites in different palikas (using service role for admin operations)
             const site1Data = {
@@ -207,33 +188,8 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test admin with access to first palika only (using service role)
-            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email,
-              password,
-              email_confirm: true
-            })
-            if (authError) throw new Error(`Auth error: ${authError.message}`)
-
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
-              id: authUser.user.id,
-              full_name: `test-heritage-rls-${uniqueId}`,
-              role: 'palika_admin',
-              hierarchy_level: 'palika',
-              province_id: testProvinceId,
-              district_id: testDistrictId,
-              palika_id: testPalikas[0],
-              is_active: true
-            }).select().single()
-            if (adminError) throw new Error(`Admin error: ${adminError.message}`)
-
-            // Assign admin to first palika only
-            const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
-              region_type: 'palika',
-              region_id: testPalikas[0]
-            })
-            if (regionError) throw new Error(`Region error: ${regionError.message}`)
+            // Create test admin with access to first palika only using helper
+            await createPalikaAdminForTest(testPalikas[0], email, password, `test-heritage-rls-${uniqueId}`)
 
             // Create heritage sites in different palikas (using service role)
             const site1Data = {
@@ -297,33 +253,8 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test admin (using service role)
-            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email,
-              password,
-              email_confirm: true
-            })
-            if (authError) throw new Error(`Auth error: ${authError.message}`)
-
-            const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
-              id: authUser.user.id,
-              full_name: `test-heritage-rls-${uniqueId}`,
-              role: 'district_admin',
-              hierarchy_level: 'district',
-              province_id: testProvinces[0],
-              district_id: testDistricts[0],
-              palika_id: null,
-              is_active: true
-            }).select().single()
-            if (adminError) throw new Error(`Admin error: ${adminError.message}`)
-
-            // Assign admin to district
-            const { error: regionError } = await supabase.from('admin_regions').insert({
-              admin_id: admin.id,
-              region_type: 'district',
-              region_id: testDistricts[0]
-            })
-            if (regionError) throw new Error(`Region error: ${regionError.message}`)
+            // Create test district admin using helper
+            await createDistrictAdminForTest(testDistricts[0], email, password, `test-heritage-rls-${uniqueId}`)
 
             // Create heritage site in palika within the district (using service role)
             const siteData = {
@@ -369,25 +300,8 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
             const email = `test-heritage-rls-${uniqueId}@example.com`
             const password = 'TestPassword123!'
 
-            // Create test super admin (using service role)
-            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-              email,
-              password,
-              email_confirm: true
-            })
-            if (authError) throw new Error(`Auth error: ${authError.message}`)
-
-            const { error: adminError } = await supabase.from('admin_users').insert({
-              id: authUser.user.id,
-              full_name: `test-heritage-rls-${uniqueId}`,
-              role: 'super_admin',
-              hierarchy_level: 'national',
-              province_id: null,
-              district_id: null,
-              palika_id: null,
-              is_active: true
-            }).select().single()
-            if (adminError) throw new Error(`Admin error: ${adminError.message}`)
+            // Create test super admin using helper
+            await createSuperAdminForTest(email, password, `test-heritage-rls-${uniqueId}`)
 
             // Create heritage sites in multiple palikas (using service role)
             const sites = []
