@@ -29,15 +29,17 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 describe('Property 14: Admin Users Audit Logging', () => {
   let testPalikaId: number
+  let testProvinceId: number
+  let testDistrictId: number
   let deletingAdminId: string
   let deletingAdminEmail: string
   let deletingAdminPassword: string
 
   beforeAll(async () => {
-    // Get or create a test palika
+    // Get or create a test palika with complete hierarchy
     const { data: existingPalikas } = await supabase
       .from('palikas')
-      .select('id')
+      .select('id, district_id')
       .limit(1)
 
     if (!existingPalikas || existingPalikas.length === 0) {
@@ -88,8 +90,23 @@ describe('Property 14: Admin Users Audit Logging', () => {
       }
 
       testPalikaId = palika.id
+      testProvinceId = province.id
+      testDistrictId = district.id
     } else {
       testPalikaId = existingPalikas[0].id
+      // Fetch district and province IDs for existing palika
+      const { data: district, error: districtError } = await supabase
+        .from('districts')
+        .select('id, province_id')
+        .eq('id', existingPalikas[0].district_id)
+        .single()
+
+      if (districtError || !district) {
+        throw new Error(`Failed to fetch district: ${districtError?.message}`)
+      }
+
+      testDistrictId = district.id
+      testProvinceId = district.province_id
     }
 
     // Create a super admin user that will perform delete operations
@@ -271,6 +288,8 @@ describe('Property 14: Admin Users Audit Logging', () => {
               full_name: 'Test Admin',
               role: testData.role,
               hierarchy_level: 'palika',
+              province_id: testProvinceId,
+              district_id: testDistrictId,
               palika_id: testPalikaId,
               is_active: true
             })
@@ -280,6 +299,14 @@ describe('Property 14: Admin Users Audit Logging', () => {
           if (insertError) {
             throw new Error(`Failed to insert admin_users: ${insertError.message}`)
           }
+
+          // Create admin_regions entry
+          const { error: regionError } = await supabase.from('admin_regions').insert({
+            admin_id: authUser.user.id,
+            region_type: 'palika',
+            region_id: testPalikaId
+          })
+          if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
           // Wait for insert trigger
           await new Promise(resolve => setTimeout(resolve, 200))
@@ -371,6 +398,8 @@ describe('Property 14: Admin Users Audit Logging', () => {
               full_name: 'Test Admin',
               role: testData.role,
               hierarchy_level: 'palika',
+              province_id: testProvinceId,
+              district_id: testDistrictId,
               palika_id: testPalikaId,
               is_active: true
             })
@@ -380,6 +409,14 @@ describe('Property 14: Admin Users Audit Logging', () => {
           if (insertError) {
             throw new Error(`Failed to insert admin_users: ${insertError.message}`)
           }
+
+          // Create admin_regions entry
+          const { error: regionError } = await supabase.from('admin_regions').insert({
+            admin_id: authUser.user.id,
+            region_type: 'palika',
+            region_id: testPalikaId
+          })
+          if (regionError) throw new Error(`Region error: ${regionError.message}`)
 
           // Wait for insert trigger
           await new Promise(resolve => setTimeout(resolve, 200))
