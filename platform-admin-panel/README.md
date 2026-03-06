@@ -1,267 +1,109 @@
-# Platform Admin Panel
+# Platform Admin Panel (Dev)
 
-A comprehensive admin panel for managing the multi-tenant Nepal Digital Tourism Infrastructure platform.
+Internal developer-facing admin panel for managing the Nepal Digital Tourism platform.
+
+## Overview
+
+**Who:** Developers, DevOps engineers
+**What:** Manage platform-level configuration, admins, roles, permissions, regions, subscriptions
+**Why:** Central control over multi-tenant system setup and administration
+
+## Architecture
+
+### Authentication
+- **Login Page:** Dev credentials (see below)
+- **Session Management:** Supabase Auth with local session storage
+- **Access Control:** Basic login protection for audit trail
+- **Notes:** Not RLS-enforced; all queries use service role key server-side
+
+### Database Access Pattern
+```
+Client (with anon key)
+  ↓
+API Endpoint (/api/*)
+  ↓
+Service Role Client (server-side)
+  ↓
+Database (bypasses RLS)
+```
+
+**Why this pattern:**
+- RLS policies can cause infinite recursion on complex queries
+- Service role bypass is safe since this is internal-only
+- All changes are logged via audit trail
+- Simpler than managing RLS for development
 
 ## Features
 
-- 🎯 **Dashboard** - System overview with key metrics and recent activity
-- 👥 **Admin Management** - Create, edit, and manage platform administrators
-- 🛡️ **Role Management** - Define and manage user roles with hierarchical levels
-- 🔐 **Permission Management** - Configure granular permissions for roles
-- 🗺️ **Geographic Hierarchy** - Manage provinces, districts, and palikas
-- 📋 **Audit Log** - Track all system activities and changes
-- ⚙️ **Settings** - Configure system-wide settings and preferences
+### Admin Management (`/admins`)
+- View all platform admins with palika/district/province
+- Filter by role
+- Search by name
 
-## Tech Stack
-
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: Supabase (PostgreSQL)
-- **State Management**: Zustand
-- **Data Fetching**: TanStack Query
-- **Forms**: React Hook Form + Zod
-- **Charts**: Recharts
-- **Icons**: Lucide React
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-- Supabase project
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <repo-url>
-cd platform-admin-panel
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
-```bash
-cp .env.local.example .env.local
-```
-
-4. Update `.env.local` with your Supabase credentials:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
-
-5. Run the development server:
-```bash
-npm run dev
-```
-
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js app directory
-│   ├── dashboard/         # Dashboard page
-│   ├── admins/           # Admin management
-│   ├── roles/            # Role management
-│   ├── permissions/      # Permission management
-│   ├── regions/          # Geographic hierarchy
-│   ├── audit-log/        # Audit log viewer
-│   ├── settings/         # System settings
-│   └── layout.tsx        # Root layout
-├── components/
-│   ├── layout/           # Layout components
-│   │   ├── AdminLayout.tsx
-│   │   ├── Sidebar.tsx
-│   │   └── Header.tsx
-│   └── ui/              # Reusable UI components
-│       ├── Card.tsx
-│       ├── Button.tsx
-│       └── Table.tsx
-└── lib/
-    ├── supabase.ts      # Supabase client
-    ├── types.ts         # TypeScript types
-    └── auth-store.ts    # Auth state management
-```
-
-## Available Scripts
-
-```bash
-# Development
-npm run dev
-
-# Build
-npm run build
-
-# Production
-npm run start
-
-# Linting
-npm run lint
-```
-
-## Pages
-
-### Dashboard (`/dashboard`)
-- System overview with key metrics
-- Admin distribution by role
-- Recent activity feed
-
-### Admins (`/admins`)
-- List all administrators
-- Create new admin
-- Edit admin details
-- Assign regions and permissions
-- Delete admin
-
-### Roles (`/roles`)
-- List all roles
-- Create custom roles
-- Edit role permissions
-- Delete roles
+### Role Management (`/roles`)
+- View and manage platform roles
 
 ### Permissions (`/permissions`)
-- List all permissions
-- Create new permissions
-- Edit permission details
-- Delete permissions
+- View all available permissions
+- Map to roles
 
 ### Regions (`/regions`)
 - View geographic hierarchy
-- Manage provinces, districts, palikas
-- Assign admins to regions
+- Manage region assignments
+
+### Subscriptions (`/subscriptions`)
+- View 3 subscription tiers (Basic, Tourism, Premium)
+- Assign tiers to palikas
+- See feature availability per tier
 
 ### Audit Log (`/audit-log`)
-- View all system activities
-- Filter by action, admin, date
-- Export audit logs
+- Complete audit trail of all operations
 
-### Settings (`/settings`)
-- Configure general settings
-- Security settings
-- Notification preferences
-
-## API Integration
-
-The admin panel connects to the following API endpoints:
-
-```
-Admin Management:
-GET    /api/admin/admins
-POST   /api/admin/admins
-GET    /api/admin/admins/:id
-PUT    /api/admin/admins/:id
-DELETE /api/admin/admins/:id
-
-Role Management:
-GET    /api/admin/roles
-POST   /api/admin/roles
-GET    /api/admin/roles/:id
-PUT    /api/admin/roles/:id
-DELETE /api/admin/roles/:id
-
-Permission Management:
-GET    /api/admin/permissions
-POST   /api/admin/permissions
-GET    /api/admin/permissions/:id
-PUT    /api/admin/permissions/:id
-DELETE /api/admin/permissions/:id
-
-Geographic Hierarchy:
-GET    /api/admin/provinces
-GET    /api/admin/districts/:provinceId
-GET    /api/admin/palikas/:districtId
-GET    /api/admin/hierarchy/tree
-
-Audit Log:
-GET    /api/admin/audit-log
-GET    /api/admin/audit-log/:id
-POST   /api/admin/audit-log/export
-
-System:
-GET    /api/admin/settings
-PUT    /api/admin/settings
-GET    /api/admin/dashboard/stats
-```
-
-## Authentication
-
-The admin panel requires authentication via Supabase Auth. Only users with `super_admin` role can access the panel.
-
-## Security
-
-- Row-Level Security (RLS) policies enforce data access control
-- JWT-based authentication
-- Session timeout after 30 minutes of inactivity
-- 2FA support for admin accounts
-- All actions logged to audit trail
-
-## Development
-
-### Adding a New Page
-
-1. Create a new directory in `src/app/`
-2. Create `page.tsx` with your component
-3. Wrap with `AdminLayout` component
-4. Add navigation link in `Sidebar.tsx`
-
-### Adding a New Component
-
-1. Create component in `src/components/`
-2. Use TypeScript for type safety
-3. Import and use in pages
-
-### Styling
-
-- Use Tailwind CSS for styling
-- Follow the existing color scheme
-- Use `cn()` utility for conditional classes
-
-## Deployment
-
-### Vercel (Recommended)
-
-1. Push code to GitHub
-2. Connect repository to Vercel
-3. Set environment variables
-4. Deploy
-
-### Docker
+## Development Setup
 
 ```bash
-docker build -t platform-admin-panel .
-docker run -p 3000:3000 platform-admin-panel
+# 1. Install dependencies
+npm install
+
+# 2. Environment variables in .env.local are pre-configured
+
+# 3. Start dev server
+npm run dev
+
+# 4. Login with dev credentials (see below)
 ```
 
-## Contributing
+## Test Credentials
 
-1. Create a feature branch
-2. Make your changes
-3. Submit a pull request
+| Role | Email | Password |
+|---|---|---|
+| Super Admin | superadmin@nepaltourism.dev | SuperSecurePass123! |
+| Palika Admin | palika.admin@kathmandu.gov.np | KathmanduAdmin456! |
+| Moderator | content.moderator@kathmandu.gov.np | ModeratorSecure789! |
 
-## License
+## Important Notes
 
-MIT
+⚠️ **This is for development only**
+- Service role key is in `.env.local` (never commit)
+- RLS policies are bypassed for simplicity
+- No rate limiting or advanced security
 
-## Support
+For production:
+- Implement proper RLS policies
+- Use API key authentication
+- Add rate limiting
+- Implement request signing
 
-For support, email support@nepaltourism.dev or open an issue on GitHub.
+## Architecture Decision: Why Service Role?
 
-## Roadmap
+The platform admin panel uses service role key for database access because:
 
-- [ ] Advanced filtering and search
-- [ ] Bulk operations
-- [ ] Export/import functionality
-- [ ] Advanced analytics
-- [ ] Custom role builder
-- [ ] API key management
-- [ ] Webhook configuration
-- [ ] Integration with external services
+1. **Simplicity:** No complex RLS policy debugging needed
+2. **Safety:** This is internal-only; anon key insufficient anyway
+3. **Audit Trail:** Login provides access control + logging
+4. **Development:** Easier to manage permissions at app level
+
+Login is kept for:
+- Access control (only developers can access)
+- Audit trail (tracking who made changes)
+- Session management (logout, timeout)

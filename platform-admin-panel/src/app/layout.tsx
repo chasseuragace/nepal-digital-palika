@@ -8,8 +8,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Admin Panel - Nepal Digital Tourism',
-  description: 'Platform administration panel for managing multi-tenant hierarchy',
+  title: 'Admin Panel - Nepal Digital Tourism (Dev)',
+  description: 'Internal developer admin panel for platform management. Manages admins, roles, permissions, regions, subscriptions, and audit logs.',
 }
 
 export default function RootLayout({
