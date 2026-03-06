@@ -212,6 +212,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Step 3: Create admin_regions entry for RLS access control
+    let regionType: 'province' | 'district' | 'palika'
+    let regionId: number
+
+    if (role === 'province_admin') {
+      regionType = 'province'
+      regionId = province_id!
+    } else if (role === 'district_admin') {
+      regionType = 'district'
+      regionId = district_id!
+    } else {
+      regionType = 'palika'
+      regionId = palika_id!
+    }
+
+    const { error: regionError } = await serviceClient
+      .from('admin_regions')
+      .insert({
+        admin_id: authData.user.id,
+        region_type: regionType,
+        region_id: regionId,
+      })
+
+    if (regionError) {
+      // Clean up: delete both auth user and admin profile
+      await serviceClient.auth.admin.deleteUser(authData.user.id)
+      await serviceClient
+        .from('admin_users')
+        .delete()
+        .eq('id', authData.user.id)
+      return NextResponse.json(
+        { error: `Failed to assign admin region: ${regionError.message}` },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
       { data: adminData, message: 'Admin user created successfully' },
       { status: 201 }

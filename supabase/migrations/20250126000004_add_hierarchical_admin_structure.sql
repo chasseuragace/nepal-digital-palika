@@ -41,6 +41,82 @@ CREATE INDEX IF NOT EXISTS idx_admin_regions_region ON public.admin_regions(regi
 CREATE INDEX IF NOT EXISTS idx_admin_regions_assigned_by ON public.admin_regions(assigned_by);
 
 -- ==========================================
+-- HELPER FUNCTIONS FOR RLS
+-- ==========================================
+
+-- Get user role
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS TEXT AS $$
+SELECT role
+FROM public.admin_users
+WHERE id = auth.uid()
+$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+
+-- Get user palika_id (for backward compatibility)
+CREATE OR REPLACE FUNCTION public.get_user_palika_id()
+RETURNS INT AS $$
+SELECT palika_id
+FROM public.admin_users
+WHERE id = auth.uid()
+$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+
+-- Check user has access to a specific palika (uses admin_regions)
+CREATE OR REPLACE FUNCTION public.user_has_access_to_palika(palika_id_param INT)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.admin_users au
+    WHERE au.id = auth.uid()
+    AND au.is_active = true
+    AND (
+      -- Super admin has access to everything
+      au.role = 'super_admin'
+      -- Direct palika assignment via admin_regions
+      OR EXISTS (
+        SELECT 1 FROM public.admin_regions ar
+        WHERE ar.admin_id = au.id
+        AND ar.region_type = 'palika'
+        AND ar.region_id = palika_id_param
+      )
+      -- District assignment grants access to all palikas in that district
+      OR EXISTS (
+        SELECT 1 FROM public.admin_regions ar
+        JOIN public.palikas p ON p.id = palika_id_param
+        WHERE ar.admin_id = au.id
+        AND ar.region_type = 'district'
+        AND ar.region_id = p.district_id
+      )
+      -- Province assignment grants access to all palikas in that province
+      OR EXISTS (
+        SELECT 1 FROM public.admin_regions ar
+        JOIN public.palikas p ON p.id = palika_id_param
+        JOIN public.districts d ON p.district_id = d.id
+        WHERE ar.admin_id = au.id
+        AND ar.region_type = 'province'
+        AND ar.region_id = d.province_id
+      )
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER VOLATILE;
+
+-- Check user has a specific permission
+CREATE OR REPLACE FUNCTION public.user_has_permission(permission_name VARCHAR)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.admin_users au
+    JOIN public.roles r ON au.role = r.name
+    JOIN public.role_permissions rp ON r.id = rp.role_id
+    JOIN public.permissions p ON rp.permission_id = p.id
+    WHERE au.id = auth.uid()
+    AND au.is_active = true
+    AND p.name = permission_name
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER VOLATILE;
+
+-- ==========================================
 -- CREATE AUDIT_LOG TABLE
 -- ==========================================
 -- Tracks all administrative actions for compliance and debugging
