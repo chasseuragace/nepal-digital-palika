@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, full_name, role, palika_id } = body
+    const { email, password, full_name, role, province_id, district_id, palika_id } = body
 
     // Validate required fields
     if (!email || !password || !full_name || !role) {
@@ -101,6 +101,43 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields: email, password, full_name, role' },
         { status: 400 }
       )
+    }
+
+    // Determine hierarchy level and validate region assignment
+    let hierarchyLevel: string
+    switch (role) {
+      case 'province_admin':
+        hierarchyLevel = 'province'
+        if (!province_id) {
+          return NextResponse.json(
+            { error: 'Province ID is required for province_admin role' },
+            { status: 400 }
+          )
+        }
+        break
+      case 'district_admin':
+        hierarchyLevel = 'district'
+        if (!district_id) {
+          return NextResponse.json(
+            { error: 'District ID is required for district_admin role' },
+            { status: 400 }
+          )
+        }
+        break
+      case 'palika_admin':
+        hierarchyLevel = 'palika'
+        if (!palika_id) {
+          return NextResponse.json(
+            { error: 'Palika ID is required for palika_admin role' },
+            { status: 400 }
+          )
+        }
+        break
+      default:
+        return NextResponse.json(
+          { error: 'Invalid role' },
+          { status: 400 }
+        )
     }
 
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
@@ -134,6 +171,9 @@ export async function POST(request: NextRequest) {
         id: authData.user.id,
         full_name,
         role,
+        hierarchy_level: hierarchyLevel,
+        province_id: province_id || null,
+        district_id: district_id || null,
         palika_id: palika_id || null,
         is_active: true,
       })
