@@ -3,13 +3,14 @@ import { supabase } from './supabase'
 export interface Admin {
   id: string
   full_name: string
+  email?: string
   role: string
   palika_id?: number
   province_id?: number
   district_id?: number
-  is_active: boolean
+  is_active?: boolean
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 export interface Role {
@@ -47,12 +48,12 @@ export interface AuditLog {
 export const apiClient = {
   // Admins
   getAdmins: async () => {
-    const { data, error } = await supabase
-      .from('admin_users')
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
+    const response = await fetch('/api/admins')
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to fetch admins')
+    }
+    const { data } = await response.json()
     return data as Admin[]
   },
 
