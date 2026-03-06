@@ -100,15 +100,22 @@ export default function LoginPage() {
 
           {/* Test Credentials */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-            <p className="text-sm font-medium text-blue-900">Test Credentials (Local Dev)</p>
-            <div className="space-y-2 text-xs text-blue-900">
-              <div>
-                <p className="font-medium">Super Admin:</p>
-                <p className="text-blue-800">superadmin@nepaltourism.dev</p>
+            <p className="text-sm font-medium text-blue-900">Test Credentials</p>
+            <div className="space-y-3 text-xs">
+              <div className="bg-white rounded p-2 border border-blue-100">
+                <p className="font-medium text-blue-900">Super Administrator</p>
+                <p className="text-blue-800">Email: superadmin@nepaltourism.dev</p>
+                <p className="text-blue-800">Password: SuperSecurePass123!</p>
               </div>
-              <div>
-                <p className="font-medium">Palika Admin:</p>
-                <p className="text-blue-800">palika.admin@kathmandu.gov.np</p>
+              <div className="bg-white rounded p-2 border border-blue-100">
+                <p className="font-medium text-blue-900">Kathmandu Palika Admin</p>
+                <p className="text-blue-800">Email: palika.admin@kathmandu.gov.np</p>
+                <p className="text-blue-800">Password: KathmanduAdmin456!</p>
+              </div>
+              <div className="bg-white rounded p-2 border border-blue-100">
+                <p className="font-medium text-blue-900">Content Moderator</p>
+                <p className="text-blue-800">Email: content.moderator@kathmandu.gov.np</p>
+                <p className="text-blue-800">Password: ModeratorSecure789!</p>
               </div>
             </div>
           </div>
