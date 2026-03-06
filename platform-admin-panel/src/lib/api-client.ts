@@ -68,13 +68,12 @@ export const apiClient = {
   },
 
   getAdmin: async (id: string) => {
-    const { data, error } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('id', id)
-      .single()
-    
-    if (error) throw error
+    const response = await fetch(`/api/admins/${id}`)
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to fetch admin')
+    }
+    const { data } = await response.json()
     return data as Admin
   },
 
