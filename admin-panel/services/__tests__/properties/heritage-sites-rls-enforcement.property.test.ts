@@ -16,6 +16,8 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
   let testProvinces: number[] = []
   let testDistricts: number[] = []
   let testPalikas: number[] = []
+  let testProvinceId: number
+  let testDistrictId: number
   let testCategoryId: number | null = null
 
   beforeAll(async () => {
@@ -23,6 +25,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
     const { data: provinces } = await supabase.from('provinces').select('id').limit(5)
     if (!provinces || provinces.length < 1) throw new Error('Not enough provinces')
     testProvinces = provinces.slice(0, Math.min(3, provinces.length)).map(p => p.id)
+    testProvinceId = testProvinces[0]
 
     // Get test districts
     let districts: any[] = []
@@ -35,6 +38,7 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
     }
     if (districts.length < 1) throw new Error('Not enough districts')
     testDistricts = districts.map(d => d.id)
+    testDistrictId = testDistricts[0]
 
     // Get test palikas - try multiple districts if needed
     let palikas: any[] = []
@@ -117,8 +121,8 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               full_name: `test-heritage-rls-${uniqueId}`,
               role: 'palika_admin',
               hierarchy_level: 'palika',
-              province_id: null,
-              district_id: null,
+              province_id: testProvinceId,
+              district_id: testDistrictId,
               palika_id: testPalikas[0],
               is_active: true
             })
@@ -216,8 +220,8 @@ describe('Property 19: Heritage Sites RLS Enforcement', () => {
               full_name: `test-heritage-rls-${uniqueId}`,
               role: 'palika_admin',
               hierarchy_level: 'palika',
-              province_id: null,
-              district_id: null,
+              province_id: testProvinceId,
+              district_id: testDistrictId,
               palika_id: testPalikas[0],
               is_active: true
             }).select().single()

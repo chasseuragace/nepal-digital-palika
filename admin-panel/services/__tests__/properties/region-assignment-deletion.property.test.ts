@@ -86,6 +86,7 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
             const password = 'TestPassword123!'
 
             // Create a heritage site in the palika using service role
+            // Use unpublished status so RLS enforcement applies (published sites are public)
             const siteData = {
               palika_id: testPalikas[0],
               name_en: `Test Region Deletion ${uniqueId}`,
@@ -93,7 +94,7 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
               slug: `test-region-deletion-${uniqueId}`,
               category_id: 1,
               location: 'POINT(85.3 27.7)',
-              status: 'published'
+              status: 'draft'
             }
 
             const { data: site } = await supabase
@@ -110,13 +111,28 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
+            // Get proper province and district IDs for the palika
+            const { data: palika, error: palikaError } = await supabase
+              .from('palikas')
+              .select('district_id')
+              .eq('id', testPalikas[0])
+              .single()
+            if (palikaError || !palika) throw new Error(`Failed to get palika: ${palikaError?.message}`)
+
+            const { data: district, error: districtError } = await supabase
+              .from('districts')
+              .select('province_id')
+              .eq('id', palika.district_id)
+              .single()
+            if (districtError || !district) throw new Error(`Failed to get district: ${districtError?.message}`)
+
             const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-region-deletion-${uniqueId}`,
               role: 'palika_admin',
               hierarchy_level: 'palika',
-              province_id: null,
-              district_id: null,
+              province_id: district.province_id,
+              district_id: palika.district_id,
               palika_id: testPalikas[0],
               is_active: true
             }).select().single()
@@ -218,6 +234,7 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
             const password = 'TestPassword123!'
 
             // Create a heritage site in the palika using service role
+            // Use unpublished status so RLS enforcement applies (published sites are public)
             const siteData = {
               palika_id: testPalikas[0],
               name_en: `Test Region Deletion ${testSiteName}`,
@@ -225,7 +242,7 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
               slug: `test-region-deletion-${uniqueId}`,
               category_id: 1,
               location: 'POINT(85.3 27.7)',
-              status: 'published'
+              status: 'draft'
             }
 
             const { data: site } = await supabase
@@ -242,13 +259,28 @@ describe('Property 3: Region Assignment Deletion Revokes Access', () => {
             })
             if (authError) throw new Error(`Auth error: ${authError.message}`)
 
+            // Get proper province and district IDs for the palika
+            const { data: palika, error: palikaError } = await supabase
+              .from('palikas')
+              .select('district_id')
+              .eq('id', testPalikas[0])
+              .single()
+            if (palikaError || !palika) throw new Error(`Failed to get palika: ${palikaError?.message}`)
+
+            const { data: district, error: districtError } = await supabase
+              .from('districts')
+              .select('province_id')
+              .eq('id', palika.district_id)
+              .single()
+            if (districtError || !district) throw new Error(`Failed to get district: ${districtError?.message}`)
+
             const { data: admin, error: adminError } = await supabase.from('admin_users').insert({
               id: authUser.user.id,
               full_name: `test-region-deletion-${uniqueId}`,
               role: 'palika_admin',
               hierarchy_level: 'palika',
-              province_id: null,
-              district_id: null,
+              province_id: district.province_id,
+              district_id: palika.district_id,
               palika_id: testPalikas[0],
               is_active: true
             }).select().single()

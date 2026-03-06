@@ -299,8 +299,9 @@ describe('Property 16: UPDATE Operation State Capture', () => {
             // Wait for INSERT audit log
             await new Promise(resolve => setTimeout(resolve, 200))
 
-            // Update multiple fields
-            const newName = `Test Update State ${uniqueId} - ${updatedName}`
+            // Update multiple fields with a guaranteed different name
+            // Ensure newName is different from siteData.name_en by appending " [UPDATED]"
+            const newName = `Test Update State ${uniqueId} - ${updatedName} [UPDATED]`
             const { error: updateError } = await adminClient
               .from('heritage_sites')
               .update({
