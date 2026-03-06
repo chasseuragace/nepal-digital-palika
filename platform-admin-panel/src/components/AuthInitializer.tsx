@@ -32,24 +32,17 @@ export function AuthInitializer() {
           return
         }
 
-        // Fetch admin user data (id = auth.users.id)
-        const { data: adminUser } = await supabase
-          .from('admin_users')
-          .select('id, full_name, role, palika_id, created_at')
-          .eq('id', session.user.id)
-          .single()
+        // Fetch admin user data via API (uses service role key server-side)
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        })
 
         if (mounted) {
-          if (adminUser && session.user.email) {
-            setUser({
-              id: adminUser.id,
-              auth_id: adminUser.id,
-              full_name: adminUser.full_name,
-              email: session.user.email,
-              role: adminUser.role,
-              palika_id: adminUser.palika_id,
-              created_at: adminUser.created_at,
-            })
+          if (response.ok) {
+            const data = await response.json()
+            setUser(data.user)
           } else {
             // User authenticated but no admin record
             await supabase.auth.signOut()
@@ -78,22 +71,15 @@ export function AuthInitializer() {
           router.push('/login')
         }
       } else {
-        const { data: adminUser } = await supabase
-          .from('admin_users')
-          .select('id, full_name, role, palika_id, created_at')
-          .eq('id', session.user.id)
-          .single()
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        })
 
-        if (adminUser && session.user.email) {
-          setUser({
-            id: adminUser.id,
-            auth_id: adminUser.id,
-            full_name: adminUser.full_name,
-            email: session.user.email,
-            role: adminUser.role,
-            palika_id: adminUser.palika_id,
-            created_at: adminUser.created_at,
-          })
+        if (response.ok) {
+          const data = await response.json()
+          setUser(data.user)
         }
       }
     })
