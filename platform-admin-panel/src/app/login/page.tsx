@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,19 +18,31 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      // Sign in with Supabase directly (stores session in client)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Login failed')
+      if (authError || !authData.user) {
+        setError('Invalid email or password')
         return
       }
 
+      // Verify admin user exists via API
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          Authorization: `Bearer ${authData.session?.access_token}`,
+        },
+      })
+
+      if (!response.ok) {
+        await supabase.auth.signOut()
+        setError('Admin account not found')
+        return
+      }
+
+      // Success - redirect to dashboard
       router.push('/dashboard')
     } catch (err) {
       setError('Network error. Please try again.')

@@ -17,10 +17,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const user = await authenticateAdmin(email, password)
+    const { user, session } = await authenticateAdmin(email, password)
 
     return NextResponse.json(
-      { user },
+      {
+        user,
+        session,
+      },
       { status: 200 }
     )
   } catch (error) {

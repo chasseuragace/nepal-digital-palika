@@ -2,18 +2,28 @@ import { supabase } from './supabase'
 import { supabaseServer } from './supabase-server'
 import { AdminUser } from './types'
 
+export interface AuthResult {
+  user: AdminUser
+  session: {
+    access_token: string
+    refresh_token: string
+    expires_in: number
+  } | null
+}
+
 /**
  * Authenticates user with email/password and fetches admin user data
  * Uses service role key to bypass RLS policies when fetching admin_users
+ * Returns both user profile and session for client use
  */
-export async function authenticateAdmin(email: string, password: string): Promise<AdminUser> {
+export async function authenticateAdmin(email: string, password: string): Promise<AuthResult> {
   // Sign in with Supabase Auth (uses anon key)
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
-  if (authError || !authData.user) {
+  if (authError || !authData.user || !authData.session) {
     throw new Error('Invalid email or password')
   }
 
@@ -31,13 +41,16 @@ export async function authenticateAdmin(email: string, password: string): Promis
   }
 
   return {
-    id: adminUser.id,
-    auth_id: adminUser.id,
-    full_name: adminUser.full_name,
-    email: authData.user.email || '',
-    role: adminUser.role,
-    palika_id: adminUser.palika_id,
-    created_at: adminUser.created_at,
+    user: {
+      id: adminUser.id,
+      auth_id: adminUser.id,
+      full_name: adminUser.full_name,
+      email: authData.user.email || '',
+      role: adminUser.role,
+      palika_id: adminUser.palika_id,
+      created_at: adminUser.created_at,
+    },
+    session: authData.session,
   }
 }
 
