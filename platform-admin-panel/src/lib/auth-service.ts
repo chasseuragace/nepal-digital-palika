@@ -1,11 +1,13 @@
 import { supabase } from './supabase'
+import { supabaseServer } from './supabase-server'
 import { AdminUser } from './types'
 
 /**
  * Authenticates user with email/password and fetches admin user data
+ * Uses service role key to bypass RLS policies when fetching admin_users
  */
 export async function authenticateAdmin(email: string, password: string): Promise<AdminUser> {
-  // Sign in with Supabase Auth
+  // Sign in with Supabase Auth (uses anon key)
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -15,8 +17,8 @@ export async function authenticateAdmin(email: string, password: string): Promis
     throw new Error('Invalid email or password')
   }
 
-  // Fetch admin user record (id = auth.users.id)
-  const { data: adminUser, error: dbError } = await supabase
+  // Fetch admin user record using server-side client (bypasses RLS)
+  const { data: adminUser, error: dbError } = await supabaseServer
     .from('admin_users')
     .select('id, full_name, role, palika_id, created_at')
     .eq('id', authData.user.id)
