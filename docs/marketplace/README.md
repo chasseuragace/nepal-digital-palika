@@ -49,6 +49,17 @@
 - **When to use:** Planning future sessions or design decisions
 - **Read time:** 20-30 minutes
 
+### 5. **SEEDING_STRATEGY.md** ⭐ DATABASE STARTUP GUIDE
+- **Purpose:** Complete guide for seeding database on fresh startup
+- **Contains:**
+  - 4-phase seeding strategy (Foundation → Admins → Content → Test Data)
+  - Analysis of all 8 seed scripts
+  - Execution sequence for dev/staging/production
+  - Verification procedures
+  - Troubleshooting guide
+- **When to use:** Setting up new environment or fresh database
+- **Read time:** 20-25 minutes
+
 ---
 
 ## 📂 ARCHIVE (Reference Only)
@@ -77,6 +88,11 @@ These documents capture the design and analysis process. **Not needed for moving
 1. Read: MARKETPLACE_READY_FOR_API.md (Status section)
 2. Execute: TESTING_CHECKLIST.md
 3. Reference: MARKETPLACE_PRODUCT_SCHEMA.md
+
+**If you're Setting Up a Fresh Database:**
+1. Read: SEEDING_STRATEGY.md (complete seeding guide)
+2. Execute: 4-phase seed sequence (15-20 minutes)
+3. Verify: Test RLS policies + verify setup
 
 **If you're Planning Future Work:**
 1. Read: MARKETPLACE_TECHNICAL_DEBT.md
