@@ -8,9 +8,58 @@
 
 ## Executive Summary
 
-This guide shows exactly which seed scripts to run, in what order, and why. The platform requires **3 critical seed scripts** to function, plus 1 optional content script and 1 test-only script.
+**Quick Start:** Run this one command:
+```bash
+./database/scripts/deploy-infrastructure.sh
+```
 
-**Total execution time:** ~12-20 minutes depending on data volume
+This single script orchestrates **all infrastructure seeding** in the correct order:
+- 📍 Geographic data (7 provinces, 77 districts, 753 palikas)
+- 🎯 Subscription tiers (3 tiers + 27 features)
+- 🏪 Product categories (8 business + 26 marketplace)
+- 🔐 Admin users (super_admin, palika_admin, moderator)
+- 📊 Palika tier enrollment (4 sample palikas)
+- 📝 Optional demo content (heritage sites, events, blogs)
+- 🧪 Optional test data (dev mode only)
+
+**Total execution time:** 5-25 minutes depending on mode:
+- `--minimal`: 5-7 minutes (infrastructure only)
+- `(default)`: 10-15 minutes (+ demo content)
+- `--dev`: 15-25 minutes (+ test data)
+
+---
+
+## 🚀 Master Deploy Script (Recommended)
+
+Instead of running individual scripts, use the master deploy script that orchestrates everything:
+
+```bash
+# Full deployment (infrastructure + demo content)
+./database/scripts/deploy-infrastructure.sh
+
+# Minimal (infrastructure only, no demo content)
+./database/scripts/deploy-infrastructure.sh --minimal
+
+# Development (infrastructure + demo + test data)
+./database/scripts/deploy-infrastructure.sh --dev
+```
+
+**What the script does:**
+1. Pre-flight checks (Node.js, npm, environment variables)
+2. Verifies Supabase connection
+3. Runs all seed scripts in correct order
+4. Provides colored output showing progress
+5. Handles errors gracefully with meaningful messages
+6. Shows summary of what was deployed
+7. Suggests next steps
+
+**Why use this instead of manual scripts:**
+- ✅ Correct execution order guaranteed
+- ✅ Automatic error handling and reporting
+- ✅ Single command for complete setup
+- ✅ Supports different deployment modes
+- ✅ Saves 30+ minutes of manual work
+- ✅ Idempotent (safe to re-run)
 
 ---
 
@@ -29,13 +78,33 @@ This guide shows exactly which seed scripts to run, in what order, and why. The 
 
 ---
 
-## 🚀 Phase 1: Foundation Tiers & Categories (Run First)
+## 🚀 Phase 1: Geographic Foundation & Categories (Run First)
 
-### What to Run
+### What Gets Seeded
+
+#### Geographic Data (from seed-database.ts)
+**Why first:** All other data depends on palikas existing
+- **7 Provinces:** Koshi, Madhesh, Bagmati, Gandaki, Lumbini, Karnali, Sudurpashchim
+- **77 Districts:** All districts of Nepal with English/Nepali names
+- **753 Palikas:** Complete hierarchy including:
+  - 6 Metropolitan municipalities
+  - 11 Sub-metropolitan municipalities
+  - 276 Municipalities
+  - 460 Rural municipalities
+
+#### Subscription Tiers & Categories
+
+### What to Run (Manual)
 ```bash
-npm run seed:tiers
-npm run seed:business-categories
-npm run seed:marketplace-categories
+npm run seed:database              # Phase 1a: Geographic data
+npm run seed:tiers                 # Phase 1b: Tiers & features
+npm run seed:business-categories   # Phase 1c: Business categories
+npm run seed:marketplace-categories # Phase 1d: Marketplace categories
+```
+
+Or use the master script (recommended):
+```bash
+./database/scripts/deploy-infrastructure.sh --minimal
 ```
 
 ### What Gets Created
@@ -329,6 +398,102 @@ npm run test:rls-policies
 
 # Total: ~5-7 minutes
 ```
+
+---
+
+## 🏗️ Complete Infrastructure Architecture
+
+### Database Hierarchy
+```
+LEVEL 1: GEOGRAPHIC (Foundation)
+├── Provinces (7)
+├── Districts (77)
+└── Palikas (753)
+    ├── Tier Assignment
+    └── Admin Assignment
+
+LEVEL 2: SYSTEM FEATURES (Tier-Based)
+├── Subscription Tiers (3)
+│   ├── Basic (Tier 1)
+│   ├── Tourism (Tier 2)
+│   └── Premium (Tier 3)
+└── Features (27, mapped to tiers)
+    ├── Registration (4)
+    ├── Contact (4)
+    ├── QR (3)
+    ├── Content (4)
+    ├── Emergency (4)
+    ├── Analytics (4)
+    └── Admin (4)
+
+LEVEL 3: PRODUCT CATEGORIES (Tier-Gated)
+├── Business Categories (8, all tiers)
+└── Marketplace Categories (26, tier-gated)
+    ├── Tier 1: 9 categories
+    ├── Tier 2: 17 categories (9+8)
+    └── Tier 3: 26 categories (17+9)
+
+LEVEL 4: CONTENT & ADMINISTRATION
+├── Admin Users (3 roles)
+│   ├── super_admin
+│   ├── palika_admin
+│   └── moderator
+├── Tourism Content (optional)
+│   ├── Heritage Sites (8)
+│   ├── Events/Festivals (8)
+│   └── Blog Posts (6)
+└── Test Data (dev only)
+    ├── Test Users (8)
+    ├── Test Businesses (8)
+    ├── Test Products (16)
+    └── Test Comments (15)
+```
+
+### Data Dependencies
+```
+                           User Input
+                           (migrations)
+                              |
+                              ↓
+    [Provinces, Districts] ← seed-database.ts
+              |
+              ↓
+    [Palikas] (753 total)
+              |
+    ┌─────────┼─────────┐
+    ↓         ↓         ↓
+  Tiers   Admin   Content
+    |       |        |
+    v       v        v
+ Features Assignments Tests
+```
+
+### Execution Sequence (Critical Order)
+
+**MUST RUN IN THIS ORDER:**
+
+1. **seed-database.ts** → Provinces, Districts, Palikas (753)
+2. **seed-subscription-tiers.ts** → 3 Tiers + 27 Features
+3. **seed-business-categories-direct.ts** → 8 Business Categories
+4. **seed-marketplace-categories-direct.ts** → 26 Marketplace Categories (depends on tiers)
+5. **seed-admin-users.ts** → 3 Admin Users (depends on palikas)
+6. **enroll-palikas-tiers.ts** → Assign palikas to tiers (depends on both palikas + tiers)
+
+**OPTIONAL (After Core):**
+
+7. **seed-content.ts** → Heritage, Events, Blogs (depends on admin users)
+8. **seed-marketplace-test-data.ts** → Test Data (depends on auth + all above)
+
+### What Each Phase Unlocks
+
+| Phase | Unlocks | Depends On |
+|-------|---------|-----------|
+| Geographic | Palika assignment, Admin assignment | None |
+| Tiers | Feature mapping, Tier-gating | None |
+| Categories | Product listings | Tiers (for marketplace) |
+| Admin | Content authoring, Approvals | Geographic (palikas) |
+| Content | Tourism visibility | Admin Users |
+| Test Data | QA testing | All above |
 
 ---
 
