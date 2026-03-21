@@ -1,4 +1,4 @@
-import { DatabaseClient } from './database-client'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export interface UserAnalytics {
   total: number
@@ -47,7 +47,7 @@ export interface ServiceResponse<T> {
 }
 
 export class MarketplaceAnalyticsService {
-  constructor(private db: DatabaseClient) {}
+  constructor(private db: SupabaseClient) {}
 
   async getUserAnalytics(palikaId: number): Promise<ServiceResponse<UserAnalytics>> {
       try {
