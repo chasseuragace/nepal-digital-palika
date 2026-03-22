@@ -112,10 +112,10 @@ export class MarketplaceAnalyticsService {
 
         if (totalError) throw totalError
 
-        // Businesses by category
+        // Businesses by category (using business_type_id)
         const { data: categoryData, error: categoryError } = await this.db
           .from('businesses')
-          .select('category')
+          .select('business_type_id')
           .eq('palika_id', palikaId)
 
         if (categoryError) throw categoryError
@@ -216,30 +216,34 @@ export class MarketplaceAnalyticsService {
 
         if (totalError) throw totalError
 
-        // Products by category
+        // Products by category (using marketplace_category_id)
         const { data: categoryData, error: categoryError } = await this.db
           .from('marketplace_products')
-          .select('category')
+          .select('marketplace_category_id')
           .in('business_id', businessIds)
 
         if (categoryError) throw categoryError
 
         const byCategory = this.groupByCategory(categoryData || [])
 
-        // Products by verification status
+        // Products by approval status (using is_approved)
         const { data: statusData, error: statusError } = await this.db
           .from('marketplace_products')
-          .select('verification_status')
+          .select('is_approved')
           .in('business_id', businessIds)
 
         if (statusError) throw statusError
 
-        const byVerificationStatus = this.groupByVerificationStatus(statusData || [])
+        const byVerificationStatus = {
+          pending: statusData?.filter((p: { is_approved?: boolean }) => p.is_approved === false).length || 0,
+          verified: statusData?.filter((p: { is_approved?: boolean }) => p.is_approved === true).length || 0,
+          rejected: 0
+        }
 
         // Most viewed products
         const { data: mostViewed, error: viewError } = await this.db
           .from('marketplace_products')
-          .select('id, title, view_count')
+          .select('id, name_en, view_count')
           .in('business_id', businessIds)
           .order('view_count', { ascending: false })
           .limit(5)
@@ -249,7 +253,7 @@ export class MarketplaceAnalyticsService {
         // Recent products
         const { data: recent, error: recentError } = await this.db
           .from('marketplace_products')
-          .select('id, title, created_at')
+          .select('id, name_en, created_at')
           .in('business_id', businessIds)
           .order('created_at', { ascending: false })
           .limit(5)
@@ -264,14 +268,14 @@ export class MarketplaceAnalyticsService {
             total: totalCount || 0,
             byCategory,
             byVerificationStatus,
-            mostViewed: (mostViewed || []).map((p: { id: string; title: string; view_count?: number }) => ({
+            mostViewed: (mostViewed || []).map((p: { id: string; name_en: string; view_count?: number }) => ({
               id: p.id,
-              title: p.title,
+              title: p.name_en,
               views: p.view_count || 0
             })),
-            recent: (recent || []).map((p: { id: string; title: string; created_at: string }) => ({
+            recent: (recent || []).map((p: { id: string; name_en: string; created_at: string }) => ({
               id: p.id,
-              title: p.title,
+              title: p.name_en,
               createdAt: p.created_at
             })),
             trend
@@ -400,11 +404,11 @@ export class MarketplaceAnalyticsService {
       return trend
     }
 
-  private groupByCategory(items: Array<{ category?: string }>): Array<{ category: string; count: number }> {
+  private groupByCategory(items: Array<{ category?: string; business_type_id?: number; marketplace_category_id?: number }>): Array<{ category: string; count: number }> {
     const grouped: Record<string, number> = {}
 
     items.forEach(item => {
-      const category = item.category || 'Uncategorized'
+      const category = item.category || item.business_type_id?.toString() || item.marketplace_category_id?.toString() || 'Uncategorized'
       grouped[category] = (grouped[category] || 0) + 1
     })
 

@@ -52,9 +52,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <li><Link href="/heritage-sites">Heritage Sites</Link></li>
           <li><Link href="/events">Events</Link></li>
           <li><Link href="/blog-posts">Blog Posts</Link></li>
-          <li><Link href="/media">Media</Link></li>
           {user.role === 'super_admin' || user.role === 'palika_admin' ? (
-            <li><Link href="/users">Users</Link></li>
+            <>
+              <li><Link href="/users">Users</Link></li>
+              <li><Link href="/palika-profile">Palika Profile</Link></li>
+              <li><Link href="/palika-gallery">Palika Gallery</Link></li>
+              <li><Link href="/tiers">Subscription Tiers</Link></li>
+              <li><Link href="/marketplace/analytics">Marketplace Analytics</Link></li>
+              <li><Link href="/marketplace/products">Marketplace Products</Link></li>
+              <li><Link href="/marketplace/businesses">Marketplace Businesses</Link></li>
+            </>
           ) : null}
           <li style={{ marginLeft: 'auto' }}>
             <span style={{ color: '#ccc', marginRight: '10px' }}>

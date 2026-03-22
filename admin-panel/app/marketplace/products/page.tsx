@@ -18,11 +18,24 @@ export default function ProductsPage() {
   })
   const [meta, setMeta] = useState({ page: 1, limit: 25, total: 0, totalPages: 0 })
 
-  // TODO: Get palika_id from auth context
-  const palikaId = 1 // Placeholder
-  const verificationAccess = useVerificationAccess(palikaId)
+  // Get palika_id and admin_id from auth context
+  const [palikaId, setPalikaId] = useState<number | null>(null)
+  const [adminId, setAdminId] = useState<string | null>(null)
 
   useEffect(() => {
+    const adminSession = localStorage.getItem('adminSession')
+    if (adminSession) {
+      const admin = JSON.parse(adminSession)
+      setPalikaId(admin.palika_id ? parseInt(admin.palika_id, 10) : null)
+      setAdminId(admin.id)
+    }
+  }, [])
+
+  const verificationAccess = useVerificationAccess(palikaId || 0)
+
+  useEffect(() => {
+    if (!palikaId) return
+
     const fetchProducts = async () => {
       try {
         setLoading(true)
@@ -53,7 +66,7 @@ export default function ProductsPage() {
     }
 
     fetchProducts()
-  }, [filters])
+  }, [filters, palikaId])
 
   const handleVerify = async (productId: string) => {
     if (!verificationAccess.canVerify) {
@@ -61,9 +74,12 @@ export default function ProductsPage() {
       return
     }
 
+    if (!palikaId || !adminId) {
+      alert('Admin session not found')
+      return
+    }
+
     try {
-      // TODO: Get admin_id from auth context
-      const adminId = 'admin-uuid-placeholder'
       const response = await fetch(`/api/products/${productId}/verify?palika_id=${palikaId}&admin_id=${adminId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -91,9 +107,12 @@ export default function ProductsPage() {
     const reason = prompt('Enter rejection reason:')
     if (!reason) return
 
+    if (!palikaId || !adminId) {
+      alert('Admin session not found')
+      return
+    }
+
     try {
-      // TODO: Get admin_id from auth context
-      const adminId = 'admin-uuid-placeholder'
       const response = await fetch(`/api/products/${productId}/reject?palika_id=${palikaId}&admin_id=${adminId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

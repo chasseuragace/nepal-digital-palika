@@ -39,8 +39,19 @@ export default function AnalyticsDashboard() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true)
-        // TODO: Get palika_id from auth context
-        const palikaId = 1 // Placeholder
+        // Get palika_id from admin session
+        const adminSession = localStorage.getItem('adminSession')
+        if (!adminSession) {
+          throw new Error('No admin session found')
+        }
+        
+        const admin = JSON.parse(adminSession)
+        const palikaId = admin.palika_id ? parseInt(admin.palika_id, 10) : null
+        
+        if (!palikaId) {
+          throw new Error('Admin is not assigned to a palika')
+        }
+        
         const response = await fetch(`/api/analytics/summary?palika_id=${palikaId}`)
 
         if (!response.ok) {
