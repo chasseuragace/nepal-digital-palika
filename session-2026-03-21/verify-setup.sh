@@ -131,11 +131,12 @@ echo ""
 # 7. Check Seeding Scripts
 echo -e "${BLUE}7. Checking Seeding Scripts${NC}"
 SEED_SCRIPTS=(
-    "database/scripts/seed-infrastructure.ts"
-    "database/scripts/seed-palika-tiers.ts"
-    "database/scripts/seed-palika-admins.ts"
-    "database/scripts/seed-users.ts"
-    "database/scripts/seed-products.ts"
+    "database/scripts/seed-admin-users.ts"
+    "database/scripts/seed-business-categories-direct.ts"
+    "database/scripts/seed-marketplace-categories-direct.ts"
+    "database/scripts/seed-subscription-tiers.ts"
+    "database/scripts/seed-complete-flow.ts"
+    "database/scripts/seed-marketplace-proper.ts"
 )
 
 for script in "${SEED_SCRIPTS[@]}"; do
@@ -145,6 +146,19 @@ for script in "${SEED_SCRIPTS[@]}"; do
         check_warn "$(basename $script) not found"
     fi
 done
+
+# Check SQL seed files
+if [ -f "supabase/seeds/subscription-tiers.sql" ]; then
+    check_pass "subscription-tiers.sql seed exists"
+else
+    check_warn "subscription-tiers.sql seed not found"
+fi
+
+if [ -f "supabase/seed.sql" ]; then
+    check_pass "seed.sql exists"
+else
+    check_warn "seed.sql not found"
+fi
 echo ""
 
 # 8. Check Admin Panel
@@ -221,8 +235,57 @@ else
 fi
 echo ""
 
-# 12. Check Documentation
-echo -e "${BLUE}12. Checking Documentation${NC}"
+# 12. Check MCP Configuration
+echo -e "${BLUE}12. Checking MCP Configuration${NC}"
+if [ -f ".kiro/settings/mcp.json" ]; then
+    check_pass ".kiro/settings/mcp.json exists"
+    
+    if grep -q '"supabase"' .kiro/settings/mcp.json; then
+        check_pass "Supabase MCP server configured"
+        
+        # Check if it's using HTTP type
+        if grep -q '"type": "http"' .kiro/settings/mcp.json; then
+            check_pass "MCP using HTTP transport"
+        else
+            check_warn "MCP not using HTTP transport"
+        fi
+        
+        # Check if URL is correct
+        if grep -q 'localhost:54321/mcp' .kiro/settings/mcp.json; then
+            check_pass "MCP URL points to local Supabase (localhost:54321/mcp)"
+        else
+            check_warn "MCP URL may not be pointing to local Supabase"
+        fi
+    else
+        check_fail "Supabase MCP server not configured"
+    fi
+else
+    check_warn ".kiro/settings/mcp.json not found"
+fi
+echo ""
+
+# 13. Check MCP Endpoint Accessibility
+echo -e "${BLUE}13. Checking MCP Endpoint Accessibility${NC}"
+if command -v curl &> /dev/null; then
+    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:54321/mcp 2>/dev/null)
+    
+    if [ "$RESPONSE" = "406" ]; then
+        check_pass "MCP endpoint is accessible (HTTP 406 - expected for SSE endpoint)"
+    elif [ "$RESPONSE" = "200" ]; then
+        check_pass "MCP endpoint is accessible (HTTP 200)"
+    elif [ "$RESPONSE" = "000" ]; then
+        check_fail "Cannot reach MCP endpoint at localhost:54321/mcp (connection refused)"
+        check_info "Make sure Supabase is running: supabase start"
+    else
+        check_warn "MCP endpoint returned HTTP $RESPONSE"
+    fi
+else
+    check_warn "curl not available - cannot test MCP endpoint"
+fi
+echo ""
+
+# 14. Check Documentation
+echo -e "${BLUE}14. Checking Documentation${NC}"
 DOC_FILES=(
     "CLAUDE.md"
     "mindstate.json"

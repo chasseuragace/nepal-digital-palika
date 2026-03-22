@@ -17,19 +17,34 @@ async function seedAdminUsers() {
   console.log('🔐 Starting admin user seeding (using service role key)...');
 
   // 1. Get the correct Kathmandu palika ID
-  const { data: palikaData, error: palikaError } = await supabaseAdmin
+  const { data: kathmanduData, error: kathmanduError } = await supabaseAdmin
     .from('palikas')
     .select('id, name_en')
-    .eq('code', 'D28-MT01')
+    .eq('code', 'KTM001')
     .single();
 
-  if (palikaError || !palikaData) {
-    console.error('❌ Could not find Kathmandu palika (D28-MT01). Run geographic seeding first.');
+  if (kathmanduError || !kathmanduData) {
+    console.error('❌ Could not find Kathmandu palika (KTM001). Run geographic seeding first.');
     return;
   }
 
-  const kathmanduPalikaId = palikaData.id;
-  console.log(`📍 Found Kathmandu palika: ${palikaData.name_en} (ID: ${kathmanduPalikaId})`);
+  const kathmanduPalikaId = kathmanduData.id;
+  console.log(`📍 Found Kathmandu palika: ${kathmanduData.name_en} (ID: ${kathmanduPalikaId})`);
+
+  // 2. Get the correct Bhaktapur palika ID
+  const { data: bhaktapurData, error: bhaktapurError } = await supabaseAdmin
+    .from('palikas')
+    .select('id, name_en')
+    .eq('code', 'BHK001')
+    .single();
+
+  if (bhaktapurError || !bhaktapurData) {
+    console.error('❌ Could not find Bhaktapur palika (BHK001). Run geographic seeding first.');
+    return;
+  }
+
+  const bhaktapurPalikaId = bhaktapurData.id;
+  console.log(`📍 Found Bhaktapur palika: ${bhaktapurData.name_en} (ID: ${bhaktapurPalikaId})`);
 
   // Using simpler, valid email formats
   const defaultUsers = [
@@ -53,6 +68,20 @@ async function seedAdminUsers() {
       role: 'moderator' as const,
       full_name: 'Kathmandu Content Moderator',
       palika_id: kathmanduPalikaId,
+    },
+    {
+      email: 'palika.admin@bhaktapur.gov.np',
+      password: 'BhaktapurAdmin456!',
+      role: 'palika_admin' as const,
+      full_name: 'Bhaktapur Palika Admin',
+      palika_id: bhaktapurPalikaId,
+    },
+    {
+      email: 'content.moderator@bhaktapur.gov.np',
+      password: 'BhaktapurModerator789!',
+      role: 'moderator' as const,
+      full_name: 'Bhaktapur Content Moderator',
+      palika_id: bhaktapurPalikaId,
     },
   ];
 

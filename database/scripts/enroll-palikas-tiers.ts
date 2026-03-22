@@ -82,12 +82,21 @@ async function enrollPalikas() {
     if (error4) throw error4
     console.log(`✅ Palika 4 → ${basicTier.display_name}`)
 
+    // Palika 10 (Bhaktapur) -> Tourism
+    let { error: error10 } = await supabaseAdmin
+      .from('palikas')
+      .update({ subscription_tier_id: tourismTier.id })
+      .eq('id', 10)
+
+    if (error10) throw error10
+    console.log(`✅ Palika 10 (Bhaktapur) → ${tourismTier.display_name}`)
+
     // Verify enrollment
     console.log('\n🔍 Verifying tier enrollment...\n')
     const { data: palikas } = await supabaseAdmin
       .from('palikas')
       .select('id, name_en, subscription_tier_id')
-      .in('id', [1, 2, 3, 4])
+      .in('id', [1, 2, 3, 4, 10])
 
     palikas?.forEach((p) => {
       const tier = tiers.find((t) => t.id === p.subscription_tier_id)

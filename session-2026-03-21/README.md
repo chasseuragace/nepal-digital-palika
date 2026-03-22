@@ -1,269 +1,339 @@
-# Session 2026-03-21 Documentation Index
+# Nepal Digital Tourism Platform - Setup & Seeding Guide
 
-**Date:** 2026-03-21  
-**Project:** Nepal Digital Tourism Infrastructure  
-**Phase:** 6 - Admin Panel Analytics & Product/Business Management  
-**Status:** ✅ COMPLETE
+## Quick Start
 
----
+```bash
+# 1. Start Supabase
+supabase start
 
-## Quick Navigation
+# 2. Reset database (applies migrations and seeds)
+supabase db reset
 
-### 📊 Start Here
-- **[FINAL_SESSION_SUMMARY.md](FINAL_SESSION_SUMMARY.md)** - Executive summary of everything completed
-- **[UPDATED_ROADMAP_SESSION_2026_03_21.md](UPDATED_ROADMAP_SESSION_2026_03_21.md)** - Current project status and timeline
-- **[NEXT_STEPS_ACTIONABLE.md](NEXT_STEPS_ACTIONABLE.md)** - What to do next with clear action items
+# 3. Run complete seeding pipeline
+bash session-2026-03-21/run-seeds.sh
 
-### 🎯 Implementation Details
-- **[ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md](ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md)** - Business approval in admin panel
-- **[M_PLACE_INTEGRATION_COMPLETE.md](M_PLACE_INTEGRATION_COMPLETE.md)** - Product approval in M-Place
-- **[FULL_APPROVAL_WORKFLOW_IMPLEMENTATION.md](FULL_APPROVAL_WORKFLOW_IMPLEMENTATION.md)** - Product approval workflow details
-- **[TIER_GATING_IMPLEMENTATION_SUMMARY.md](TIER_GATING_IMPLEMENTATION_SUMMARY.md)** - Tier-gating implementation
-
-### 📋 Analysis & Planning
-- **[BUSINESS_APPROVAL_FEASIBILITY_ANALYSIS.md](BUSINESS_APPROVAL_FEASIBILITY_ANALYSIS.md)** - Business approval feasibility
-- **[DATABASE_MIGRATION_REQUIREMENTS.md](DATABASE_MIGRATION_REQUIREMENTS.md)** - Database migration details
-- **[FINDINGS_AND_RECOMMENDATIONS.md](FINDINGS_AND_RECOMMENDATIONS.md)** - Summary of findings
-
-### 📚 Reference
-- **[PHASE_6_ADMIN_PANEL_REQUIREMENTS.md](PHASE_6_ADMIN_PANEL_REQUIREMENTS.md)** - Phase 6 specifications
-- **[APPROVAL_WORKFLOW_SUMMARY.md](APPROVAL_WORKFLOW_SUMMARY.md)** - Quick reference for approval workflows
-- **[PHASE_6_TIER_GATING_UPDATE.md](PHASE_6_TIER_GATING_UPDATE.md)** - Tier-gating reference
+# 4. Verify setup
+bash session-2026-03-21/verify-setup.sh
+```
 
 ---
 
-## What Was Completed
+## Documentation
 
-### ✅ Phase 6.1: Admin Dashboard Analytics
-- User registration analytics
-- Business registration analytics
-- Product analytics with verification status
-- Summary cards and trend charts
+### Core Guides
+- **[SEEDING_PIPELINE.md](./SEEDING_PIPELINE.md)** - 5-stage seeding pipeline overview
+- **[SCRIPTS_REORGANIZATION.md](./SCRIPTS_REORGANIZATION.md)** - Before/after script organization
+- **[USER_BUSINESS_CREATION_FLOW.md](./USER_BUSINESS_CREATION_FLOW.md)** - How users, businesses, and products are created
+- **[SETUP_COMPLETE.md](./SETUP_COMPLETE.md)** - Current setup status and credentials
 
-### ✅ Phase 6.2: Product Management
-- Product listing with pagination
-- Product filtering & sorting
-- Product verification workflow
-- Product rejection workflow with reason
-- M-Place integration (seller dashboard, product detail, product edit)
-
-### ✅ Phase 6.2.1: Business Management (Admin Panel)
-- Business listing with pagination
-- Business filtering & sorting
-- Business verification workflow
-- Business rejection workflow with reason
-- Admin dashboard stats (verification status breakdown)
-- Database migration (ready to deploy)
-
-### 🔵 Phase 6.2.2: Business Management (M-Place)
-- Planned for next session
-- Estimated time: 2-3 hours
+### Verification
+- **[verify-setup.sh](./verify-setup.sh)** - Verify all components are set up correctly
+- **[run-seeds.sh](./run-seeds.sh)** - Run complete seeding pipeline
 
 ---
 
-## Key Deliverables
+## 5-Stage Seeding Pipeline
 
-### Code
-- 14 new files created
-- 10 existing files updated
-- ~3,500 lines of code written
-- 7 API endpoints
-- 7 components
-- 2 services
-- 2 hooks
-- 3 pages
+### Stage 1: Infrastructure Setup
+Creates core platform infrastructure (tiers, categories, features)
 
-### Documentation
-- 15 comprehensive documents
-- ~20,000 words of documentation
-- Complete API specifications
-- Clear implementation guides
-- Testing checklists
-- Deployment steps
+**Scripts**:
+- `seed-subscription-tiers.ts` - 3 tiers with 27 features
+- `seed-business-types.ts` - 96 business type categories
+- `seed-business-categories-direct.ts` - 8 business categories
+- `seed-marketplace-categories-direct.ts` - 26 marketplace categories
 
-### Database
-- 1 migration created
-- < 2 seconds execution time
-- No data loss
-- Backward compatible
+**Output**: Infrastructure ready for admins and users
 
 ---
 
-## Document Descriptions
+### Stage 2: Admin Setup
+Creates admin users for platform management
 
-### FINAL_SESSION_SUMMARY.md
-Executive summary of the entire session. Includes what was delivered, code metrics, testing status, and deployment readiness. **Start here for overview.**
+**Scripts**:
+- `seed-admin-users.ts` - 5 admin users (super admin, palika admins, moderators)
 
-### UPDATED_ROADMAP_SESSION_2026_03_21.md
-Current project status with updated timeline. Shows what's complete, what's in progress, and what's planned. **Use this to understand current status.**
-
-### NEXT_STEPS_ACTIONABLE.md
-Clear action items for the next 1-4 weeks. Includes priority, time estimates, owners, and success criteria. **Use this to plan next work.**
-
-### ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md
-Complete documentation of business approval implementation in admin panel. Includes API specs, components, and testing checklist. **Reference for business approval.**
-
-### M_PLACE_INTEGRATION_COMPLETE.md
-Complete documentation of product approval integration in M-Place. Includes components, user flows, and testing checklist. **Reference for M-Place product approval.**
-
-### FULL_APPROVAL_WORKFLOW_IMPLEMENTATION.md
-Detailed implementation of product approval workflow. Includes database schema, API changes, and user experience flows. **Reference for product approval details.**
-
-### TIER_GATING_IMPLEMENTATION_SUMMARY.md
-Complete tier-gating implementation details. Includes access control flow, tier-based behavior, and testing scenarios. **Reference for tier-gating.**
-
-### BUSINESS_APPROVAL_FEASIBILITY_ANALYSIS.md
-Analysis of business approval workflow feasibility. Includes database support, tier-gating rules, and implementation plan. **Reference for business approval planning.**
-
-### DATABASE_MIGRATION_REQUIREMENTS.md
-Database migration details for business approval. Includes migration SQL, impact analysis, and deployment steps. **Reference for database changes.**
-
-### FINDINGS_AND_RECOMMENDATIONS.md
-Summary of all findings and recommendations. Includes business approval feasibility, admin dashboard stats, and database requirements. **Reference for analysis summary.**
-
-### PHASE_6_ADMIN_PANEL_REQUIREMENTS.md
-Phase 6 specifications and requirements. Includes feature descriptions, API endpoints, and success criteria. **Reference for Phase 6 specs.**
-
-### APPROVAL_WORKFLOW_SUMMARY.md
-Quick reference for approval workflows. Includes workflow states, API changes, and files created. **Quick reference for approval workflows.**
-
-### PHASE_6_TIER_GATING_UPDATE.md
-Tier-gating documentation and testing scenarios. Includes tier-based behavior and API responses. **Reference for tier-gating details.**
-
-### M_PLACE_PRODUCT_APPROVAL_INTEGRATION.md
-Integration plan for product approval in M-Place. Includes integration points, components, and user experience flows. **Reference for M-Place integration planning.**
-
-### SESSION_COMPLETION_SUMMARY.md
-Session overview with files created, metrics, and next steps. **Alternative summary document.**
+**Admins**:
+```
+Super Admin: superadmin@nepaltourism.dev / SuperSecurePass123!
+Kathmandu Admin: palika.admin@kathmandu.gov.np / KathmanduAdmin456!
+Bhaktapur Admin: palika.admin@bhaktapur.gov.np / BhaktapurAdmin456!
+```
 
 ---
 
-## How to Use This Documentation
+### Stage 3: Palika Tier Assignment
+Assigns subscription tiers to palikas
 
-### For Project Managers
-1. Read **FINAL_SESSION_SUMMARY.md** for overview
-2. Check **UPDATED_ROADMAP_SESSION_2026_03_21.md** for status
-3. Review **NEXT_STEPS_ACTIONABLE.md** for planning
+**Scripts**:
+- `enroll-palikas-tiers.ts` - Assign tiers to 5 palikas
 
-### For Developers
-1. Read **ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md** for business approval
-2. Read **M_PLACE_INTEGRATION_COMPLETE.md** for M-Place integration
-3. Reference **FULL_APPROVAL_WORKFLOW_IMPLEMENTATION.md** for details
-4. Check **DATABASE_MIGRATION_REQUIREMENTS.md** for database changes
-
-### For QA/Testing
-1. Read **NEXT_STEPS_ACTIONABLE.md** for testing tasks
-2. Reference **ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md** for testing checklist
-3. Reference **M_PLACE_INTEGRATION_COMPLETE.md** for testing checklist
-4. Check **TIER_GATING_IMPLEMENTATION_SUMMARY.md** for tier-gating tests
-
-### For Stakeholders
-1. Read **FINAL_SESSION_SUMMARY.md** for overview
-2. Check **UPDATED_ROADMAP_SESSION_2026_03_21.md** for timeline
-3. Review **NEXT_STEPS_ACTIONABLE.md** for next steps
+**Assignments**:
+```
+Palika 1 (Rajbiraj)   → Premium
+Palika 2 (Kanyam)     → Tourism
+Palika 3 (Tilawe)     → Tourism
+Palika 4 (Itahari)    → Basic
+Palika 10 (Bhaktapur) → Tourism
+```
 
 ---
 
-## Key Metrics
+### Stage 4: Palika User Creation
+Creates test users with business profiles
 
-### Code
-- **Files Created:** 14
-- **Files Updated:** 10
-- **Lines of Code:** ~3,500
-- **API Endpoints:** 7
-- **Components:** 7
-- **Services:** 2
-- **Hooks:** 2
-- **Pages:** 3
+**Scripts**:
+- `seed-marketplace-proper.ts` - 8 users with businesses and products
 
-### Documentation
-- **Documents:** 15
-- **Words:** ~20,000
-- **API Specs:** Complete
-- **Implementation Guides:** Complete
-- **Testing Checklists:** Complete
+**Flow**:
+```
+Auth User → Profile (palika_id) → Business → Products
+```
 
-### Database
-- **Migrations:** 1
-- **Breaking Changes:** 0
-- **Execution Time:** < 2 seconds
-- **Data Loss:** None
+**Output**: 8 users, 8 businesses, 16 products across 3 tiers
 
 ---
 
-## Status Summary
+### Stage 5: Marketplace Product Creation
+Creates additional marketplace products and comments
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| Product Approval (Admin) | ✅ Complete | Ready to deploy |
-| Product Approval (M-Place) | ✅ Complete | Ready to deploy |
-| Business Approval (Admin) | ✅ Complete | Ready to deploy |
-| Business Approval (M-Place) | 🔵 Planned | Next session |
-| Tier-Gating | ✅ Complete | Both products & businesses |
-| Database Migration | ✅ Created | Ready to deploy |
-| Testing | 🔵 Pending | Next week |
-| Documentation | ✅ Complete | Comprehensive |
+**Scripts**:
+- `seed-marketplace-test-data.ts` - Additional products and threaded comments
+
+**Output**: Complete marketplace with products and user interactions
+
+---
+
+## Database Schema
+
+### Key Tables
+
+**Geographic Hierarchy**:
+- `provinces` - 6 provinces
+- `districts` - 6 districts
+- `palikas` - 12 palikas (local government units)
+
+**Subscription System**:
+- `subscription_tiers` - 3 tiers (Basic, Tourism, Premium)
+- `features` - 27 platform features
+- `tier_features` - Feature mappings to tiers
+
+**Categories**:
+- `categories` - Business types (96 total, 8 per palika)
+- `business_categories` - Business categories (8)
+- `marketplace_categories` - Product categories (26, tier-gated)
+
+**Users & Businesses**:
+- `auth.users` - Supabase auth users
+- `profiles` - User profiles with palika assignment
+- `admin_users` - Admin user profiles
+- `businesses` - Business profiles
+- `marketplace_products` - Marketplace products
+- `marketplace_product_comments` - Threaded comments
+
+---
+
+## Available Palikas
+
+```
+ID  Code    Name                Type
+1   RAJ001  Rajbiraj            Municipality
+2   KAN001  Kanyam              Rural Municipality
+3   TIL001  Tilawe              Rural Municipality
+4   ITA001  Itahari             Municipality
+5   DHA001  Dharan              Municipality
+6   INA001  Inaruwa             Municipality
+7   KTM001  Kathmandu           Metropolitan
+8   TOK001  Tokha               Municipality
+9   BUD001  Budhanilkantha      Rural Municipality
+10  BHK001  Bhaktapur           Municipality
+11  MAD001  Madanpur            Rural Municipality
+12  THI001  Thimi               Municipality
+```
+
+---
+
+## Test Credentials
+
+### Admin Users
+```
+Super Admin:
+  Email: superadmin@nepaltourism.dev
+  Password: SuperSecurePass123!
+
+Kathmandu Palika Admin:
+  Email: palika.admin@kathmandu.gov.np
+  Password: KathmanduAdmin456!
+
+Kathmandu Moderator:
+  Email: content.moderator@kathmandu.gov.np
+  Password: ModeratorSecure789!
+
+Bhaktapur Palika Admin:
+  Email: palika.admin@bhaktapur.gov.np
+  Password: BhaktapurAdmin456!
+
+Bhaktapur Moderator:
+  Email: content.moderator@bhaktapur.gov.np
+  Password: BhaktapurModerator789!
+```
+
+### Test Users
+Generated during seeding with format:
+```
+Email: [name]@test.com
+Password: TestPassword123!@#
+```
+
+---
+
+## Supabase Services
+
+- **API**: http://127.0.0.1:54321
+- **Studio**: http://127.0.0.1:54323
+- **MCP Endpoint**: http://127.0.0.1:54321/mcp
+- **Database**: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+---
+
+## Running the Pipeline
+
+### Complete Pipeline (All Stages)
+```bash
+bash session-2026-03-21/run-seeds.sh
+```
+
+### Individual Stages
+```bash
+cd database
+
+# Stage 1: Infrastructure
+npx ts-node scripts/seed-subscription-tiers.ts
+npx ts-node scripts/seed-business-types.ts
+npx ts-node scripts/seed-business-categories-direct.ts
+npx ts-node scripts/seed-marketplace-categories-direct.ts
+
+# Stage 2: Admin
+npx ts-node scripts/seed-admin-users.ts
+
+# Stage 3: Tier Assignment
+npx ts-node scripts/enroll-palikas-tiers.ts
+
+# Stage 4: User Creation
+npx ts-node scripts/seed-marketplace-proper.ts
+
+# Stage 5: Products
+npx ts-node scripts/seed-marketplace-test-data.ts
+```
+
+### Quick Test (Single User)
+```bash
+cd database
+npx ts-node scripts/seed-complete-flow.ts
+```
+
+---
+
+## Verification
+
+### Check Setup Status
+```bash
+bash session-2026-03-21/verify-setup.sh
+```
+
+### Check Database State
+```bash
+# Using Supabase MCP
+mcp_supabase_execute_sql "SELECT COUNT(*) FROM subscription_tiers;"
+mcp_supabase_execute_sql "SELECT COUNT(*) FROM admin_users;"
+mcp_supabase_execute_sql "SELECT COUNT(*) FROM profiles;"
+mcp_supabase_execute_sql "SELECT COUNT(*) FROM businesses;"
+```
+
+---
+
+## Troubleshooting
+
+### Supabase Won't Start
+```bash
+# Check if containers are running
+docker ps | grep supabase
+
+# Check logs
+supabase status
+
+# Reset if needed
+supabase stop
+supabase start
+```
+
+### Database Reset Fails
+```bash
+# Check migrations
+supabase db pull
+
+# Check for syntax errors
+supabase db reset --debug
+```
+
+### Seeding Fails
+```bash
+# Check dependencies
+cd database
+npm install
+
+# Run individual script with debug
+npx ts-node scripts/seed-subscription-tiers.ts
+```
+
+### MCP Connection Issues
+```bash
+# Check endpoint
+curl http://localhost:54321/mcp
+
+# Verify configuration
+cat .kiro/settings/mcp.json
+
+# Reconnect MCP server
+# (Use Kiro UI to reconnect)
+```
 
 ---
 
 ## Next Steps
 
-### This Week
-1. Test product & business approval workflows
-2. Deploy migration to staging
-3. Get stakeholder feedback
-
-### Next Week
-1. Integrate business approval in M-Place
-2. Complete Phase 6.3 testing
-3. Performance optimization
-
-### Following Week
-1. Deploy to production
-2. Monitor and support
-3. Plan Phase 7
-
----
-
-## Contact & Support
-
-For questions about:
-- **Implementation:** See ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md or M_PLACE_INTEGRATION_COMPLETE.md
-- **Next Steps:** See NEXT_STEPS_ACTIONABLE.md
-- **Timeline:** See UPDATED_ROADMAP_SESSION_2026_03_21.md
-- **Database:** See DATABASE_MIGRATION_REQUIREMENTS.md
-- **Testing:** See ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md or M_PLACE_INTEGRATION_COMPLETE.md
+1. ✅ Start Supabase: `supabase start`
+2. ✅ Reset database: `supabase db reset`
+3. ✅ Run seeds: `bash session-2026-03-21/run-seeds.sh`
+4. ✅ Verify setup: `bash session-2026-03-21/verify-setup.sh`
+5. ✅ Start development servers:
+   ```bash
+   # Terminal 1: Admin Panel
+   cd admin-panel && npm run dev
+   
+   # Terminal 2: Marketplace
+   cd m-place && npm run dev
+   ```
+6. ✅ Access applications:
+   - Admin Panel: http://localhost:3000
+   - Marketplace: http://localhost:3001
+   - Supabase Studio: http://127.0.0.1:54323
 
 ---
 
-## Document Statistics
+## Additional Resources
 
-| Document | Words | Purpose |
-|----------|-------|---------|
-| FINAL_SESSION_SUMMARY.md | 2,500 | Executive summary |
-| UPDATED_ROADMAP_SESSION_2026_03_21.md | 2,000 | Project status |
-| NEXT_STEPS_ACTIONABLE.md | 2,500 | Action items |
-| ADMIN_PANEL_BUSINESS_APPROVAL_COMPLETE.md | 2,000 | Business approval |
-| M_PLACE_INTEGRATION_COMPLETE.md | 2,000 | M-Place integration |
-| FULL_APPROVAL_WORKFLOW_IMPLEMENTATION.md | 2,000 | Product approval |
-| TIER_GATING_IMPLEMENTATION_SUMMARY.md | 1,500 | Tier-gating |
-| BUSINESS_APPROVAL_FEASIBILITY_ANALYSIS.md | 1,500 | Analysis |
-| DATABASE_MIGRATION_REQUIREMENTS.md | 1,500 | Database |
-| FINDINGS_AND_RECOMMENDATIONS.md | 1,500 | Findings |
-| Other documents | 1,500 | Reference |
-| **Total** | **~20,000** | **Complete documentation** |
+- [Supabase Documentation](https://supabase.com/docs)
+- [MCP Configuration](https://supabase.com/docs/guides/getting-started/mcp)
+- [Database Schema](../database/docs/schema.md)
+- [RLS Policies](../database/docs/rls-policies.md)
 
 ---
 
-## Version History
+## Support
 
-| Date | Version | Status | Notes |
-|------|---------|--------|-------|
-| 2026-03-21 | 1.0 | ✅ Complete | Initial session documentation |
-
----
-
-**✅ Session 2026-03-21 Documentation Complete**
-
-Last Updated: 2026-03-21  
-Status: Ready for Review
+For issues or questions:
+1. Check the troubleshooting section above
+2. Review the detailed guides in this directory
+3. Check Supabase logs: `supabase logs`
+4. Check MCP logs in Kiro UI

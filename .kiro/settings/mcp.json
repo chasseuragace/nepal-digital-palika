@@ -2,18 +2,24 @@
   "mcpServers": {
     "supabase": {
       "type": "http",
-      "url": "http://127.0.0.1:54321/mcp?project_ref=adbkciyjlbtbunjswior&read_only=false&features=database,docs,debugging,development",
-      "disabled": true,
+      "url": "http://localhost:54321/mcp",
       "autoApprove": [
         "list_tables",
         "describe_table",
         "execute_sql",
         "get_project_config",
-        "apply_migration",
-        "apply_migration",
-        "apply_migration",
         "apply_migration"
-      ]
+      ],
+      "disabled": false
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ],
+      "disabled": true
     }
   }
 }

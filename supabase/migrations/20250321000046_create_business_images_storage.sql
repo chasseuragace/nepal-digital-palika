@@ -22,8 +22,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Anyone can view business images
 CREATE POLICY "Public read access" ON storage.objects
   FOR SELECT
-  USING (bucket_id = 'business-images')
-  WITH CHECK (false);
+  USING (bucket_id = 'business-images');
 
 -- Policy 2: Authenticated users can upload images
 -- Only authenticated users can upload images to their business folder

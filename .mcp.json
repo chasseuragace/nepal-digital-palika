@@ -1,20 +1,29 @@
 {
   "mcpServers": {
-    "supabase": {
-      "command": "npx",
-      "args": ["-y", "@supabase-cli/mcp"],
-      "env": {
-        "SUPABASE_URL": "http://127.0.0.1:54321",
-        "SUPABASE_ANON_KEY": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
-        "SUPABASE_SERVICE_ROLE_KEY": "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz"
-      }
-    },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@playwright-mcp/server"],
-      "env": {
-        "BROWSER": "chromium"
-      }
+      "args": [
+        "@playwright/mcp@latest"
+      ],
+      "autoApprove": [
+        "browser_navigate",
+        "browser_click",
+        "browser_fill",
+        "browser_take_screenshot",
+        "browser_evaluate",
+        "browser_type"
+      ]
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "http://localhost:54321/mcp",
+        "--transport",
+        "sse",
+        "--allow-http"
+      ]
     }
   }
 }
