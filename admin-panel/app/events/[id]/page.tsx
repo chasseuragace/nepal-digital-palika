@@ -304,4 +304,163 @@ export default function EditEventPage() {
                 type="time"
                 id="end_time"
                 value={formData.end_time}
-                onChange={(e) => handleInputChange
+                onChange={(e) => handleInputChange('end_time', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <h3>Location</h3>
+
+          <div className="form-group">
+            <label htmlFor="palika_id">Palika *</label>
+            <select
+              id="palika_id"
+              value={formData.palika_id}
+              onChange={(e) => handleInputChange('palika_id', e.target.value)}
+              required
+            >
+              <option value="">Select Palika</option>
+              {palikas.map((palika) => (
+                <option key={palika.id} value={palika.id}>
+                  {palika.name_en} ({palika.name_ne})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="location">Location Name *</label>
+            <input
+              type="text"
+              id="location"
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              required
+              placeholder="e.g., City Hall, Community Center"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="address">Address *</label>
+            <input
+              type="text"
+              id="address"
+              value={formData.address}
+              onChange={(e) => handleInputChange('address', e.target.value)}
+              required
+              placeholder="Full address"
+            />
+          </div>
+
+          <div className="grid grid-2">
+            <div className="form-group">
+              <label htmlFor="latitude">Latitude</label>
+              <input
+                type="number"
+                id="latitude"
+                value={formData.latitude}
+                onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value) || 0)}
+                step="any"
+                placeholder="27.7172"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="longitude">Longitude</label>
+              <input
+                type="number"
+                id="longitude"
+                value={formData.longitude}
+                onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value) || 0)}
+                step="any"
+                placeholder="85.3240"
+              />
+            </div>
+          </div>
+
+          <h3>Organizer Information</h3>
+
+          <div className="grid grid-2">
+            <div className="form-group">
+              <label htmlFor="organizer_name">Organizer Name *</label>
+              <input
+                type="text"
+                id="organizer_name"
+                value={formData.organizer_name}
+                onChange={(e) => handleInputChange('organizer_name', e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="organizer_contact">Organizer Contact *</label>
+              <input
+                type="text"
+                id="organizer_contact"
+                value={formData.organizer_contact}
+                onChange={(e) => handleInputChange('organizer_contact', e.target.value)}
+                required
+                placeholder="Phone or email"
+              />
+            </div>
+          </div>
+
+          <h3>Media & SEO</h3>
+
+          <div className="form-group">
+            <label htmlFor="featured_image_url">Featured Image URL</label>
+            <input
+              type="url"
+              id="featured_image_url"
+              value={formData.featured_image_url}
+              onChange={(e) => handleInputChange('featured_image_url', e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="meta_title">Meta Title</label>
+            <input
+              type="text"
+              id="meta_title"
+              value={formData.meta_title}
+              onChange={(e) => handleInputChange('meta_title', e.target.value)}
+              placeholder="SEO title"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="meta_description">Meta Description</label>
+            <textarea
+              id="meta_description"
+              value={formData.meta_description}
+              onChange={(e) => handleInputChange('meta_description', e.target.value)}
+              placeholder="SEO description"
+              style={{ minHeight: '80px' }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="keywords">Keywords</label>
+            <input
+              type="text"
+              id="keywords"
+              value={formData.keywords}
+              onChange={(e) => handleInputChange('keywords', e.target.value)}
+              placeholder="Comma-separated keywords"
+            />
+          </div>
+
+          <div style={{ marginTop: '30px', display: 'flex', gap: '10px' }}>
+            <button type="submit" className="btn btn-primary" disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Update Event'}
+            </button>
+            <Link href="/events" className="btn btn-secondary">
+              Cancel
+            </Link>
+          </div>
+        </form>
+      </div>
+    </AdminLayout>
+  )
+}
