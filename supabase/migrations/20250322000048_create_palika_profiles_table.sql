@@ -8,18 +8,18 @@ CREATE TABLE IF NOT EXISTS palika_profiles (
   description_ne TEXT,
   featured_image TEXT,
   gallery_images JSONB DEFAULT '[]'::jsonb,
-  highlights JSONB DEFAULT '[]'::jsonb COMMENT 'Array of {title, description} objects',
+  highlights JSONB DEFAULT '[]'::jsonb,
   tourism_info JSONB DEFAULT '{
     "best_time_to_visit": null,
     "accessibility": null,
     "languages": [],
     "currency": "NPR"
-  }'::jsonb COMMENT 'Tourism-related information',
+  }'::jsonb,
   demographics JSONB DEFAULT '{
     "population": 0,
     "area_sq_km": 0,
     "established_year": 0
-  }'::jsonb COMMENT 'Demographic information',
+  }'::jsonb,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -27,5 +27,8 @@ CREATE TABLE IF NOT EXISTS palika_profiles (
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_palika_profiles_palika_id ON palika_profiles(palika_id);
 
--- Add comment to table
+-- Add comments to table and columns
 COMMENT ON TABLE palika_profiles IS 'Digital profiles for palikas with descriptions, images, and metadata';
+COMMENT ON COLUMN palika_profiles.highlights IS 'Array of {title, description} objects';
+COMMENT ON COLUMN palika_profiles.tourism_info IS 'Tourism-related information';
+COMMENT ON COLUMN palika_profiles.demographics IS 'Demographic information';

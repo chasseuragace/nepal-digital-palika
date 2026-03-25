@@ -8,7 +8,9 @@
         "describe_table",
         "execute_sql",
         "get_project_config",
-        "apply_migration"
+        "apply_migration",
+        "get_logs",
+        "search_docs"
       ],
       "disabled": false
     },
@@ -19,7 +21,21 @@
         "-y",
         "@playwright/mcp"
       ],
-      "disabled": true
+      "disabled": false,
+      "autoApprove": [
+        "browser_click",
+        "browser_network_requests",
+        "browser_fill_form",
+        "browser_navigate",
+        "browser_wait_for",
+        "browser_console_messages",
+        "browser_snapshot",
+        "browser_run_code",
+        "browser_evaluate",
+        "browser_take_screenshot",
+        "browser_type",
+        "browser_navigate"
+      ]
     }
   }
 }
