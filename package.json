@@ -1,0 +1,14 @@
+﻿{
+  "name": "nepal-digital-palika",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Nepal Digital Palika Database Scripts",
+  "scripts": {
+    "seed": "node database/scripts/seed-database.ts",
+    "seed-marketplace": "node database/scripts/seed-marketplace-direct.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.0",
+    "pg": "^8.11.3"
+  }
+}
