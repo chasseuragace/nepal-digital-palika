@@ -1,0 +1,430 @@
+- generic:
+  - generic:
+    - list
+    - region "Notifications alt+T"
+    - generic:
+      - navigation:
+        - generic:
+          - generic:
+            - link:
+              - /url: /
+              - generic:
+                - img
+              - generic:
+                - generic: Palika Bajar
+            - generic:
+              - generic:
+                - img
+                - textbox:
+                  - /placeholder: Search products...
+            - generic:
+              - link:
+                - /url: /favorites
+                - img
+                - generic: Favorites
+                - generic: "3"
+              - link:
+                - /url: /sell
+                - img
+                - generic: Sell
+              - button:
+                - generic:
+                  - generic: AU
+                - generic: Admin
+                - img
+      - main:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - heading [level=1]: Marketplace
+                - paragraph: Discover amazing deals from local sellers in your community
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - heading [level=3]:
+                      - img
+                      - text: Filters
+                  - generic:
+                    - generic:
+                      - generic: Search
+                      - textbox:
+                        - /placeholder: Search products...
+                    - generic:
+                      - generic: Category
+                      - combobox [expanded]:
+                        - generic: All Categories
+                        - img
+                    - generic:
+                      - generic: Price Range (NPR)
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider
+                        - generic:
+                          - generic: NPR 0
+                          - generic: NPR 500,000
+                    - generic:
+                      - generic: Sort By
+                      - combobox:
+                        - generic: Newest First
+                        - img
+                    - generic:
+                      - checkbox
+                      - generic: In Stock Only
+                    - generic:
+                      - checkbox
+                      - generic:
+                        - img
+                        - text: Featured Only
+              - generic:
+                - generic:
+                  - paragraph: Showing 1 - 12 of 50 products
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 11,516.85
+                      - generic:
+                        - heading [level=3]: Handwoven Pashmina Shawl - 1
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 44,700.84
+                      - generic:
+                        - heading [level=3]: Hand-Carved Stone Mask - 16
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 43,676.11
+                      - generic:
+                        - heading [level=3]: Brass Buddha Statue - 19
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 2,363.07
+                      - generic:
+                        - heading [level=3]: Handwoven Pashmina Shawl - 33
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 11,253.84
+                      - generic:
+                        - heading [level=3]: Tibetan Wool Carpet - 39
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 46,543.06
+                      - generic:
+                        - heading [level=3]: Traditional Dhaka Cloth - 42
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 41,579.42
+                      - generic:
+                        - heading [level=3]: Handwoven Pashmina Shawl - 17
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 4,976.95
+                      - generic:
+                        - heading [level=3]: Traditional Dhaka Cloth - 18
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 44,399.74
+                      - generic:
+                        - heading [level=3]: Ceramic Tea Set - 29
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 23,921.34
+                      - generic:
+                        - heading [level=3]: Tibetan Wool Carpet - 15
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 39,510.39
+                      - generic:
+                        - heading [level=3]: Wooden Prayer Wheel - 14
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                        - generic:
+                          - button:
+                            - img
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Quick View
+                        - generic:
+                          - generic: NPR 41,670.63
+                      - generic:
+                        - heading [level=3]: Wooden Prayer Wheel - 38
+                        - generic:
+                          - generic:
+                            - img
+                            - generic: Nepal
+                          - generic:
+                            - generic: Active
+                - generic:
+                  - button [disabled]:
+                    - img
+                    - text: Previous
+                  - generic:
+                    - button: "1"
+                    - button: "2"
+                    - generic: ...
+                    - button: "5"
+                  - button:
+                    - text: Next
+                    - img
+      - contentinfo:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                - generic:
+                  - text: Palika Bajar
+                  - paragraph: Nepal's Local Marketplace
+              - paragraph: Palika Bajar is a comprehensive marketplace application designed for local communities across Nepal. Connect with buyers and sellers in your area and discover amazing deals.
+            - generic:
+              - generic:
+                - heading [level=3]: Get in Touch
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic:
+                      - link:
+                        - /url: tel:+977 9801138780
+                        - text: +977 9801138780
+                      - link:
+                        - /url: tel:+977 1-5907701
+                        - text: +977 1-5907701
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                    - link:
+                      - /url: mailto:info@palikabajar.com.np
+                      - text: info@palikabajar.com.np
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic: Anamnagar, Kathmandu Nepal
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: © 2026 Kaha Incorporation . All rights reserved.
+  - listbox [ref=e722]:
+    - option "All Categories" [active] [selected] [ref=e723]:
+      - img [ref=e726]
+      - generic [ref=e728]: All Categories
+    - option "Textiles & Crafts" [ref=e729]:
+      - generic [ref=e731]: Textiles & Crafts
+    - option "Jewelry & Accessories" [ref=e732]:
+      - generic [ref=e734]: Jewelry & Accessories
+    - option "Home Décor" [ref=e735]:
+      - generic [ref=e737]: Home Décor
+    - option "Art & Paintings" [ref=e738]:
+      - generic [ref=e740]: Art & Paintings
+    - option "Souvenirs" [ref=e741]:
+      - generic [ref=e743]: Souvenirs
+    - option "Books & Publications" [ref=e744]:
+      - generic [ref=e746]: Books & Publications
