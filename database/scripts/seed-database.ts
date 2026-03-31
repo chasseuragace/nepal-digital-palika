@@ -757,7 +757,8 @@ const CATEGORIES: Category[] = [
   { entity_type: 'business', name_en: 'Transport', name_ne: 'यातायात', slug: 'transport', display_order: 4 },
   { entity_type: 'business', name_en: 'Shopping', name_ne: 'किनमेल', slug: 'shopping', display_order: 5 },
   { entity_type: 'business', name_en: 'Entertainment', name_ne: 'मनोरञ्जन', slug: 'entertainment', display_order: 6 },
-  { entity_type: 'business', name_en: 'Emergency Services', name_ne: 'आपतकालीन सेवा', slug: 'emergency', display_order: 7 },
+  // Emergency Services category deactivated — service_providers table used instead (migration 062)
+  // { entity_type: 'business', name_en: 'Emergency Services', name_ne: 'आपतकालीन सेवा', slug: 'emergency', display_order: 7 },
   { entity_type: 'business', name_en: 'Government Office', name_ne: 'सरकारी कार्यालय', slug: 'government', display_order: 8 },
   
   // Blog post categories
