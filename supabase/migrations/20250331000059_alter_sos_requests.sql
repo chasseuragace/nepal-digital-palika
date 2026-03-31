@@ -28,7 +28,8 @@ ALTER TABLE sos_requests
     ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS reviewed_by UUID REFERENCES admin_users(id),
     ADD COLUMN IF NOT EXISTS app_submitted BOOLEAN DEFAULT false,
-    ADD COLUMN IF NOT EXISTS device_location BOOLEAN DEFAULT false;
+    ADD COLUMN IF NOT EXISTS device_location BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN DEFAULT false;
 
 -- 5. Add indexes for new fields
 CREATE INDEX IF NOT EXISTS idx_sos_priority ON sos_requests(priority);
