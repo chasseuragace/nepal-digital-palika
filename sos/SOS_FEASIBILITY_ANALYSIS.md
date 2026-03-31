@@ -16,11 +16,39 @@
 5. Write RLS policies for new tables
 6. Align enums between frontend and database
 
+### Where SOS Code Lives (Three Apps)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  sos/admin-map-dash (REFERENCE ONLY — source code to split) │
+│  ├─ Admin features → admin-panel                            │
+│  └─ Public features → m-place                               │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  admin-panel (PALIKA ADMIN)         │
+│  ├─ SOS dashboard & triage          │
+│  ├─ Assign providers to requests    │
+│  ├─ Create/manage service providers │
+│  ├─ View analytics & reports        │
+│  └─ Real-time dispatch interface    │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  m-place (PUBLIC / CITIZEN)         │
+│  ├─ File SOS complaint              │
+│  ├─ Track request status            │
+│  ├─ View active alerts              │
+│  ├─ Public transparency portal      │
+│  └─ Emergency contact info          │
+└─────────────────────────────────────┘
+```
+
 ### What We're NOT Doing (Yet)
 - Building API routes (later, when wiring frontend)
 - Building real-time subscriptions (later)
 - SMS/push notifications (later)
-- Migrating SOS frontend code into m-place (later)
+- Splitting SOS frontend code between admin-panel and m-place (later)
 
 ---
 
@@ -557,14 +585,16 @@ No schema change needed. RLS already allows INSERT for authenticated users. May 
 
 ### ⚠️ DEFERRED — Not Blocking
 
-| Item | Why Deferred | When |
-|------|-------------|------|
-| API routes | Need frontend wiring first | When merging to m-place |
-| Real-time subscriptions | Polling works for now | After API routes |
-| SMS/push notifications | External service needed | After real-time |
-| Geographic polygon coverage | Text coverage works | After basic dispatch |
-| Rating computation trigger | Admin-set works first | After enough SOS data |
-| SOS frontend → m-place merge | Separate task | After data layer done |
+| Item | Why Deferred | Target App | When |
+|------|-------------|------------|------|
+| SOS admin features (dashboard, assign, providers) | Need data layer first | **admin-panel** | After migrations |
+| SOS public features (file complaint, track status) | Need data layer first | **m-place** | Phase 7 |
+| Admin API routes (assign, triage, provider CRUD) | Need admin panel wiring | **admin-panel** | After admin UI |
+| Public API routes (create request, track status) | Need m-place wiring | **m-place** | Phase 7 |
+| Real-time subscriptions | Polling works for now | Both | After API routes |
+| SMS/push notifications | External service needed | Both | After real-time |
+| Geographic polygon coverage | Text coverage works | admin-panel | After basic dispatch |
+| Rating computation trigger | Admin-set works first | admin-panel | After enough SOS data |
 
 ### 🔴 RISK: Status Data Migration
 
@@ -599,9 +629,18 @@ Step 4: Verify
 
 Step 5: Commit to feature/sos-data-layer branch
 
-Step 6: (Future) Wire SOS frontend to Supabase
-Step 7: (Future) Merge SOS frontend into m-place
-Step 8: (Future) Build API routes
+Step 6: (Future) Split sos/admin-map-dash code:
+  6a. Admin features (dashboard, assignment, provider CRUD) → admin-panel
+  6b. Public features (complaint form, status tracking, alerts) → m-place
+
+Step 7: (Future) Wire admin-panel SOS to Supabase
+  7a. API routes for provider CRUD, request triage, assignment
+  7b. Real-time dashboard with Supabase subscriptions
+
+Step 8: (Future) Wire m-place SOS to Supabase
+  8a. Public complaint submission (create sos_request)
+  8b. Status tracking (query by request_code)
+  8c. Active alerts display (public read)
 ```
 
 ---
