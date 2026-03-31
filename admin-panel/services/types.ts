@@ -458,3 +458,138 @@ export interface Category {
   display_order: number
   is_active: boolean
 }
+
+// ============ Service Provider Types ============
+export interface ServiceProvider {
+  id: string
+  palika_id: number
+  name_en: string
+  name_ne?: string
+  service_type: 'ambulance' | 'fire_brigade' | 'police' | 'rescue' | 'other'
+  phone: string
+  email?: string
+  secondary_phones?: string[]
+  location?: { lat: number; lng: number }
+  address?: string
+  ward_number?: number
+  coverage_area?: string
+  vehicle_count: number
+  services?: string[]
+  operating_hours?: Record<string, any>
+  is_24_7: boolean
+  status: 'available' | 'busy' | 'offline' | 'suspended'
+  response_time_avg_minutes?: number
+  rating_average: number
+  rating_count: number
+  total_assignments: number
+  total_resolved: number
+  is_active: boolean
+  created_by?: string
+  created_at: string
+  updated_at: string
+  // Joined fields
+  palika_name?: string
+}
+
+export interface ServiceProviderFilters {
+  palika_id?: number
+  service_type?: string
+  status?: string
+  is_active?: boolean
+  search?: string
+}
+
+export interface CreateServiceProviderInput {
+  palika_id: number
+  name_en: string
+  name_ne?: string
+  service_type: 'ambulance' | 'fire_brigade' | 'police' | 'rescue' | 'other'
+  phone: string
+  email?: string
+  secondary_phones?: string[]
+  latitude: number
+  longitude: number
+  address?: string
+  ward_number?: number
+  coverage_area?: string
+  vehicle_count?: number
+  services?: string[]
+  is_24_7?: boolean
+}
+
+// ============ SOS Request Types ============
+export interface SOSRequest {
+  id: string
+  palika_id: number
+  user_id?: string
+  request_code: string
+  emergency_type: 'medical' | 'accident' | 'fire' | 'security' | 'natural_disaster' | 'other'
+  service_type?: 'ambulance' | 'fire_brigade' | 'police' | 'rescue' | 'other'
+  priority?: 'low' | 'medium' | 'high' | 'critical'
+  urgency_score?: number
+  location?: { lat: number; lng: number }
+  location_description?: string
+  ward_number?: number
+  user_name?: string
+  user_phone: string
+  details?: string
+  images?: string[]
+  status: 'pending' | 'reviewing' | 'assigned' | 'in_progress' | 'resolved' | 'cancelled'
+  status_updated_at?: string
+  assigned_to?: string
+  reviewed_at?: string
+  reviewed_by?: string
+  resolved_at?: string
+  resolution_notes?: string
+  user_rating?: number
+  user_feedback?: string
+  app_submitted: boolean
+  device_location: boolean
+  timeline?: any[]
+  created_at: string
+  updated_at: string
+  // Joined fields
+  palika_name?: string
+  assignments?: SOSRequestAssignment[]
+}
+
+export interface SOSRequestFilters {
+  palika_id?: number
+  status?: string
+  emergency_type?: string
+  service_type?: string
+  priority?: string
+  search?: string
+  date_from?: string
+  date_to?: string
+}
+
+// ============ SOS Assignment Types ============
+export interface SOSRequestAssignment {
+  id: string
+  sos_request_id: string
+  provider_id: string
+  assigned_by: string
+  assigned_at: string
+  status: 'assigned' | 'acknowledged' | 'en_route' | 'on_scene' | 'completed' | 'declined'
+  status_updated_at?: string
+  estimated_arrival_minutes?: number
+  actual_arrival_at?: string
+  distance_km?: number
+  assignment_notes?: string
+  completion_notes?: string
+  created_at: string
+  updated_at: string
+  // Joined fields
+  provider_name?: string
+  provider_type?: string
+  provider_phone?: string
+}
+
+export interface CreateAssignmentInput {
+  sos_request_id: string
+  provider_id: string
+  estimated_arrival_minutes?: number
+  distance_km?: number
+  assignment_notes?: string
+}

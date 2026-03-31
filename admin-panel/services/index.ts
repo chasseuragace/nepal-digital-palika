@@ -44,6 +44,8 @@ export { HeritageSitesService } from './heritage-sites.service'
 export { EventsService } from './events.service'
 export { BlogPostsService } from './blog-posts.service'
 export { AnalyticsService, AnalyticsFilters } from './analytics.service'
+export { ServiceProvidersService } from './service-providers.service'
+export { SOSRequestsService } from './sos-requests.service'
 
 /**
  * Service Factory - Creates all services with a single database client
@@ -54,6 +56,8 @@ import { HeritageSitesService } from './heritage-sites.service'
 import { EventsService } from './events.service'
 import { BlogPostsService } from './blog-posts.service'
 import { AnalyticsService } from './analytics.service'
+import { ServiceProvidersService } from './service-providers.service'
+import { SOSRequestsService } from './sos-requests.service'
 
 export interface ServiceContainer {
   auth: AuthService
@@ -61,10 +65,12 @@ export interface ServiceContainer {
   events: EventsService
   blogPosts: BlogPostsService
   analytics: AnalyticsService
+  serviceProviders: ServiceProvidersService
+  sosRequests: SOSRequestsService
 }
 
 export function createServices(
-  db: DatabaseClient, 
+  db: DatabaseClient,
   authConfig?: AuthServiceConfig
 ): ServiceContainer {
   return {
@@ -72,6 +78,8 @@ export function createServices(
     heritageSites: new HeritageSitesService(db),
     events: new EventsService(db),
     blogPosts: new BlogPostsService(db),
-    analytics: new AnalyticsService(db)
+    analytics: new AnalyticsService(db),
+    serviceProviders: new ServiceProvidersService(db),
+    sosRequests: new SOSRequestsService(db)
   }
 }
