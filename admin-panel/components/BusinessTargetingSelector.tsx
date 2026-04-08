@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ChevronDown, Filter, Zap, X, Check, Users } from 'lucide-react'
+import LoadingSpinner from './LoadingSpinner'
 
 interface FilterOptions {
   wards: number[]
@@ -58,6 +59,7 @@ export default function BusinessTargetingSelector({
   const [results, setResults] = useState<BusinessResult[]>([])
   const [selectedBusinesses, setSelectedBusinesses] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null)
   const [stats, setStats] = useState<BusinessTargetingStats | null>(null)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0 })
@@ -99,6 +101,7 @@ export default function BusinessTargetingSelector({
 
   const executeSimpleSearch = async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const params = new URLSearchParams({
         palika_id: String(palikaId),
@@ -118,9 +121,14 @@ export default function BusinessTargetingSelector({
         const data = await res.json()
         setResults(data.data)
         setPagination(prev => ({ ...prev, total: data.total }))
+        setError(null)
+      } else {
+        const errorData = await res.json()
+        setError(errorData.error || 'Failed to load businesses')
       }
     } catch (error) {
       console.error('Search failed:', error)
+      setError('Network error. Please check your connection.')
     } finally {
       setIsLoading(false)
     }
@@ -343,6 +351,20 @@ export default function BusinessTargetingSelector({
             )}
 
             {/* Results Table */}
+            {error && (
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '6px',
+                marginBottom: '12px',
+                color: '#991b1b',
+                fontSize: '13px',
+              }}>
+                {error}
+              </div>
+            )}
+
             <div style={{
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
@@ -351,14 +373,28 @@ export default function BusinessTargetingSelector({
               overflowY: 'auto',
               marginBottom: '12px',
             }}>
-              {results.length === 0 ? (
+              {isLoading ? (
+                <div style={{
+                  padding: '40px 20px',
+                  textAlign: 'center',
+                  color: '#94a3b8',
+                  fontSize: '13px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}>
+                  <LoadingSpinner size={24} />
+                  <span>Searching businesses...</span>
+                </div>
+              ) : results.length === 0 ? (
                 <div style={{
                   padding: '40px 20px',
                   textAlign: 'center',
                   color: '#94a3b8',
                   fontSize: '13px',
                 }}>
-                  {isLoading ? 'Searching...' : 'No businesses match your filters'}
+                  {error ? 'Failed to load businesses. Please try again.' : 'No businesses match your filters'}
                 </div>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
