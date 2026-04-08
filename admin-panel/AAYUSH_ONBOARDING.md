@@ -4,7 +4,7 @@ Welcome! This document provides everything you need to continue the notification
 
 ## Executive Summary
 
-The **notification system** allows palikas (municipal bodies) to send targeted announcements to users and businesses. The backend, service layer, and API routes are **complete**. Your task is to **enhance the UI** for the notification composer and dashboard with polish, responsiveness, and user experience improvements.
+The **notification system** allows palikas (municipal bodies) to send targeted announcements to users and businesses. The backend, service layer, and API routes are **complete**. Your task is to **enhance the UI** for the notification composer and dashboard with polish, better interactions, and user experience improvements.
 
 **Status**: ✅ Architecture complete, 🔄 UI polish pending  
 **Tech Stack**: Next.js 13+ (App Router), React hooks, inline styles, TypeScript  
@@ -78,13 +78,12 @@ admin-panel/
 - ✅ User targeting (for personal)
 - ✅ Business targeting selector (modal integration)
 - ✅ Live preview panel
-- 🔄 **Needs UI Polish**:
-  - Responsive design (mobile)
+- 🔄 **Needs UI Polish** (desktop-only):
   - Better spacing/padding
   - Loading states
   - Error handling UI
-  - Accessibility (labels, ARIA)
-  - Dark mode support
+  - User feedback notifications (toast/snackbar)
+  - Dark mode support (optional)
 
 **Key Components**:
 - `TypeButton` (sub-component)
@@ -570,15 +569,16 @@ Create new page: `app/notifications/[id]/page.tsx`
 
 Fetch: `await notificationService.getNotificationDetail(id)`
 
-### 4. Add Responsive Design
-Use CSS media queries or conditional rendering:
+### 4. Add Polish & Animations
+Enhance UI with subtle animations and improved visual hierarchy:
 ```javascript
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-
-// Or use CSS Media Query object
-const responsiveStyle = {
-  display: isMobile ? 'flex' : 'grid',
-  padding: isMobile ? '12px' : '24px',
+// Example: Smooth transitions on hover
+const buttonStyle = {
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: '#2563eb',
+    transform: 'translateY(-2px)',
+  }
 }
 ```
 
@@ -635,7 +635,8 @@ For development, **keep fake datasource enabled**.
 - **Architecture Docs**: See `./CLEAN_ARCHITECTURE.md`
 - **Project Roadmap**: See `./README.md` (root)
 - **Backend Status**: Service layer + API routes complete ✅
-- **Your Focus**: UI polish, responsiveness, UX enhancements 🎨
+- **Your Focus**: UI polish, loading states, error handling, user feedback 🎨
+- **Persona**: Palika admin using desktop browser (no mobile needed)
 
 ---
 
@@ -652,14 +653,17 @@ For development, **keep fake datasource enabled**.
 
 ---
 
-## Next Steps
-Persona: The Palika admin who will be using this module. 
-1. ~~**Responsive Design**: Make composer/dashboard work on mobile~~
-2. **Loading States**: Add spinners, skeleton loaders
-3. **Error Handling**: Better error messages, retry logic
-4. ~~**Accessibility**: ARIA labels, keyboard navigation, color contrast~~
-5. **Polish**: Better spacing, subtle animations, dark mode
-6. **Empty States**: "No notifications sent yet" messaging
-7. **Notifications**: Toast/snackbar for success/error feedback
+## Next Steps (UI Enhancement Priorities)
+
+**Note**: Admin panel is **desktop-only** — no mobile responsiveness needed.
+
+Focus areas for Aayush:
+
+1. **Loading States**: Add spinners, skeleton loaders during API calls
+2. **Error Handling**: Better error messages, retry logic
+3. **Polish**: Better spacing, typography, subtle animations
+4. **Empty States**: "No notifications sent yet" messaging
+5. **User Feedback**: Toast/snackbar for success/error notifications
+6. **Dark Mode**: Optional (nice-to-have)
 
 Good luck! 🚀
