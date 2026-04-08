@@ -653,11 +653,11 @@ For development, **keep fake datasource enabled**.
 ---
 
 ## Next Steps
-
-1. **Responsive Design**: Make composer/dashboard work on mobile
+Persona: The Palika admin who will be using this module. 
+1. ~~**Responsive Design**: Make composer/dashboard work on mobile~~
 2. **Loading States**: Add spinners, skeleton loaders
 3. **Error Handling**: Better error messages, retry logic
-4. **Accessibility**: ARIA labels, keyboard navigation, color contrast
+4. ~~**Accessibility**: ARIA labels, keyboard navigation, color contrast~~
 5. **Polish**: Better spacing, subtle animations, dark mode
 6. **Empty States**: "No notifications sent yet" messaging
 7. **Notifications**: Toast/snackbar for success/error feedback
