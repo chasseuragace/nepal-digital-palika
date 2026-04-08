@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Bell, ArrowLeft, Send, Globe, User, Plus, Trash2,
-  FileText, Link as LinkIcon, Smartphone, Image, Zap, Store, AlertCircle
+  FileText, Link as LinkIcon, Smartphone, Image, Zap, Store, AlertCircle,
+  Eye, EyeOff, CheckCircle, Info, Users, Target, Sparkles, Clock, Settings
 } from 'lucide-react'
 import {
   NOTIFICATION_CATEGORIES,
@@ -58,6 +59,8 @@ export default function NotificationComposePage() {
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null)
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [isFormDirty, setIsFormDirty] = useState(false)
 
   // Templates for the selected category
   const availableTemplates = getTemplatesByCategory(category)
@@ -70,6 +73,7 @@ export default function NotificationComposePage() {
     if (template.body_full_template) setBodyFull(template.body_full_template)
     setNotificationType(template.default_type)
     setPriority(template.default_priority)
+    setIsFormDirty(true)
   }
 
   // ─── Attachment management ───
@@ -238,7 +242,7 @@ export default function NotificationComposePage() {
         />
       )}
 
-      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '16px' }}>
         <Link 
           href="/notifications" 
           style={{ 
@@ -246,54 +250,88 @@ export default function NotificationComposePage() {
             display: 'flex', 
             alignItems: 'center',
             textDecoration: 'none',
-            padding: '8px',
-            borderRadius: '6px',
-            transition: 'all 0.2s ease',
+            padding: '12px',
+            borderRadius: '10px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#f1f5f9'
             e.currentTarget.style.color = '#1e293b'
+            e.currentTarget.style.transform = 'translateX(-2px)'
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.backgroundColor = '#f8fafc'
             e.currentTarget.style.color = '#64748b'
+            e.currentTarget.style.transform = 'translateX(0)'
+            e.currentTarget.style.boxShadow = 'none'
           }}
         >
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Bell size={28} />
+          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              color: '#fff',
+            }}>
+              <Bell size={24} />
+            </div>
             Compose Notification
           </h1>
-          <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: '14px' }}>
-            Create and send notifications to your palika users
+          <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Target size={16} />
+            Create and send targeted notifications to your palika users
           </p>
         </div>
       </div>
 
       <div style={{ maxWidth: '100%' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: showPreview ? '1fr 1fr' : '1fr', gap: '24px' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: showPreview ? '1fr 1fr' : '1fr', 
+          gap: '24px'
+        }}>
           {/* ─── Compose Form ─── */}
           <div>
             {/* Validation errors */}
             {validationErrors.length > 0 && (
               <div style={{
-                marginBottom: '16px',
-                padding: '12px 16px',
-                borderRadius: '8px',
+                marginBottom: '20px',
+                padding: '16px 20px',
+                borderRadius: '12px',
                 backgroundColor: '#fef2f2',
                 border: '1px solid #fecaca',
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.1)',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <AlertCircle size={18} color="#dc2626" />
-                  <span style={{ color: '#991b1b', fontSize: '14px', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    backgroundColor: '#dc2626',
+                    color: '#fff',
+                  }}>
+                    <AlertCircle size={18} />
+                  </div>
+                  <span style={{ color: '#991b1b', fontSize: '15px', fontWeight: 600 }}>
                     Please fix the following errors:
                   </span>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '20px', color: '#991b1b', fontSize: '13px' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: '#991b1b', fontSize: '14px', lineHeight: '1.6' }}>
                   {validationErrors.map((error, i) => (
-                    <li key={i}>{error}</li>
+                    <li key={i} style={{ marginBottom: '4px' }}>{error}</li>
                   ))}
                 </ul>
               </div>
@@ -302,24 +340,29 @@ export default function NotificationComposePage() {
             {/* Type selector */}
             <div style={{
               backgroundColor: '#fff',
-              borderRadius: '8px',
-              padding: '20px',
+              borderRadius: '12px',
+              padding: '24px',
               border: '1px solid #e2e8f0',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
             }}>
-              <label style={labelStyle}>Notification Type</label>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Settings size={16} />
+                Notification Type
+              </label>
+              <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
                 <TypeButton
                   active={notificationType === 'general'}
                   onClick={() => setNotificationType('general')}
-                  icon={<Globe size={18} />}
+                  icon={<Globe size={20} />}
                   label="General Broadcast"
                   description="Sent to all users in the palika"
                 />
                 <TypeButton
                   active={notificationType === 'personal'}
                   onClick={() => setNotificationType('personal')}
-                  icon={<User size={18} />}
+                  icon={<User size={20} />}
                   label="Personal"
                   description="Sent to specific users"
                 />
@@ -327,16 +370,23 @@ export default function NotificationComposePage() {
 
               {notificationType === 'general' && (
                 <div style={{
-                  marginTop: '12px',
-                  padding: '10px 14px',
+                  marginTop: '16px',
+                  padding: '14px 18px',
                   backgroundColor: '#eff6ff',
-                  borderRadius: '6px',
-                  fontSize: '13px',
+                  borderRadius: '10px',
+                  fontSize: '14px',
                   color: '#1e40af',
-                  lineHeight: '1.5',
+                  lineHeight: '1.6',
+                  border: '1px solid #bfdbfe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
                 }}>
-                  This will create one notification row per user in the palika.
-                  All opted-in users will receive this notification.
+                  <Info size={18} style={{ flexShrink: 0 }} />
+                  <span>
+                    This will create one notification row per user in the palika.
+                    All opted-in users will receive this notification.
+                  </span>
                 </div>
               )}
             </div>
@@ -344,19 +394,24 @@ export default function NotificationComposePage() {
             {/* Category selector — governance-grounded */}
             <div style={{
               backgroundColor: '#fff',
-              borderRadius: '8px',
-              padding: '20px',
+              borderRadius: '12px',
+              padding: '24px',
               border: '1px solid #e2e8f0',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={labelStyle}>Category (विषय)</label>
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={16} />
+                Category (विषय)
+              </label>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-                gap: '8px',
-                marginTop: '8px',
-                maxHeight: '320px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '10px',
+                marginTop: '12px',
+                maxHeight: '340px',
                 overflowY: 'auto',
+                padding: '4px',
               }}>
                 {NOTIFICATION_CATEGORIES.map(cat => {
                   const isSelected = category === cat.value
@@ -368,23 +423,39 @@ export default function NotificationComposePage() {
                         setPriority(cat.default_priority)
                         setNotificationType(cat.default_type)
                         setSelectedTemplate(null)
+                        setIsFormDirty(true)
                       }}
                       style={{
-                        padding: '10px 12px',
-                        borderRadius: '6px',
+                        padding: '12px 14px',
+                        borderRadius: '10px',
                         border: isSelected ? `2px solid ${cat.color.text}` : '1px solid #e2e8f0',
                         backgroundColor: isSelected ? cat.color.bg : '#fff',
                         cursor: 'pointer',
                         textAlign: 'left',
+                        transition: 'all 0.2s ease',
+                        transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                        boxShadow: isSelected ? `0 4px 12px ${cat.color.text}20` : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = '#f8fafc'
+                          e.currentTarget.style.transform = 'scale(1.02)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = '#fff'
+                          e.currentTarget.style.transform = 'scale(1)'
+                        }
                       }}
                     >
-                      <div style={{ fontWeight: 500, fontSize: '13px', color: '#1e293b' }}>
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b', marginBottom: '2px' }}>
                         {cat.label_en}
                       </div>
-                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>
                         {cat.label_ne}
                       </div>
-                      <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '3px' }}>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.3' }}>
                         {cat.description_en}
                       </div>
                     </button>
@@ -396,31 +467,53 @@ export default function NotificationComposePage() {
             {/* Priority selector */}
             <div style={{
               backgroundColor: '#fff',
-              borderRadius: '8px',
-              padding: '20px',
+              borderRadius: '12px',
+              padding: '24px',
               border: '1px solid #e2e8f0',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={labelStyle}>Priority (प्राथमिकता)</label>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Target size={16} />
+                Priority (प्राथमिकता)
+              </label>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                 {PRIORITIES.map(p => (
                   <button
                     key={p.value}
-                    onClick={() => setPriority(p.value)}
+                    onClick={() => {
+                      setPriority(p.value)
+                      setIsFormDirty(true)
+                    }}
                     style={{
                       flex: 1,
-                      padding: '8px 10px',
-                      borderRadius: '6px',
+                      padding: '12px 14px',
+                      borderRadius: '10px',
                       border: priority === p.value ? `2px solid ${p.color}` : '1px solid #e2e8f0',
-                      backgroundColor: priority === p.value ? `${p.color}10` : '#fff',
+                      backgroundColor: priority === p.value ? `${p.color}15` : '#fff',
                       cursor: 'pointer',
                       textAlign: 'center',
+                      transition: 'all 0.2s ease',
+                      transform: priority === p.value ? 'scale(1.05)' : 'scale(1)',
+                      boxShadow: priority === p.value ? `0 4px 12px ${p.color}30` : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (priority !== p.value) {
+                        e.currentTarget.style.backgroundColor = '#f8fafc'
+                        e.currentTarget.style.transform = 'scale(1.05)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (priority !== p.value) {
+                        e.currentTarget.style.backgroundColor = '#fff'
+                        e.currentTarget.style.transform = 'scale(1)'
+                      }
                     }}
                   >
-                    <div style={{ fontWeight: 500, fontSize: '12px', color: priority === p.value ? p.color : '#64748b' }}>
+                    <div style={{ fontWeight: 600, fontSize: '13px', color: priority === p.value ? p.color : '#64748b' }}>
                       {p.label_en}
                     </div>
-                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>{p.label_ne}</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{p.label_ne}</div>
                   </button>
                 ))}
               </div>
@@ -430,35 +523,53 @@ export default function NotificationComposePage() {
             {availableTemplates.length > 0 && (
               <div style={{
                 backgroundColor: '#fff',
-                borderRadius: '8px',
-                padding: '20px',
+                borderRadius: '12px',
+                padding: '24px',
                 border: '1px solid #e2e8f0',
-                marginBottom: '16px',
+                marginBottom: '20px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}>
-                <label style={labelStyle}>
-                  <Zap size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Zap size={16} style={{ color: '#f59e0b' }} />
                   Quick Templates (ढाँचा)
                 </label>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
                   {availableTemplates.map(t => (
                     <button
                       key={t.id}
                       onClick={() => applyTemplate(t)}
                       style={{
-                        padding: '6px 12px',
-                        borderRadius: '16px',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
                         border: selectedTemplate?.id === t.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
                         backgroundColor: selectedTemplate?.id === t.id ? '#eff6ff' : '#fff',
                         cursor: 'pointer',
-                        fontSize: '12px',
-                        color: '#475569',
+                        fontSize: '13px',
+                        color: selectedTemplate?.id === t.id ? '#1d4ed8' : '#475569',
+                        fontWeight: selectedTemplate?.id === t.id ? 600 : 500,
+                        transition: 'all 0.2s ease',
+                        transform: selectedTemplate?.id === t.id ? 'scale(1.05)' : 'scale(1)',
+                        boxShadow: selectedTemplate?.id === t.id ? '0 4px 12px rgba(59, 130, 246, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedTemplate?.id !== t.id) {
+                          e.currentTarget.style.backgroundColor = '#f8fafc'
+                          e.currentTarget.style.transform = 'scale(1.05)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedTemplate?.id !== t.id) {
+                          e.currentTarget.style.backgroundColor = '#fff'
+                          e.currentTarget.style.transform = 'scale(1)'
+                        }
                       }}
                     >
                       {t.label_ne} / {t.label_en}
                     </button>
                   ))}
                 </div>
-                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Info size={14} />
                   Selecting a template pre-fills the form. You can edit everything after.
                 </div>
               </div>
@@ -468,55 +579,113 @@ export default function NotificationComposePage() {
             {notificationType === 'personal' && (
               <div style={{
                 backgroundColor: '#fff',
-                borderRadius: '8px',
-                padding: '20px',
+                borderRadius: '12px',
+                padding: '24px',
                 border: '1px solid #e2e8f0',
-                marginBottom: '16px',
+                marginBottom: '20px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}>
-                <label style={labelStyle}>Target Users</label>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Users size={16} />
+                  Target Users
+                </label>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                   <input
                     type="text"
                     placeholder="Search user by name, email, or enter UUID..."
                     value={targetUserSearch}
                     onChange={(e) => setTargetUserSearch(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && addTargetUser()}
-                    style={{ ...inputStyle, flex: 1 }}
+                    onFocus={() => setFocusedField('userSearch')}
+                    onBlur={() => setFocusedField(null)}
+                    style={{
+                      ...inputStyle,
+                      flex: 1,
+                      borderColor: focusedField === 'userSearch' ? '#3b82f6' : '#e2e8f0',
+                      boxShadow: focusedField === 'userSearch' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                      transition: 'all 0.2s ease',
+                    }}
                   />
-                  <button onClick={addTargetUser} style={{
-                    whiteSpace: 'nowrap',
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#fff',
-                    color: '#475569',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}>
-                    <Plus size={14} /> Add
+                  <button 
+                    onClick={addTargetUser} 
+                    style={{
+                      whiteSpace: 'nowrap',
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: '1px solid #3b82f6',
+                      backgroundColor: '#3b82f6',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#1d4ed8'
+                      e.currentTarget.style.transform = 'translateY(-1px)'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#3b82f6'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)'
+                    }}
+                  >
+                    <Plus size={16} /> Add
                   </button>
                 </div>
                 {targetUsers.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
                     {targetUsers.map(u => (
                       <span key={u.id} style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        padding: '4px 10px',
-                        borderRadius: '16px',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        borderRadius: '20px',
                         backgroundColor: '#ede9fe',
                         color: '#5b21b6',
-                        fontSize: '12px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        border: '1px solid #ddd6fe',
+                        boxShadow: '0 2px 4px rgba(139, 92, 246, 0.1)',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#ddd6fe'
+                        e.currentTarget.style.transform = 'scale(1.05)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#ede9fe'
+                        e.currentTarget.style.transform = 'scale(1)'
                       }}>
+                        <User size={12} />
                         {u.label.length > 24 ? u.label.substring(0, 24) + '...' : u.label}
                         <button
                           onClick={() => removeTargetUser(u.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7c3aed', padding: 0 }}
+                          style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            cursor: 'pointer', 
+                            color: '#7c3aed', 
+                            padding: '2px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#c4b5fd'
+                            e.currentTarget.style.color = '#5b21b6'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                            e.currentTarget.style.color = '#7c3aed'
+                          }}
                         >
                           <Trash2 size={12} />
                         </button>
@@ -525,7 +694,19 @@ export default function NotificationComposePage() {
                   </div>
                 )}
                 {targetUsers.length === 0 && (
-                  <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>
+                  <div style={{ 
+                    color: '#94a3b8', 
+                    fontSize: '13px', 
+                    marginTop: '10px',
+                    padding: '12px 16px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}>
+                    <Info size={14} />
                     No users selected. In production, this will autocomplete from the palika user list.
                   </div>
                 )}
@@ -535,20 +716,33 @@ export default function NotificationComposePage() {
             {/* Target Businesses (Optional) — for both broadcast and personal */}
             <div style={{
               backgroundColor: '#fff',
-              borderRadius: '8px',
-              padding: '20px',
+              borderRadius: '12px',
+              padding: '24px',
               border: '1px solid #e2e8f0',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={labelStyle}>
-                <Store size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Store size={16} />
                 Target Businesses (Optional)
               </label>
-              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginBottom: '8px' }}>
+              <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', marginBottom: '12px', lineHeight: '1.5' }}>
                 Select specific businesses to notify their owners/staff. Their users will be automatically added to the target list.
               </p>
               {businessUsersLoading && (
-                <div style={{ fontSize: '12px', color: '#3b82f6', marginBottom: '8px' }}>
+                <div style={{ 
+                  fontSize: '13px', 
+                  color: '#3b82f6', 
+                  marginBottom: '12px',
+                  padding: '10px 14px',
+                  backgroundColor: '#eff6ff',
+                  borderRadius: '8px',
+                  border: '1px solid #bfdbfe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <LoadingSpinner size={14} color="#3b82f6" />
                   Loading business users...
                 </div>
               )}
@@ -562,44 +756,98 @@ export default function NotificationComposePage() {
             {/* Content */}
             <div style={{
               backgroundColor: '#fff',
-              borderRadius: '8px',
-              padding: '20px',
+              borderRadius: '12px',
+              padding: '24px',
               border: '1px solid #e2e8f0',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={labelStyle}>Title</label>
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px' }}>Title</label>
               <input
                 type="text"
                 placeholder="Notification title (max 300 chars)"
                 value={title}
-                onChange={(e) => setTitle(e.target.value.slice(0, 300))}
+                onChange={(e) => {
+                  setTitle(e.target.value.slice(0, 300))
+                  setIsFormDirty(true)
+                }}
                 maxLength={300}
-                style={{ ...inputStyle, marginTop: '6px' }}
+                onFocus={() => setFocusedField('title')}
+                onBlur={() => setFocusedField(null)}
+                style={{
+                  ...inputStyle,
+                  marginTop: '8px',
+                  borderColor: focusedField === 'title' ? '#3b82f6' : '#e2e8f0',
+                  boxShadow: focusedField === 'title' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s ease',
+                }}
               />
-              <div style={{ textAlign: 'right', fontSize: '11px', color: '#94a3b8' }}>
-                {title.length}/300
+              <div style={{ 
+                textAlign: 'right', 
+                fontSize: '12px', 
+                color: title.length > 280 ? '#ef4444' : '#94a3b8',
+                marginTop: '6px',
+                fontWeight: title.length > 280 ? 600 : 400,
+              }}>
+                {title.length}/300 {title.length > 280 && ' (approaching limit)'}
               </div>
 
-              <label style={{ ...labelStyle, marginTop: '12px' }}>Body (Preview Text)</label>
+              <label style={{ ...labelStyle, marginTop: '16px', fontSize: '14px' }}>Body (Preview Text)</label>
               <textarea
                 placeholder="Short preview shown in notification cards..."
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={(e) => {
+                  setBody(e.target.value)
+                  setIsFormDirty(true)
+                }}
+                onFocus={() => setFocusedField('body')}
+                onBlur={() => setFocusedField(null)}
                 rows={3}
-                style={{ ...inputStyle, marginTop: '6px', resize: 'vertical' }}
+                style={{
+                  ...inputStyle, 
+                  marginTop: '8px', 
+                  resize: 'vertical',
+                  borderColor: focusedField === 'body' ? '#3b82f6' : '#e2e8f0',
+                  boxShadow: focusedField === 'body' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s ease',
+                }}
               />
 
-              <label style={{ ...labelStyle, marginTop: '12px' }}>
+              <label style={{ ...labelStyle, marginTop: '16px', fontSize: '14px' }}>
                 Full Content <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
                 placeholder="Detailed content shown when user opens the notification. Supports longer text, instructions, emergency details..."
                 value={bodyFull}
-                onChange={(e) => setBodyFull(e.target.value)}
+                onChange={(e) => {
+                  setBodyFull(e.target.value)
+                  setIsFormDirty(true)
+                }}
+                onFocus={() => setFocusedField('bodyFull')}
+                onBlur={() => setFocusedField(null)}
                 rows={6}
-                style={{ ...inputStyle, marginTop: '6px', resize: 'vertical' }}
+                style={{
+                  ...inputStyle, 
+                  marginTop: '8px', 
+                  resize: 'vertical',
+                  borderColor: focusedField === 'bodyFull' ? '#3b82f6' : '#e2e8f0',
+                  boxShadow: focusedField === 'bodyFull' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s ease',
+                }}
               />
-              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#94a3b8', 
+                marginTop: '6px',
+                padding: '8px 12px',
+                backgroundColor: '#f8fafc',
+                borderRadius: '6px',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}>
+                <Info size={12} />
                 Rich text editor will replace this in a future session.
               </div>
             </div>
@@ -607,29 +855,84 @@ export default function NotificationComposePage() {
             {/* Image */}
             <div style={{
               backgroundColor: '#fff',
-              borderRadius: '8px',
-              padding: '20px',
+              borderRadius: '12px',
+              padding: '24px',
               border: '1px solid #e2e8f0',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={labelStyle}>
-                <Image size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Image size={16} />
                 Featured Image URL <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
               </label>
               <input
                 type="text"
                 placeholder="https://..."
                 value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                style={{ ...inputStyle, marginTop: '6px' }}
+                onChange={(e) => {
+                  setImageUrl(e.target.value)
+                  setIsFormDirty(true)
+                }}
+                onFocus={() => setFocusedField('imageUrl')}
+                onBlur={() => setFocusedField(null)}
+                style={{
+                  ...inputStyle, 
+                  marginTop: '8px',
+                  borderColor: focusedField === 'imageUrl' ? '#3b82f6' : '#e2e8f0',
+                  boxShadow: focusedField === 'imageUrl' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s ease',
+                }}
               />
               {imageUrl && (
-                <div style={{ marginTop: '8px', borderRadius: '6px', overflow: 'hidden', maxHeight: '150px' }}>
+                <div style={{ 
+                  marginTop: '12px', 
+                  borderRadius: '10px', 
+                  overflow: 'hidden', 
+                  maxHeight: '180px',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.02)'
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)'
+                }}>
                   <img
                     src={imageUrl}
                     alt="Preview"
-                    style={{ width: '100%', objectFit: 'cover' }}
-                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement
+                      target.style.display = 'none'
+                      const parent = target.parentElement!
+                      parent.innerHTML = `
+                        <div style="
+                          padding: 20px;
+                          text-align: center;
+                          color: #ef4444;
+                          font-size: 13px;
+                          background-color: #fef2f2;
+                          border: 1px solid #fecaca;
+                          border-radius: 8px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          gap: 8px;
+                        ">
+                          <AlertCircle size={16} />
+                          Failed to load image
+                        </div>
+                      `
+                    }}
                   />
                 </div>
               )}
@@ -638,59 +941,112 @@ export default function NotificationComposePage() {
             {/* Attachments */}
             <div style={{
               backgroundColor: '#fff',
-              borderRadius: '8px',
-              padding: '20px',
+              borderRadius: '12px',
+              padding: '24px',
               border: '1px solid #e2e8f0',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={labelStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <label style={{...labelStyle, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileText size={16} />
                   Attachments <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
                 </label>
-                <button onClick={addAttachment} style={{
-                  fontSize: '12px',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: '#fff',
-                  color: '#475569',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}>
-                  <Plus size={12} /> Add Attachment
+                <button 
+                  onClick={addAttachment} 
+                  style={{
+                    fontSize: '13px',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid #3b82f6',
+                    backgroundColor: '#3b82f6',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 6px rgba(59, 130, 246, 0.2)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1d4ed8'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                    e.currentTarget.style.boxShadow = '0 4px 10px rgba(59, 130, 246, 0.3)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3b82f6'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(59, 130, 246, 0.2)'
+                  }}
+                >
+                  <Plus size={14} /> Add Attachment
                 </button>
               </div>
 
               {attachments.map((att, idx) => (
                 <div key={idx} style={{
-                  marginTop: '12px',
-                  padding: '12px',
+                  marginTop: '16px',
+                  padding: '16px',
                   border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   backgroundColor: '#fafafa',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f1f5f9'
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fafafa'
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: '#475569' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FileText size={16} style={{ color: '#3b82f6' }} />
                       Attachment {idx + 1}
                     </span>
                     <button
                       onClick={() => removeAttachment(idx)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}
+                      style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        color: '#ef4444',
+                        padding: '6px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#fef2f2'
+                        e.currentTarget.style.color = '#dc2626'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = '#ef4444'
+                      }}
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
                       <label style={smallLabelStyle}>Type</label>
                       <select
                         value={att.attachment_type}
                         onChange={(e) => updateAttachment(idx, 'attachment_type', e.target.value)}
-                        style={inputStyle}
+                        style={{
+                          ...inputStyle,
+                          borderColor: focusedField === `attachment_type_${idx}` ? '#3b82f6' : '#e2e8f0',
+                          boxShadow: focusedField === `attachment_type_${idx}` ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onFocus={() => setFocusedField(`attachment_type_${idx}`)}
+                        onBlur={() => setFocusedField(null)}
                       >
                         <option value="file">File (PDF, Image, etc.)</option>
                         <option value="web_url">Web URL</option>
@@ -704,82 +1060,137 @@ export default function NotificationComposePage() {
                         placeholder="pdf, image, document..."
                         value={att.file_type || ''}
                         onChange={(e) => updateAttachment(idx, 'file_type', e.target.value)}
-                        style={inputStyle}
+                        style={{
+                          ...inputStyle,
+                          borderColor: focusedField === `file_type_${idx}` ? '#3b82f6' : '#e2e8f0',
+                          boxShadow: focusedField === `file_type_${idx}` ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onFocus={() => setFocusedField(`file_type_${idx}`)}
+                        onBlur={() => setFocusedField(null)}
                       />
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '8px' }}>
+                  <div style={{ marginTop: '12px' }}>
                     <label style={smallLabelStyle}>Name</label>
                     <input
                       type="text"
                       placeholder="Attachment name"
                       value={att.attachment_name}
                       onChange={(e) => updateAttachment(idx, 'attachment_name', e.target.value)}
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        borderColor: focusedField === `attachment_name_${idx}` ? '#3b82f6' : '#e2e8f0',
+                        boxShadow: focusedField === `attachment_name_${idx}` ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onFocus={() => setFocusedField(`attachment_name_${idx}`)}
+                      onBlur={() => setFocusedField(null)}
                     />
                   </div>
 
-                  <div style={{ marginTop: '8px' }}>
+                  <div style={{ marginTop: '12px' }}>
                     <label style={smallLabelStyle}>URL</label>
                     <input
                       type="text"
                       placeholder="https://..."
                       value={att.attachment_url}
                       onChange={(e) => updateAttachment(idx, 'attachment_url', e.target.value)}
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        borderColor: focusedField === `attachment_url_${idx}` ? '#3b82f6' : '#e2e8f0',
+                        boxShadow: focusedField === `attachment_url_${idx}` ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onFocus={() => setFocusedField(`attachment_url_${idx}`)}
+                      onBlur={() => setFocusedField(null)}
                     />
                   </div>
 
-                  <div style={{ marginTop: '8px' }}>
+                  <div style={{ marginTop: '12px' }}>
                     <label style={smallLabelStyle}>Display Label (shown to user)</label>
                     <input
                       type="text"
                       placeholder="e.g., Download Festival Schedule PDF"
                       value={att.display_label || ''}
                       onChange={(e) => updateAttachment(idx, 'display_label', e.target.value)}
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        borderColor: focusedField === `display_label_${idx}` ? '#3b82f6' : '#e2e8f0',
+                        boxShadow: focusedField === `display_label_${idx}` ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onFocus={() => setFocusedField(`display_label_${idx}`)}
+                      onBlur={() => setFocusedField(null)}
                     />
                   </div>
                 </div>
               ))}
 
               {attachments.length === 0 && (
-                <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '8px' }}>
+                <div style={{ 
+                  color: '#94a3b8', 
+                  fontSize: '13px', 
+                  marginTop: '12px',
+                  padding: '12px 16px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <Info size={14} />
                   Supports file links (PDF, images), web URLs, and in-app deep links.
                 </div>
               )}
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginTop: '24px' }}>
               <button
                 onClick={handleSubmit}
                 disabled={isSending || !title.trim() || !body.trim()}
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: 500,
+                  padding: '12px 24px',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  fontWeight: 600,
                   cursor: (isSending || !title.trim() || !body.trim()) ? 'not-allowed' : 'pointer',
                   border: 'none',
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: (isSending || !title.trim() || !body.trim()) ? '#94a3b8' : '#3b82f6',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  opacity: (isSending || !title.trim() || !body.trim()) ? 0.6 : 1,
-                  transition: 'all 0.2s ease',
+                  gap: '10px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: (isSending || !title.trim() || !body.trim()) ? 'none' : '0 4px 12px rgba(59, 130, 246, 0.4)',
+                  transform: (isSending || !title.trim() || !body.trim()) ? 'scale(1)' : 'scale(1)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSending && title.trim() && body.trim()) {
+                    e.currentTarget.style.backgroundColor = '#1d4ed8'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.5)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSending && title.trim() && body.trim()) {
+                    e.currentTarget.style.backgroundColor = '#3b82f6'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)'
+                  }
                 }}
               >
                 {isSending ? (
                   <>
-                    <LoadingSpinner size={14} color="#fff" />
+                    <LoadingSpinner size={16} color="#fff" />
                     Sending...
                   </>
                 ) : (
                   <>
-                    <Send size={14} />
+                    <Send size={16} />
                     {notificationType === 'general' ? 'Broadcast to Palika' : 'Send to Selected Users'}
                   </>
                 )}
@@ -788,23 +1199,57 @@ export default function NotificationComposePage() {
               <button
                 onClick={() => setShowPreview(!showPreview)}
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: 500,
+                  padding: '12px 20px',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   border: '1px solid #e2e8f0',
                   backgroundColor: '#fff',
                   color: '#475569',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '8px',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8fafc'
+                  e.currentTarget.style.borderColor = '#cbd5e1'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fff'
+                  e.currentTarget.style.borderColor = '#e2e8f0'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.1)'
                 }}
               >
+                {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
                 {showPreview ? 'Hide Preview' : 'Show Preview'}
               </button>
 
-              <Link href="/notifications" style={{ color: '#94a3b8', fontSize: '14px', textDecoration: 'none' }}>
+              <Link 
+                href="/notifications" 
+                style={{ 
+                  color: '#94a3b8', 
+                  fontSize: '15px', 
+                  textDecoration: 'none',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#64748b'
+                  e.currentTarget.style.backgroundColor = '#f8fafc'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#94a3b8'
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
                 Cancel
               </Link>
             </div>
@@ -831,86 +1276,135 @@ export default function NotificationComposePage() {
                 position: 'sticky',
                 top: '24px',
                 backgroundColor: '#fff',
-                borderRadius: '12px',
+                borderRadius: '16px',
                 border: '1px solid #e2e8f0',
                 overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
               }}>
                 <div style={{
-                  padding: '12px 16px',
-                  backgroundColor: '#f8fafc',
+                  padding: '16px 20px',
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
                   borderBottom: '1px solid #e2e8f0',
-                  fontSize: '13px',
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: '#475569',
+                  color: '#1e293b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
                 }}>
+                  <Eye size={18} style={{ color: '#3b82f6' }} />
                   Preview — as seen on m-place
                 </div>
 
                 {/* Card preview */}
-                <div style={{ padding: '16px' }}>
+                <div style={{ padding: '20px' }}>
                   <div style={{
                     border: '1px solid #e2e8f0',
-                    borderRadius: '10px',
+                    borderRadius: '12px',
                     overflow: 'hidden',
                     backgroundColor: '#fff',
+                    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)'
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)'
+                    e.currentTarget.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.08)'
                   }}>
                     {imageUrl && (
-                      <div style={{ height: '120px', overflow: 'hidden', backgroundColor: '#f1f5f9' }}>
+                      <div style={{ height: '140px', overflow: 'hidden', backgroundColor: '#f1f5f9' }}>
                         <img
                           src={imageUrl}
                           alt=""
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover',
+                            transition: 'all 0.3s ease',
+                          }}
                           onError={(e) => (e.currentTarget.style.display = 'none')}
                         />
                       </div>
                     )}
-                    <div style={{ padding: '12px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <div style={{ padding: '16px 18px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                         <span style={{
-                          fontSize: '10px',
-                          padding: '1px 6px',
-                          borderRadius: '3px',
+                          fontSize: '11px',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
                           backgroundColor: getCategoryColor(category).bg,
                           color: getCategoryColor(category).text,
                           textTransform: 'uppercase',
                           fontWeight: 600,
+                          letterSpacing: '0.5px',
                         }}>
                           {NOTIFICATION_CATEGORIES.find(c => c.value === category)?.label_ne || category}
                         </span>
                         {notificationType === 'personal' && (
-                          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                          <span style={{ 
+                            fontSize: '11px', 
+                            color: '#94a3b8',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}>
+                            <User size={10} />
                             Personal
                           </span>
                         )}
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b', marginBottom: '4px' }}>
+                      <div style={{ 
+                        fontWeight: 600, 
+                        fontSize: '15px', 
+                        color: '#0f172a', 
+                        marginBottom: '6px',
+                        lineHeight: '1.4',
+                      }}>
                         {title || 'Notification Title'}
                       </div>
-                      <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.4' }}>
+                      <div style={{ 
+                        fontSize: '14px', 
+                        color: '#64748b', 
+                        lineHeight: '1.5',
+                        marginBottom: '10px',
+                      }}>
                         {body || 'Preview text will appear here...'}
                       </div>
                       {attachments.filter(a => a.attachment_name).length > 0 && (
-                        <div style={{ marginTop: '8px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                           {attachments.filter(a => a.attachment_name).map((a, i) => (
                             <span key={i} style={{
-                              fontSize: '11px',
-                              padding: '2px 6px',
-                              borderRadius: '3px',
+                              fontSize: '12px',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
                               backgroundColor: '#f1f5f9',
                               color: '#475569',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '3px',
+                              gap: '4px',
+                              border: '1px solid #e2e8f0',
                             }}>
-                              {a.attachment_type === 'file' && <FileText size={10} />}
-                              {a.attachment_type === 'web_url' && <LinkIcon size={10} />}
-                              {a.attachment_type === 'app_link' && <Smartphone size={10} />}
+                              {a.attachment_type === 'file' && <FileText size={12} />}
+                              {a.attachment_type === 'web_url' && <LinkIcon size={12} />}
+                              {a.attachment_type === 'app_link' && <Smartphone size={12} />}
                               {a.display_label || a.attachment_name}
                             </span>
                           ))}
                         </div>
                       )}
-                      <div style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '8px' }}>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#cbd5e1', 
+                        marginTop: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}>
+                        <Clock size={12} />
                         Just now
                       </div>
                     </div>
@@ -919,25 +1413,36 @@ export default function NotificationComposePage() {
 
                 {/* Delivery info */}
                 <div style={{
-                  padding: '12px 16px',
-                  backgroundColor: '#f8fafc',
+                  padding: '16px 20px',
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
                   borderTop: '1px solid #e2e8f0',
-                  fontSize: '12px',
+                  fontSize: '13px',
                   color: '#64748b',
+                  lineHeight: '1.5',
                 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <Target size={14} style={{ color: '#3b82f6' }} />
+                    <span style={{ fontWeight: 600, color: '#1e293b' }}>Delivery Info</span>
+                  </div>
                   {targetBusinessIds.length > 0 ? (
                     <>
-                      <div>Will send to users of {targetBusinessIds.length} selected business{targetBusinessIds.length !== 1 ? 'es' : ''}</div>
+                      <div style={{ marginLeft: '22px' }}>
+                        Will send to users of {targetBusinessIds.length} selected business{targetBusinessIds.length !== 1 ? 'es' : ''}
+                      </div>
                       {notificationType === 'personal' && (
-                        <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8' }}>
+                        <div style={{ marginTop: '6px', marginLeft: '22px', fontSize: '12px', color: '#94a3b8' }}>
                           (Plus {targetUsers.length} direct user{targetUsers.length !== 1 ? 's' : ''})
                         </div>
                       )}
                     </>
                   ) : notificationType === 'general' ? (
-                    'Will broadcast to all opted-in users in the palika'
+                    <div style={{ marginLeft: '22px' }}>
+                      Will broadcast to all opted-in users in the palika
+                    </div>
                   ) : (
-                    `Will send to ${targetUsers.length} selected user${targetUsers.length !== 1 ? 's' : ''}`
+                    <div style={{ marginLeft: '22px' }}>
+                      Will send to {targetUsers.length} selected user{targetUsers.length !== 1 ? 's' : ''}
+                    </div>
                   )}
                 </div>
               </div>
@@ -963,28 +1468,55 @@ function TypeButton({ active, onClick, icon, label, description }: {
       onClick={onClick}
       style={{
         flex: 1,
-        padding: '14px 16px',
-        borderRadius: '8px',
+        padding: '18px 20px',
+        borderRadius: '12px',
         border: active ? '2px solid #3b82f6' : '1px solid #e2e8f0',
         backgroundColor: active ? '#eff6ff' : '#fff',
         cursor: 'pointer',
         textAlign: 'left',
         display: 'flex',
         alignItems: 'flex-start',
-        gap: '10px',
+        gap: '12px',
+        transition: 'all 0.3s ease',
+        transform: active ? 'scale(1.02)' : 'scale(1)',
+        boxShadow: active ? '0 4px 16px rgba(59, 130, 246, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.05)',
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = '#f8fafc'
+          e.currentTarget.style.transform = 'scale(1.02)'
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = '#fff'
+          e.currentTarget.style.transform = 'scale(1)'
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)'
+        }
       }}
     >
       <div style={{
         color: active ? '#3b82f6' : '#94a3b8',
         marginTop: '2px',
+        transition: 'all 0.3s ease',
       }}>
         {icon}
       </div>
       <div>
-        <div style={{ fontWeight: 600, fontSize: '14px', color: active ? '#1e293b' : '#64748b' }}>
+        <div style={{ 
+          fontWeight: 600, 
+          fontSize: '15px', 
+          color: active ? '#1e293b' : '#64748b',
+          marginBottom: '4px',
+        }}>
           {label}
         </div>
-        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
+        <div style={{ 
+          fontSize: '13px', 
+          color: '#94a3b8', 
+          lineHeight: '1.4',
+        }}>
           {description}
         </div>
       </div>
@@ -997,25 +1529,26 @@ function TypeButton({ active, onClick, icon, label, description }: {
 const labelStyle: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: 600,
-  color: '#475569',
+  color: '#374151',
   display: 'block',
 }
 
 const smallLabelStyle: React.CSSProperties = {
-  fontSize: '11px',
+  fontSize: '12px',
   fontWeight: 500,
-  color: '#94a3b8',
+  color: '#6b7280',
   display: 'block',
-  marginBottom: '3px',
+  marginBottom: '4px',
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '8px 12px',
-  borderRadius: '6px',
+  padding: '10px 14px',
+  borderRadius: '8px',
   border: '1px solid #e2e8f0',
   fontSize: '14px',
   color: '#1e293b',
   backgroundColor: '#fff',
   boxSizing: 'border-box',
+  transition: 'all 0.2s ease',
 }
