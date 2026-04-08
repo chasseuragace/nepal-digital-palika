@@ -3,18 +3,19 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  LayoutDashboard, 
-  Landmark, 
-  Calendar, 
-  FileText, 
-  Users, 
-  Building2, 
-  Image, 
-  Crown, 
-  TrendingUp, 
-  Package, 
+import {
+  LayoutDashboard,
+  Landmark,
+  Calendar,
+  FileText,
+  Users,
+  Building2,
+  Image,
+  Crown,
+  TrendingUp,
+  Package,
   Store,
+  Bell,
   LogOut,
   ChevronDown,
   Menu,
@@ -78,6 +79,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   ]
 
   const adminNavItems = user.role === 'super_admin' || user.role === 'palika_admin' ? [
+    { href: '/notifications', label: 'Notifications', icon: Bell },
     { href: '/users', label: 'Users', icon: Users },
     { href: '/palika-profile', label: 'Palika Profile', icon: Building2 },
     { href: '/palika-gallery', label: 'Gallery', icon: Image },
