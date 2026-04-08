@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Bell, ArrowLeft, Send, Globe, User, Plus, Trash2,
-  FileText, Link as LinkIcon, Smartphone, Image, Zap, Store
+  FileText, Link as LinkIcon, Smartphone, Image, Zap, Store, AlertCircle
 } from 'lucide-react'
 import {
   NOTIFICATION_CATEGORIES,
@@ -17,6 +17,9 @@ import {
   type NotificationTemplate,
 } from '@/lib/notification-use-cases'
 import BusinessTargetingSelector from '@/components/BusinessTargetingSelector'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import Toast, { ToastType } from '@/components/Toast'
+import AdminLayout from '@/components/AdminLayout'
 
 type NotificationType = 'general' | 'personal'
 type AttachmentType = 'file' | 'web_url' | 'app_link'
@@ -53,6 +56,8 @@ export default function NotificationComposePage() {
   const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null)
+  const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
 
   // Templates for the selected category
   const availableTemplates = getTemplatesByCategory(category)
@@ -142,19 +147,36 @@ export default function NotificationComposePage() {
 
   // ─── Submit ───
 
-  const handleSubmit = async () => {
-    if (!title.trim() || !body.trim()) {
-      setSendResult({ success: false, message: 'Title and body are required.' })
-      return
+  const validateForm = (): boolean => {
+    const errors: string[] = []
+
+    if (!title.trim()) {
+      errors.push('Title is required')
+    } else if (title.length > 300) {
+      errors.push('Title must be 300 characters or less')
+    }
+
+    if (!body.trim()) {
+      errors.push('Body text is required')
     }
 
     if (notificationType === 'personal' && targetUsers.length === 0) {
-      setSendResult({ success: false, message: 'Select at least one target user for personal notifications.' })
+      errors.push('Select at least one target user for personal notifications')
+    }
+
+    setValidationErrors(errors)
+    return errors.length === 0
+  }
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      setToast({ type: 'error', message: 'Please fix the validation errors' })
       return
     }
 
     setIsSending(true)
     setSendResult(null)
+    setValidationErrors([])
 
     try {
       const payload = {
@@ -186,41 +208,105 @@ export default function NotificationComposePage() {
 
       if (response.ok) {
         setSendResult({ success: true, message: result.message })
+        setToast({ type: 'success', message: result.message || 'Notification sent successfully!' })
+        
+        // Reset form after 2 seconds
+        setTimeout(() => {
+          router.push('/notifications')
+        }, 2000)
       } else {
-        setSendResult({ success: false, message: result.error || 'Failed to send notification.' })
+        const errorMsg = result.error || 'Failed to send notification'
+        setSendResult({ success: false, message: errorMsg })
+        setToast({ type: 'error', message: errorMsg })
       }
     } catch (error) {
-      setSendResult({ success: false, message: 'Network error. Is the server running?' })
+      const errorMsg = 'Network error. Please check your connection and try again.'
+      setSendResult({ success: false, message: errorMsg })
+      setToast({ type: 'error', message: errorMsg })
     } finally {
       setIsSending(false)
     }
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      {/* Top nav */}
-      <nav style={{
-        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-        padding: '12px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-      }}>
-        <Link href="/notifications" style={{ color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
-          <ArrowLeft size={18} />
-        </Link>
-        <Bell size={20} color="#fff" />
-        <span style={{ color: '#fff', fontWeight: 600, fontSize: '16px' }}>
-          Compose Notification
-        </span>
-      </nav>
+    <AdminLayout>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <Link 
+          href="/notifications" 
+          style={{ 
+            color: '#64748b', 
+            display: 'flex', 
+            alignItems: 'center',
+            textDecoration: 'none',
+            padding: '8px',
+            borderRadius: '6px',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#f1f5f9'
+            e.currentTarget.style.color = '#1e293b'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = '#64748b'
+          }}
+        >
+          <ArrowLeft size={20} />
+        </Link>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Bell size={28} />
+            Compose Notification
+          </h1>
+          <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: '14px' }}>
+            Create and send notifications to your palika users
+          </p>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: '100%' }}>
         <div style={{ display: 'grid', gridTemplateColumns: showPreview ? '1fr 1fr' : '1fr', gap: '24px' }}>
           {/* ─── Compose Form ─── */}
           <div>
+            {/* Validation errors */}
+            {validationErrors.length > 0 && (
+              <div style={{
+                marginBottom: '16px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <AlertCircle size={18} color="#dc2626" />
+                  <span style={{ color: '#991b1b', fontSize: '14px', fontWeight: 600 }}>
+                    Please fix the following errors:
+                  </span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: '#991b1b', fontSize: '13px' }}>
+                  {validationErrors.map((error, i) => (
+                    <li key={i}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Type selector */}
-            <div className="card" style={{ marginBottom: '16px' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '16px',
+            }}>
               <label style={labelStyle}>Notification Type</label>
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <TypeButton
@@ -256,7 +342,13 @@ export default function NotificationComposePage() {
             </div>
 
             {/* Category selector — governance-grounded */}
-            <div className="card" style={{ marginBottom: '16px' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '16px',
+            }}>
               <label style={labelStyle}>Category (विषय)</label>
               <div style={{
                 display: 'grid',
@@ -302,7 +394,13 @@ export default function NotificationComposePage() {
             </div>
 
             {/* Priority selector */}
-            <div className="card" style={{ marginBottom: '16px' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '16px',
+            }}>
               <label style={labelStyle}>Priority (प्राथमिकता)</label>
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                 {PRIORITIES.map(p => (
@@ -330,7 +428,13 @@ export default function NotificationComposePage() {
 
             {/* Quick-start templates */}
             {availableTemplates.length > 0 && (
-              <div className="card" style={{ marginBottom: '16px' }}>
+              <div style={{
+                backgroundColor: '#fff',
+                borderRadius: '8px',
+                padding: '20px',
+                border: '1px solid #e2e8f0',
+                marginBottom: '16px',
+              }}>
                 <label style={labelStyle}>
                   <Zap size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                   Quick Templates (ढाँचा)
@@ -362,7 +466,13 @@ export default function NotificationComposePage() {
 
             {/* Personal: User targeting */}
             {notificationType === 'personal' && (
-              <div className="card" style={{ marginBottom: '16px' }}>
+              <div style={{
+                backgroundColor: '#fff',
+                borderRadius: '8px',
+                padding: '20px',
+                border: '1px solid #e2e8f0',
+                marginBottom: '16px',
+              }}>
                 <label style={labelStyle}>Target Users</label>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                   <input
@@ -373,7 +483,20 @@ export default function NotificationComposePage() {
                     onKeyDown={(e) => e.key === 'Enter' && addTargetUser()}
                     style={{ ...inputStyle, flex: 1 }}
                   />
-                  <button onClick={addTargetUser} className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+                  <button onClick={addTargetUser} style={{
+                    whiteSpace: 'nowrap',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#fff',
+                    color: '#475569',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
                     <Plus size={14} /> Add
                   </button>
                 </div>
@@ -410,7 +533,13 @@ export default function NotificationComposePage() {
             )}
 
             {/* Target Businesses (Optional) — for both broadcast and personal */}
-            <div className="card" style={{ marginBottom: '16px' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '16px',
+            }}>
               <label style={labelStyle}>
                 <Store size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                 Target Businesses (Optional)
@@ -431,7 +560,13 @@ export default function NotificationComposePage() {
             </div>
 
             {/* Content */}
-            <div className="card" style={{ marginBottom: '16px' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '16px',
+            }}>
               <label style={labelStyle}>Title</label>
               <input
                 type="text"
@@ -470,7 +605,13 @@ export default function NotificationComposePage() {
             </div>
 
             {/* Image */}
-            <div className="card" style={{ marginBottom: '16px' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '16px',
+            }}>
               <label style={labelStyle}>
                 <Image size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                 Featured Image URL <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
@@ -495,12 +636,30 @@ export default function NotificationComposePage() {
             </div>
 
             {/* Attachments */}
-            <div className="card" style={{ marginBottom: '16px' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '16px',
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label style={labelStyle}>
                   Attachments <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
                 </label>
-                <button onClick={addAttachment} className="btn btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }}>
+                <button onClick={addAttachment} style={{
+                  fontSize: '12px',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#fff',
+                  color: '#475569',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}>
                   <Plus size={12} /> Add Attachment
                 </button>
               </div>
@@ -593,28 +752,56 @@ export default function NotificationComposePage() {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={handleSubmit}
                 disabled={isSending || !title.trim() || !body.trim()}
-                className="btn btn-primary"
                 style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: (isSending || !title.trim() || !body.trim()) ? 'not-allowed' : 'pointer',
+                  border: 'none',
+                  backgroundColor: '#3b82f6',
+                  color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '8px',
                   opacity: (isSending || !title.trim() || !body.trim()) ? 0.6 : 1,
+                  transition: 'all 0.2s ease',
                 }}
               >
-                <Send size={14} />
-                {isSending ? 'Sending...' : notificationType === 'general' ? 'Broadcast to Palika' : 'Send to Selected Users'}
+                {isSending ? (
+                  <>
+                    <LoadingSpinner size={14} color="#fff" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send size={14} />
+                    {notificationType === 'general' ? 'Broadcast to Palika' : 'Send to Selected Users'}
+                  </>
+                )}
               </button>
 
               <button
                 onClick={() => setShowPreview(!showPreview)}
-                className="btn btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#fff',
+                  color: '#475569',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
               >
-                Preview
+                {showPreview ? 'Hide Preview' : 'Show Preview'}
               </button>
 
               <Link href="/notifications" style={{ color: '#94a3b8', fontSize: '14px', textDecoration: 'none' }}>
@@ -622,8 +809,8 @@ export default function NotificationComposePage() {
               </Link>
             </div>
 
-            {/* Result message */}
-            {sendResult && (
+            {/* Result message - deprecated in favor of toast */}
+            {sendResult && !toast && (
               <div style={{
                 marginTop: '16px',
                 padding: '12px 16px',
@@ -758,7 +945,7 @@ export default function NotificationComposePage() {
           )}
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }
 
