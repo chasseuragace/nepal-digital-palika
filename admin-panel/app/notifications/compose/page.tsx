@@ -6,11 +6,10 @@ import { useRouter } from 'next/navigation'
 import {
   Bell, ArrowLeft, Send, Globe, User, Plus, Trash2,
   FileText, Link as LinkIcon, Smartphone, Image, Zap, Store, AlertCircle,
-  Eye, EyeOff, CheckCircle, Info, Users, Target, Sparkles, Clock, Settings
+  Eye, EyeOff, Info, Users, Target, Sparkles, Clock, Settings
 } from 'lucide-react'
 import {
   NOTIFICATION_CATEGORIES,
-  NOTIFICATION_TEMPLATES,
   PRIORITIES,
   getTemplatesByCategory,
   getCategoryColor,
@@ -21,6 +20,7 @@ import BusinessTargetingSelector from '@/components/BusinessTargetingSelector'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Toast, { ToastType } from '@/components/Toast'
 import AdminLayout from '@/components/AdminLayout'
+import './compose.css'
 
 type NotificationType = 'general' | 'personal'
 type AttachmentType = 'file' | 'web_url' | 'app_link'
@@ -242,116 +242,50 @@ export default function NotificationComposePage() {
         />
       )}
 
-      <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <Link 
-          href="/notifications" 
-          style={{ 
-            color: '#64748b', 
-            display: 'flex', 
-            alignItems: 'center',
-            textDecoration: 'none',
-            padding: '12px',
-            borderRadius: '10px',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#f1f5f9'
-            e.currentTarget.style.color = '#1e293b'
-            e.currentTarget.style.transform = 'translateX(-2px)'
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#f8fafc'
-            e.currentTarget.style.color = '#64748b'
-            e.currentTarget.style.transform = 'translateX(0)'
-            e.currentTarget.style.boxShadow = 'none'
-          }}
-        >
+      <div className="compose-page-header">
+        <Link href="/notifications" className="compose-back-btn">
           <ArrowLeft size={20} />
         </Link>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-              color: '#fff',
-            }}>
-              <Bell size={24} />
-            </div>
-            Compose Notification
-          </h1>
-          <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Target size={16} />
-            Create and send targeted notifications to your palika users
-          </p>
+        <div className="compose-header-content">
+          <div className="compose-header-icon">
+            <Bell size={32} />
+          </div>
+          <div>
+            <h1>Compose Notification</h1>
+            <p>Create and send targeted notifications to your palika users</p>
+          </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: '100%' }}>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: showPreview ? '1fr 1fr' : '1fr', 
-          gap: '24px'
-        }}>
+      <div className="compose-form-container">
+        <div className={`compose-grid ${showPreview ? 'with-preview' : ''}`}>
           {/* ─── Compose Form ─── */}
           <div>
             {/* Validation errors */}
             {validationErrors.length > 0 && (
-              <div style={{
-                marginBottom: '20px',
-                padding: '16px 20px',
-                borderRadius: '12px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.1)',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    backgroundColor: '#dc2626',
-                    color: '#fff',
-                  }}>
+              <div className="validation-errors">
+                <div className="validation-errors-header">
+                  <div className="validation-error-icon">
                     <AlertCircle size={18} />
                   </div>
-                  <span style={{ color: '#991b1b', fontSize: '15px', fontWeight: 600 }}>
+                  <span className="validation-errors-title">
                     Please fix the following errors:
                   </span>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '20px', color: '#991b1b', fontSize: '14px', lineHeight: '1.6' }}>
+                <ul>
                   {validationErrors.map((error, i) => (
-                    <li key={i} style={{ marginBottom: '4px' }}>{error}</li>
+                    <li key={i}>{error}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             {/* Type selector */}
-            <div style={{
-              backgroundColor: '#fff',
-              borderRadius: '12px',
-              padding: '24px',
-              border: '1px solid #e2e8f0',
-              marginBottom: '20px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.3s ease',
-            }}>
-              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Settings size={16} />
+            <div className="form-card">
+              <label className="form-label">
                 Notification Type
               </label>
-              <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+              <div className="type-buttons" style={{ gap: '16px' }}>
                 <TypeButton
                   active={notificationType === 'general'}
                   onClick={() => setNotificationType('general')}
@@ -369,20 +303,8 @@ export default function NotificationComposePage() {
               </div>
 
               {notificationType === 'general' && (
-                <div style={{
-                  marginTop: '16px',
-                  padding: '14px 18px',
-                  backgroundColor: '#eff6ff',
-                  borderRadius: '10px',
-                  fontSize: '14px',
-                  color: '#1e40af',
-                  lineHeight: '1.6',
-                  border: '1px solid #bfdbfe',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                }}>
-                  <Info size={18} style={{ flexShrink: 0 }} />
+                <div className="info-banner">
+                  <Info size={18} />
                   <span>
                     This will create one notification row per user in the palika.
                     All opted-in users will receive this notification.
@@ -391,28 +313,12 @@ export default function NotificationComposePage() {
               )}
             </div>
 
-            {/* Category selector — governance-grounded */}
-            <div style={{
-              backgroundColor: '#fff',
-              borderRadius: '12px',
-              padding: '24px',
-              border: '1px solid #e2e8f0',
-              marginBottom: '20px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            }}>
-              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} />
-                Category (विषय)
+            {/* Category selector */}
+            <div className="form-card">
+              <label className="form-label">
+                Category
               </label>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '10px',
-                marginTop: '12px',
-                maxHeight: '340px',
-                overflowY: 'auto',
-                padding: '4px',
-              }}>
+              <div className="category-grid">
                 {NOTIFICATION_CATEGORIES.map(cat => {
                   const isSelected = category === cat.value
                   return (
@@ -433,19 +339,21 @@ export default function NotificationComposePage() {
                         cursor: 'pointer',
                         textAlign: 'left',
                         transition: 'all 0.2s ease',
-                        transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                        transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
                         boxShadow: isSelected ? `0 4px 12px ${cat.color.text}20` : '0 1px 3px rgba(0, 0, 0, 0.1)',
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
                           e.currentTarget.style.backgroundColor = '#f8fafc'
-                          e.currentTarget.style.transform = 'scale(1.02)'
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (!isSelected) {
                           e.currentTarget.style.backgroundColor = '#fff'
-                          e.currentTarget.style.transform = 'scale(1)'
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
                         }
                       }}
                     >
@@ -473,11 +381,10 @@ export default function NotificationComposePage() {
               marginBottom: '20px',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Target size={16} />
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px' }}>
                 Priority (प्राथमिकता)
               </label>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+              <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
                 {PRIORITIES.map(p => (
                   <button
                     key={p.value}
@@ -494,19 +401,21 @@ export default function NotificationComposePage() {
                       cursor: 'pointer',
                       textAlign: 'center',
                       transition: 'all 0.2s ease',
-                      transform: priority === p.value ? 'scale(1.05)' : 'scale(1)',
+                      transform: priority === p.value ? 'translateY(-2px)' : 'translateY(0)',
                       boxShadow: priority === p.value ? `0 4px 12px ${p.color}30` : '0 1px 3px rgba(0, 0, 0, 0.1)',
                     }}
                     onMouseEnter={(e) => {
                       if (priority !== p.value) {
                         e.currentTarget.style.backgroundColor = '#f8fafc'
-                        e.currentTarget.style.transform = 'scale(1.05)'
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (priority !== p.value) {
                         e.currentTarget.style.backgroundColor = '#fff'
-                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
                       }
                     }}
                   >
@@ -529,8 +438,7 @@ export default function NotificationComposePage() {
                 marginBottom: '20px',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}>
-                <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Zap size={16} style={{ color: '#f59e0b' }} />
+                <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px' }}>
                   Quick Templates (ढाँचा)
                 </label>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
@@ -585,8 +493,7 @@ export default function NotificationComposePage() {
                 marginBottom: '20px',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}>
-                <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Users size={16} />
+                <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px' }}>
                   Target Users
                 </label>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
@@ -722,8 +629,7 @@ export default function NotificationComposePage() {
               marginBottom: '20px',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Store size={16} />
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px' }}>
                 Target Businesses (Optional)
               </label>
               <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', marginBottom: '12px', lineHeight: '1.5' }}>
@@ -861,8 +767,7 @@ export default function NotificationComposePage() {
               marginBottom: '20px',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
-              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Image size={16} />
+              <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px' }}>
                 Featured Image URL <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
               </label>
               <input
@@ -948,8 +853,7 @@ export default function NotificationComposePage() {
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <label style={{...labelStyle, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FileText size={16} />
+                <label style={{...labelStyle, fontSize: '14px' }}>
                   Attachments <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
                 </label>
                 <button 
@@ -1466,57 +1370,16 @@ function TypeButton({ active, onClick, icon, label, description }: {
   return (
     <button
       onClick={onClick}
-      style={{
-        flex: 1,
-        padding: '18px 20px',
-        borderRadius: '12px',
-        border: active ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-        backgroundColor: active ? '#eff6ff' : '#fff',
-        cursor: 'pointer',
-        textAlign: 'left',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '12px',
-        transition: 'all 0.3s ease',
-        transform: active ? 'scale(1.02)' : 'scale(1)',
-        boxShadow: active ? '0 4px 16px rgba(59, 130, 246, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.05)',
-      }}
-      onMouseEnter={(e) => {
-        if (!active) {
-          e.currentTarget.style.backgroundColor = '#f8fafc'
-          e.currentTarget.style.transform = 'scale(1.02)'
-          e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!active) {
-          e.currentTarget.style.backgroundColor = '#fff'
-          e.currentTarget.style.transform = 'scale(1)'
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)'
-        }
-      }}
+      className={`type-button ${active ? 'active' : ''}`}
     >
-      <div style={{
-        color: active ? '#3b82f6' : '#94a3b8',
-        marginTop: '2px',
-        transition: 'all 0.3s ease',
-      }}>
+      <div className="type-button-icon">
         {icon}
       </div>
       <div>
-        <div style={{ 
-          fontWeight: 600, 
-          fontSize: '15px', 
-          color: active ? '#1e293b' : '#64748b',
-          marginBottom: '4px',
-        }}>
+        <div className="type-button-label">
           {label}
         </div>
-        <div style={{ 
-          fontSize: '13px', 
-          color: '#94a3b8', 
-          lineHeight: '1.4',
-        }}>
+        <div className="type-button-description">
           {description}
         </div>
       </div>
@@ -1545,7 +1408,7 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: '8px',
-  border: '1px solid #e2e8f0',
+  border: '2px solid #e2e8f0',
   fontSize: '14px',
   color: '#1e293b',
   backgroundColor: '#fff',
