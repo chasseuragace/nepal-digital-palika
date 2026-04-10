@@ -16,6 +16,7 @@ import {
   type NotificationPriority,
   type NotificationTemplate,
 } from '@/lib/notification-use-cases'
+import { notificationsService, type AttachmentInput } from '@/lib/client/notifications-client.service'
 import BusinessTargetingSelector from '@/components/BusinessTargetingSelector'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Toast, { ToastType } from '@/components/Toast'
@@ -23,15 +24,6 @@ import AdminLayout from '@/components/AdminLayout'
 import './compose.css'
 
 type NotificationType = 'general' | 'personal'
-type AttachmentType = 'file' | 'web_url' | 'app_link'
-
-interface AttachmentInput {
-  attachment_name: string
-  attachment_url: string
-  attachment_type: AttachmentType
-  file_type?: string
-  display_label?: string
-}
 
 const PALIKA_ID = 1 // Skeleton default
 
@@ -202,27 +194,15 @@ export default function NotificationComposePage() {
         attachments: attachments.filter(a => a.attachment_name && a.attachment_url),
       }
 
-      const response = await fetch('/api/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      const result = await notificationsService.send(payload)
 
-      const result = await response.json()
+      setSendResult({ success: true, message: result.message })
+      setToast({ type: 'success', message: result.message || 'Notification sent successfully!' })
 
-      if (response.ok) {
-        setSendResult({ success: true, message: result.message })
-        setToast({ type: 'success', message: result.message || 'Notification sent successfully!' })
-        
-        // Reset form after 2 seconds
-        setTimeout(() => {
-          router.push('/notifications')
-        }, 2000)
-      } else {
-        const errorMsg = result.error || 'Failed to send notification'
-        setSendResult({ success: false, message: errorMsg })
-        setToast({ type: 'error', message: errorMsg })
-      }
+      // Reset form after 2 seconds
+      setTimeout(() => {
+        router.push('/notifications')
+      }, 2000)
     } catch (error) {
       const errorMsg = 'Network error. Please check your connection and try again.'
       setSendResult({ success: false, message: errorMsg })

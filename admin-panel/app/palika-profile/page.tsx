@@ -3,34 +3,12 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import PalikaGallery from '@/components/PalikaGallery'
+import { palikaProfileService, type PalikaProfile } from '@/lib/client/palika-profile-client.service'
 
 interface GalleryItem {
   id: string
   file_name: string
   storage_path: string
-}
-
-interface PalikaProfile {
-  id: string
-  palika_id: number
-  description_en: string
-  description_ne: string
-  featured_image: string
-  gallery_images: string[]
-  highlights: Array<{ title: string; description: string; image_url?: string }>
-  tourism_info: {
-    best_time_to_visit?: string
-    accessibility?: string
-    languages?: string[]
-    currency?: string
-    image_url?: string
-  }
-  demographics: {
-    population?: number
-    area_sq_km?: number
-    established_year?: number
-  }
-  videos: string[]
 }
 
 interface FormData {
@@ -97,10 +75,9 @@ export default function PalikaProfilePage() {
 
       setPalikaId(admin.palika_id)
 
-      const response = await fetch(`/api/palika-profile?palika_id=${admin.palika_id}`)
-      const data = await response.json()
+      const data = await palikaProfileService.getByPalikaId(admin.palika_id)
 
-      if (response.ok && data.profile) {
+      if (data.profile) {
         setProfile(data.profile)
         setFormData({
           description_en: data.profile.description_en || '',
@@ -262,23 +239,10 @@ export default function PalikaProfilePage() {
       const adminSession = localStorage.getItem('adminSession')
       const admin = adminSession ? JSON.parse(adminSession) : null
 
-      const response = await fetch('/api/palika-profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Palika-ID': admin.palika_id.toString()
-        },
-        body: JSON.stringify(formData)
-      })
+      const data = await palikaProfileService.update(admin.palika_id, formData)
 
-      const data = await response.json()
-
-      if (response.ok) {
-        setMessage({ type: 'success', text: 'Palika profile updated successfully!' })
-        setProfile(data.profile)
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to update profile' })
-      }
+      setMessage({ type: 'success', text: 'Palika profile updated successfully!' })
+      setProfile(data.profile)
     } catch (error) {
       console.error('Error saving palika profile:', error)
       setMessage({ type: 'error', text: 'Failed to save palika profile' })

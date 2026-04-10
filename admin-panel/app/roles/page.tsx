@@ -3,23 +3,8 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
-
-interface Permission {
-  id: number
-  name: string
-  resource: string
-  action: string
-  description: string
-}
-
-interface Role {
-  id: number
-  name: string
-  hierarchy_level: 'national' | 'province' | 'district' | 'palika'
-  description: string
-  description_ne: string
-  permissions: Permission[]
-}
+import { rolesService, type Role } from '@/lib/client/roles-client.service'
+import type { Permission } from '@/lib/client/permissions-client.service'
 
 interface ApiResponse {
   data: Role[]
@@ -81,26 +66,10 @@ export default function RolesPage() {
       setIsLoading(true)
       setError(null)
 
-      const params = new URLSearchParams()
-      params.append('page', currentPage.toString())
-      params.append('limit', limit.toString())
-      if (search) params.append('search', search)
-
-      const response = await fetch(`/api/roles?${params.toString()}`)
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setError('Unauthorized: Please log in')
-        } else if (response.status === 403) {
-          setError('Forbidden: You do not have permission to view roles')
-        } else {
-          setError('Failed to fetch roles')
-        }
-        setRoles([])
-        return
-      }
-
-      const data: ApiResponse = await response.json()
+      const data = await rolesService.getAll({
+        page: currentPage,
+        limit
+      })
       setRoles(data.data || [])
       setTotalCount(data.total || 0)
     } catch (err) {
@@ -150,17 +119,7 @@ export default function RolesPage() {
     try {
       setDeleteConfirmation(prev => ({ ...prev, isDeleting: true, error: null }))
 
-      const response = await fetch(`/api/roles/${deleteConfirmation.roleId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to delete role')
-      }
+      await rolesService.delete(deleteConfirmation.roleId)
 
       await fetchRoles()
       closeDeleteConfirmation()
@@ -204,23 +163,12 @@ export default function RolesPage() {
     try {
       setCreateForm(prev => ({ ...prev, isSubmitting: true, error: null }))
 
-      const response = await fetch('/api/roles', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: createForm.name,
-          hierarchy_level: createForm.hierarchy_level,
-          description: createForm.description,
-          description_ne: createForm.description_ne
-        })
+      await rolesService.create({
+        name: createForm.name,
+        hierarchy_level: createForm.hierarchy_level,
+        description: createForm.description,
+        description_ne: createForm.description_ne
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create role')
-      }
 
       await fetchRoles()
       closeCreateForm()
