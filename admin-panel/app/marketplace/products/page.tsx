@@ -6,6 +6,7 @@ import { ProductFiltersComponent } from '@/components/ProductFilters'
 import { Pagination } from '@/components/Pagination'
 import { useVerificationAccess } from '@/lib/hooks/useVerificationAccess'
 import { ProductFilters, ProductListItem, ProductListResponse } from '@/services/marketplace-products.service'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductListItem[]>([])
@@ -23,11 +24,12 @@ export default function ProductsPage() {
   const [adminId, setAdminId] = useState<string | null>(null)
 
   useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession')
-    if (adminSession) {
-      const admin = JSON.parse(adminSession)
-      setPalikaId(admin.palika_id ? parseInt(admin.palika_id, 10) : null)
-      setAdminId(admin.id)
+    const session = adminSessionStore.get()
+    if (session) {
+      // Defensive: coerce to number in case legacy sessions stored it as string
+      const palika = session.palika_id != null ? Number(session.palika_id) : null
+      setPalikaId(Number.isNaN(palika) ? null : palika)
+      setAdminId(session.id)
     }
   }, [])
 

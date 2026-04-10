@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, Mail, Lock, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -30,7 +31,7 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        localStorage.setItem('adminSession', JSON.stringify(data.user))
+        adminSessionStore.set(data.user)
         router.push('/dashboard')
       } else {
         setError(data.error || 'Login failed')

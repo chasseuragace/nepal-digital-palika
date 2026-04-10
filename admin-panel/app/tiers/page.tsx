@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { tierChangeRequestsService, type Tier, type CurrentSubscription, type TierChangeRequest } from '@/lib/client/tier-change-requests-client.service'
+import { adminSessionStore, type AdminSession } from '@/lib/storage/session-storage.service'
 
 export default function TiersPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<AdminSession | null>(null)
   const [palikaId, setPalikaId] = useState<number | null>(null)
   const [tiers, setTiers] = useState<Tier[]>([])
   const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null)
@@ -18,12 +19,12 @@ export default function TiersPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession')
-    if (adminSession) {
-      const userData = JSON.parse(adminSession)
-      setUser(userData)
-      const palika = userData.palika_id ? parseInt(userData.palika_id, 10) : null
-      setPalikaId(palika)
+    const session = adminSessionStore.get()
+    if (session) {
+      setUser(session)
+      // Defensive: coerce to number in case legacy sessions stored it as string
+      const palika = session.palika_id != null ? Number(session.palika_id) : null
+      setPalikaId(Number.isNaN(palika) ? null : palika)
     } else {
       router.push('/login')
     }

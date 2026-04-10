@@ -5,6 +5,7 @@ import { SummaryCard } from '@/components/SummaryCard'
 import { TrendChart } from '@/components/TrendChart'
 import { CategoryBreakdown } from '@/components/CategoryBreakdown'
 import { VerificationStatusChart } from '@/components/VerificationStatusChart'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 
 interface AnalyticsSummary {
   users: {
@@ -40,18 +41,19 @@ export default function AnalyticsDashboard() {
       try {
         setLoading(true)
         // Get palika_id from admin session
-        const adminSession = localStorage.getItem('adminSession')
-        if (!adminSession) {
+        const session = adminSessionStore.get()
+        if (!session) {
           throw new Error('No admin session found')
         }
-        
-        const admin = JSON.parse(adminSession)
-        const palikaId = admin.palika_id ? parseInt(admin.palika_id, 10) : null
-        
+
+        // Defensive: coerce to number in case legacy sessions stored it as string
+        const palikaRaw = session.palika_id != null ? Number(session.palika_id) : null
+        const palikaId = palikaRaw != null && !Number.isNaN(palikaRaw) ? palikaRaw : null
+
         if (!palikaId) {
           throw new Error('Admin is not assigned to a palika')
         }
-        
+
         const response = await fetch(`/api/analytics/summary?palika_id=${palikaId}`)
 
         if (!response.ok) {

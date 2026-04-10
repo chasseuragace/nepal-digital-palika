@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import PalikaGallery from '@/components/PalikaGallery'
 import { palikaProfileService, type PalikaProfile } from '@/lib/client/palika-profile-client.service'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 
 interface GalleryItem {
   id: string
@@ -64,8 +65,7 @@ export default function PalikaProfilePage() {
 
   const fetchPalikaProfile = async () => {
     try {
-      const adminSession = localStorage.getItem('adminSession')
-      const admin = adminSession ? JSON.parse(adminSession) : null
+      const admin = adminSessionStore.get()
 
       if (!admin?.palika_id) {
         setMessage({ type: 'error', text: 'No palika assigned to this admin' })
@@ -236,8 +236,12 @@ export default function PalikaProfilePage() {
     setMessage(null)
 
     try {
-      const adminSession = localStorage.getItem('adminSession')
-      const admin = adminSession ? JSON.parse(adminSession) : null
+      const admin = adminSessionStore.get()
+
+      if (!admin?.palika_id) {
+        setMessage({ type: 'error', text: 'No palika assigned to this admin' })
+        return
+      }
 
       const data = await palikaProfileService.update(admin.palika_id, formData)
 
