@@ -1,0 +1,98 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e35]
+  - generic [ref=e36]:
+    - navigation [ref=e37]:
+      - generic [ref=e38]:
+        - link "Nepal Tourism Admin" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e40]
+          - generic [ref=e44]: Nepal Tourism Admin
+        - generic [ref=e45]:
+          - link "Dashboard" [ref=e46] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e47]
+            - generic [ref=e52]: Dashboard
+          - link "Heritage Sites" [ref=e53] [cursor=pointer]:
+            - /url: /heritage-sites
+            - img [ref=e54]
+            - generic [ref=e56]: Heritage Sites
+          - link "Events" [ref=e57] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e58]
+            - generic [ref=e60]: Events
+          - link "Blog Posts" [ref=e61] [cursor=pointer]:
+            - /url: /blog-posts
+            - img [ref=e62]
+            - generic [ref=e65]: Blog Posts
+          - link "Notifications" [ref=e66] [cursor=pointer]:
+            - /url: /notifications
+            - img [ref=e67]
+            - generic [ref=e70]: Notifications
+          - link "Users" [ref=e71] [cursor=pointer]:
+            - /url: /users
+            - img [ref=e72]
+            - generic [ref=e77]: Users
+          - link "Palika Profile" [ref=e78] [cursor=pointer]:
+            - /url: /palika-profile
+            - img [ref=e79]
+            - generic [ref=e83]: Palika Profile
+          - link "Gallery" [ref=e84] [cursor=pointer]:
+            - /url: /palika-gallery
+            - img [ref=e85]
+            - generic [ref=e89]: Gallery
+          - link "Tiers" [ref=e90] [cursor=pointer]:
+            - /url: /tiers
+            - img [ref=e91]
+            - generic [ref=e93]: Tiers
+          - button "Marketplace" [ref=e95] [cursor=pointer]:
+            - img [ref=e96]
+            - generic [ref=e101]: Marketplace
+            - img [ref=e102]
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: S
+            - generic [ref=e107]:
+              - generic [ref=e108]: Super Admin
+              - generic [ref=e109]: super admin
+          - button "Logout" [ref=e110] [cursor=pointer]:
+            - img [ref=e111]
+    - main [ref=e114]:
+      - generic [ref=e115]:
+        - heading "Dashboard" [level=1] [ref=e116]
+        - paragraph [ref=e117]: Welcome back! Here's what's happening with your Palika.
+      - generic [ref=e118]:
+        - generic [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: Heritage Sites
+          - generic [ref=e121]: "0"
+          - generic [ref=e122]: Click to manage →
+        - generic [ref=e123] [cursor=pointer]:
+          - generic [ref=e124]: Events
+          - generic [ref=e125]: "0"
+          - generic [ref=e126]: Click to manage →
+        - generic [ref=e127] [cursor=pointer]:
+          - generic [ref=e128]: Blog Posts
+          - generic [ref=e129]: "0"
+          - generic [ref=e130]: Click to manage →
+        - generic [ref=e131] [cursor=pointer]:
+          - generic [ref=e132]: Pending Approvals
+          - generic [ref=e133]: "0"
+          - generic [ref=e134]: Click to manage →
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - heading "Recent Activity" [level=3] [ref=e137]
+          - generic [ref=e138]: No recent activity
+        - generic [ref=e139]:
+          - heading "Quick Actions" [level=3] [ref=e140]
+          - generic [ref=e141]:
+            - link "Add Heritage Site" [ref=e142] [cursor=pointer]:
+              - /url: /heritage-sites/new
+              - button "Add Heritage Site" [ref=e143]
+            - link "Add Event" [ref=e144] [cursor=pointer]:
+              - /url: /events/new
+              - button "Add Event" [ref=e145]
+            - link "Write Blog Post" [ref=e146] [cursor=pointer]:
+              - /url: /blog-posts/new
+              - button "Write Blog Post" [ref=e147]
+            - link "Manage Gallery" [ref=e148] [cursor=pointer]:
+              - /url: /palika-gallery
+              - button "Manage Gallery" [ref=e149]

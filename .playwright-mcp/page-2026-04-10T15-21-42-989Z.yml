@@ -1,0 +1,136 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "Nepal Tourism Admin" [ref=e5] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e6]
+          - generic [ref=e10]: Nepal Tourism Admin
+        - generic [ref=e11]:
+          - link "Dashboard" [ref=e12] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e13]
+            - generic [ref=e18]: Dashboard
+          - link "Heritage Sites" [ref=e19] [cursor=pointer]:
+            - /url: /heritage-sites
+            - img [ref=e20]
+            - generic [ref=e22]: Heritage Sites
+          - link "Events" [ref=e23] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e24]
+            - generic [ref=e26]: Events
+          - link "Blog Posts" [ref=e27] [cursor=pointer]:
+            - /url: /blog-posts
+            - img [ref=e28]
+            - generic [ref=e31]: Blog Posts
+          - link "Notifications" [ref=e32] [cursor=pointer]:
+            - /url: /notifications
+            - img [ref=e33]
+            - generic [ref=e36]: Notifications
+          - link "Users" [ref=e37] [cursor=pointer]:
+            - /url: /users
+            - img [ref=e38]
+            - generic [ref=e43]: Users
+          - link "Palika Profile" [ref=e44] [cursor=pointer]:
+            - /url: /palika-profile
+            - img [ref=e45]
+            - generic [ref=e49]: Palika Profile
+          - link "Gallery" [ref=e50] [cursor=pointer]:
+            - /url: /palika-gallery
+            - img [ref=e51]
+            - generic [ref=e55]: Gallery
+          - link "Tiers" [ref=e56] [cursor=pointer]:
+            - /url: /tiers
+            - img [ref=e57]
+            - generic [ref=e59]: Tiers
+          - button "Marketplace" [ref=e61] [cursor=pointer]:
+            - img [ref=e62]
+            - generic [ref=e67]: Marketplace
+            - img [ref=e68]
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - generic [ref=e72]: S
+            - generic [ref=e73]:
+              - generic [ref=e74]: Super Admin
+              - generic [ref=e75]: super admin
+          - button "Logout" [ref=e76] [cursor=pointer]:
+            - img [ref=e77]
+    - main [ref=e80]:
+      - generic [ref=e81]:
+        - heading "Blog Posts Management" [level=1] [ref=e82]
+        - link "Write New Post" [ref=e83] [cursor=pointer]:
+          - /url: /blog-posts/new
+      - generic [ref=e84]:
+        - textbox "Search blog posts..." [ref=e86]
+        - table [ref=e87]:
+          - rowgroup [ref=e88]:
+            - row "Title Slug Status Author Created Published Actions" [ref=e89]:
+              - columnheader "Title" [ref=e90]
+              - columnheader "Slug" [ref=e91]
+              - columnheader "Status" [ref=e92]
+              - columnheader "Author" [ref=e93]
+              - columnheader "Created" [ref=e94]
+              - columnheader "Published" [ref=e95]
+              - columnheader "Actions" [ref=e96]
+          - rowgroup [ref=e97]:
+            - row "sustainable-tourism-nepal-preserving-heritage draft Anita Paudel 4/1/2024 - Edit View" [ref=e98]:
+              - cell [ref=e99]
+              - cell "sustainable-tourism-nepal-preserving-heritage" [ref=e100]
+              - cell "draft" [ref=e101]
+              - cell "Anita Paudel" [ref=e102]
+              - cell "4/1/2024" [ref=e103]
+              - cell "-" [ref=e104]
+              - cell "Edit View" [ref=e105]:
+                - link "Edit" [ref=e106] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440005
+                - link "View" [ref=e107] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440005/view
+            - row "exploring-temples-kathmandu-valley published Ramesh Sharma 3/15/2024 3/15/2024 Edit View" [ref=e108]:
+              - cell [ref=e109]
+              - cell "exploring-temples-kathmandu-valley" [ref=e110]
+              - cell "published" [ref=e111]
+              - cell "Ramesh Sharma" [ref=e112]
+              - cell "3/15/2024" [ref=e113]
+              - cell "3/15/2024" [ref=e114]
+              - cell "Edit View" [ref=e115]:
+                - link "Edit" [ref=e116] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440001
+                - link "View" [ref=e117] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440001/view
+            - row "traditional-pottery-bhaktapur-heritage published Anita Paudel 3/10/2024 3/10/2024 Edit View" [ref=e118]:
+              - cell [ref=e119]
+              - cell "traditional-pottery-bhaktapur-heritage" [ref=e120]
+              - cell "published" [ref=e121]
+              - cell "Anita Paudel" [ref=e122]
+              - cell "3/10/2024" [ref=e123]
+              - cell "3/10/2024" [ref=e124]
+              - cell "Edit View" [ref=e125]:
+                - link "Edit" [ref=e126] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440002
+                - link "View" [ref=e127] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440002/view
+            - row "kathmandu-street-food-culinary-adventure published Ramesh Sharma 3/5/2024 3/5/2024 Edit View" [ref=e128]:
+              - cell [ref=e129]
+              - cell "kathmandu-street-food-culinary-adventure" [ref=e130]
+              - cell "published" [ref=e131]
+              - cell "Ramesh Sharma" [ref=e132]
+              - cell "3/5/2024" [ref=e133]
+              - cell "3/5/2024" [ref=e134]
+              - cell "Edit View" [ref=e135]:
+                - link "Edit" [ref=e136] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440004
+                - link "View" [ref=e137] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440004/view
+            - row "best-time-visit-nepal-seasonal-guide published Pradeep Magar 2/28/2024 2/28/2024 Edit View" [ref=e138]:
+              - cell [ref=e139]
+              - cell "best-time-visit-nepal-seasonal-guide" [ref=e140]
+              - cell "published" [ref=e141]
+              - cell "Pradeep Magar" [ref=e142]
+              - cell "2/28/2024" [ref=e143]
+              - cell "2/28/2024" [ref=e144]
+              - cell "Edit View" [ref=e145]:
+                - link "Edit" [ref=e146] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440003
+                - link "View" [ref=e147] [cursor=pointer]:
+                  - /url: /blog-posts/770e8400-e29b-41d4-a716-446655440003/view
+  - alert [ref=e148]

@@ -1,0 +1,77 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e35]
+  - generic [ref=e150]:
+    - navigation [ref=e151]:
+      - generic [ref=e152]:
+        - link "Nepal Tourism Admin" [ref=e153] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e154]
+          - generic [ref=e158]: Nepal Tourism Admin
+        - generic [ref=e159]:
+          - link "Dashboard" [ref=e160] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e161]
+            - generic [ref=e166]: Dashboard
+          - link "Heritage Sites" [ref=e167] [cursor=pointer]:
+            - /url: /heritage-sites
+            - img [ref=e168]
+            - generic [ref=e170]: Heritage Sites
+          - link "Events" [ref=e171] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e172]
+            - generic [ref=e174]: Events
+          - link "Blog Posts" [ref=e175] [cursor=pointer]:
+            - /url: /blog-posts
+            - img [ref=e176]
+            - generic [ref=e179]: Blog Posts
+          - link "Notifications" [ref=e180] [cursor=pointer]:
+            - /url: /notifications
+            - img [ref=e181]
+            - generic [ref=e184]: Notifications
+          - link "Users" [ref=e185] [cursor=pointer]:
+            - /url: /users
+            - img [ref=e186]
+            - generic [ref=e191]: Users
+          - link "Palika Profile" [ref=e192] [cursor=pointer]:
+            - /url: /palika-profile
+            - img [ref=e193]
+            - generic [ref=e197]: Palika Profile
+          - link "Gallery" [ref=e198] [cursor=pointer]:
+            - /url: /palika-gallery
+            - img [ref=e199]
+            - generic [ref=e203]: Gallery
+          - link "Tiers" [ref=e204] [cursor=pointer]:
+            - /url: /tiers
+            - img [ref=e205]
+            - generic [ref=e207]: Tiers
+          - button "Marketplace" [ref=e209] [cursor=pointer]:
+            - img [ref=e210]
+            - generic [ref=e215]: Marketplace
+            - img [ref=e216]
+        - generic [ref=e218]:
+          - generic [ref=e219]:
+            - generic [ref=e220]: S
+            - generic [ref=e221]:
+              - generic [ref=e222]: Super Admin
+              - generic [ref=e223]: super admin
+          - button "Logout" [ref=e224] [cursor=pointer]:
+            - img [ref=e225]
+    - main [ref=e228]:
+      - generic [ref=e229]:
+        - heading "Blog Posts Management" [level=1] [ref=e230]
+        - link "Write New Post" [ref=e231] [cursor=pointer]:
+          - /url: /blog-posts/new
+      - generic [ref=e232]:
+        - textbox "Search blog posts..." [ref=e234]
+        - table [ref=e235]:
+          - rowgroup [ref=e236]:
+            - row "Title Slug Status Author Created Published Actions" [ref=e237]:
+              - columnheader "Title" [ref=e238]
+              - columnheader "Slug" [ref=e239]
+              - columnheader "Status" [ref=e240]
+              - columnheader "Author" [ref=e241]
+              - columnheader "Created" [ref=e242]
+              - columnheader "Published" [ref=e243]
+              - columnheader "Actions" [ref=e244]
+          - rowgroup
+        - generic [ref=e245]: No blog posts found. Write your first post!
