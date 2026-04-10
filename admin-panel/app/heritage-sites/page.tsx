@@ -3,18 +3,8 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
+import { heritageSitesService, type HeritageSite } from '@/lib/client/heritage-sites-client.service'
 import './heritage-sites.css'
-
-interface HeritageSite {
-  id: string
-  name_english: string
-  name_nepali: string
-  category: string
-  type: string
-  status: string
-  palika_name: string
-  created_at: string
-}
 
 export default function HeritageSitesPage() {
   const [sites, setSites] = useState<HeritageSite[]>([])
@@ -29,14 +19,8 @@ export default function HeritageSitesPage() {
 
   const fetchHeritageSites = async () => {
     try {
-      const response = await fetch('/api/heritage-sites')
-      if (response.ok) {
-        const data = await response.json()
-        setSites(Array.isArray(data) ? data : [])
-      } else {
-        console.error('Failed to fetch heritage sites')
-        setSites([])
-      }
+      const result = await heritageSitesService.getAll()
+      setSites(result.data)
     } catch (error) {
       console.error('Error fetching heritage sites:', error)
       setSites([])
@@ -46,13 +30,13 @@ export default function HeritageSitesPage() {
   }
 
   const filteredSites = sites.filter(site => {
-    const matchesSearch = site.name_english?.toLowerCase().includes(filter.toLowerCase()) ||
-      site.name_nepali?.includes(filter) ||
-      site.category?.toLowerCase().includes(filter.toLowerCase())
-    
+    const matchesSearch = site.name_en?.toLowerCase().includes(filter.toLowerCase()) ||
+      site.name_ne?.includes(filter) ||
+      site.site_type?.toLowerCase().includes(filter.toLowerCase())
+
     const matchesStatus = statusFilter === 'all' || site.status === statusFilter
-    const matchesType = typeFilter === 'all' || site.type === typeFilter
-    
+    const matchesType = typeFilter === 'all' || site.site_type === typeFilter
+
     return matchesSearch && matchesStatus && matchesType
   })
 
@@ -222,14 +206,14 @@ export default function HeritageSitesPage() {
                 <tr key={site.id}>
                   <td>
                     <div className="site-name-cell">
-                      <div className="site-name-english">{site.name_english}</div>
-                      <div className="site-name-nepali">{site.name_nepali}</div>
+                      <div className="site-name-english">{site.name_en}</div>
+                      <div className="site-name-nepali">{site.name_ne}</div>
                     </div>
                   </td>
                   <td>
-                    <span className="category-badge">{site.category}</span>
+                    <span className="category-badge">{site.category_name || 'Uncategorized'}</span>
                   </td>
-                  <td>{site.type}</td>
+                  <td>{site.site_type}</td>
                   <td>
                     <span className={`status-badge status-${site.status.toLowerCase().replace(' ', '-')}`}>
                       {site.status}

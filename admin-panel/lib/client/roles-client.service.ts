@@ -135,17 +135,18 @@ class RolesClientService {
   }
 
   /**
-   * Assign permissions to a role
+   * Assign permissions to a role (replaces all permissions)
    */
   async assignPermissions(roleId: number, permissionIds: number[]): Promise<Role> {
     const response = await fetch(`${this.baseUrl}/${roleId}/permissions`, {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ permissions: permissionIds })
+      body: JSON.stringify({ permissionIds })
     })
 
     if (!response.ok) {
-      throw new Error('Failed to assign permissions')
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.error || 'Failed to assign permissions')
     }
 
     return response.json()

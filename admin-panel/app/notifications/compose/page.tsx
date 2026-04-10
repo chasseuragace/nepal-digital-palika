@@ -17,6 +17,7 @@ import {
   type NotificationTemplate,
 } from '@/lib/notification-use-cases'
 import { notificationsService, type AttachmentInput } from '@/lib/client/notifications-client.service'
+import { businessTargetingService } from '@/lib/client/business-targeting-client.service'
 import BusinessTargetingSelector from '@/components/BusinessTargetingSelector'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Toast, { ToastType } from '@/components/Toast'
@@ -117,23 +118,18 @@ export default function NotificationComposePage() {
     // Fetch users for selected businesses
     setBusinessUsersLoading(true)
     try {
-      const response = await fetch(
-        `/api/business-targeting/users?business_ids=${businessIds.join(',')}`
-      )
-      if (response.ok) {
-        const result = await response.json()
-        const businessUsers = (result.data || []).map((u: any) => ({
-          id: u.id,
-          label: u.name,
-        }))
+      const businessUsers = await businessTargetingService.getUsersByBusinessIds(businessIds)
+      const formattedUsers = businessUsers.map((u: any) => ({
+        id: u.id,
+        label: u.name,
+      }))
 
-        // Add these users to the target users list (avoiding duplicates)
-        setTargetUsers(prev => {
-          const existingIds = new Set(prev.map(u => u.id))
-          const newUsers = businessUsers.filter((u: any) => !existingIds.has(u.id))
-          return [...prev, ...newUsers]
-        })
-      }
+      // Add these users to the target users list (avoiding duplicates)
+      setTargetUsers(prev => {
+        const existingIds = new Set(prev.map(u => u.id))
+        const newUsers = formattedUsers.filter((u: any) => !existingIds.has(u.id))
+        return [...prev, ...newUsers]
+      })
     } catch (error) {
       console.error('Failed to fetch business users:', error)
     } finally {

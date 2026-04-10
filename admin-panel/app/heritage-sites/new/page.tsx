@@ -5,6 +5,7 @@ import AdminLayout from '@/components/AdminLayout'
 import { useRouter } from 'next/navigation'
 import { categoriesService, type Category } from '@/lib/client/categories-client.service'
 import { palikaService, type Palika } from '@/lib/client/palika-client.service'
+import { heritageSitesService } from '@/lib/client/heritage-sites-client.service'
 import './heritage-sites-new.css'
 
 interface FormData {
@@ -134,26 +135,14 @@ export default function NewHeritageSitePage() {
     setSuccess('')
 
     try {
-      const response = await fetch('/api/heritage-sites', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setSuccess('Heritage site created successfully!')
-        setTimeout(() => {
-          router.push('/heritage-sites')
-        }, 2000)
-      } else {
-        setError(data.error || 'Failed to create heritage site')
-      }
-    } catch (error) {
-      setError('Network error. Please try again.')
+      await heritageSitesService.create(formData as any)
+      setSuccess('Heritage site created successfully!')
+      setTimeout(() => {
+        router.push('/heritage-sites')
+      }, 2000)
+    } catch (err) {
+      console.error('Error creating heritage site:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create heritage site')
     } finally {
       setIsLoading(false)
     }

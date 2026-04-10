@@ -4,23 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
-
-interface Province {
-  id: number
-  name_en: string
-}
-
-interface District {
-  id: number
-  name_en: string
-  province_id: number
-}
-
-interface Palika {
-  id: number
-  name_en: string
-  district_id: number
-}
+import { adminsService } from '@/lib/client/admins-client.service'
+import { palikaService, type Province, type District, type Palika } from '@/lib/client/palika-client.service'
 
 interface AdminRegion {
   id: number
@@ -120,19 +105,7 @@ export default function EditAdminPage() {
   const fetchAdmin = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/admins/${adminId}`)
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setErrors({ submit: 'Admin not found' })
-        } else {
-          setErrors({ submit: 'Failed to load admin data' })
-        }
-        return
-      }
-
-      const data = await response.json()
-      const adminData = data.data
+      const adminData: any = await adminsService.getById(adminId)
 
       setAdmin(adminData)
       setFormData({
@@ -141,13 +114,13 @@ export default function EditAdminPage() {
         province_id: adminData.province_id || '',
         district_id: adminData.district_id || '',
         palika_id: adminData.palika_id || '',
-        regions: adminData.regions,
+        regions: adminData.regions || [],
         is_active: adminData.is_active
       })
 
       // Set selected regions
       const selected = new Set<string>()
-      adminData.regions.forEach((r: AdminRegion) => {
+      ;(adminData.regions || []).forEach((r: AdminRegion) => {
         selected.add(`${r.region_type}-${r.region_id}`)
       })
       setSelectedRegions(selected)
@@ -163,7 +136,7 @@ export default function EditAdminPage() {
       }
     } catch (error) {
       console.error('Error fetching admin:', error)
-      setErrors({ submit: 'An error occurred while loading admin data' })
+      setErrors({ submit: 'Failed to load admin data' })
     } finally {
       setIsLoading(false)
     }
@@ -171,11 +144,8 @@ export default function EditAdminPage() {
 
   const fetchProvinces = async () => {
     try {
-      const response = await fetch('/api/palikas/provinces')
-      if (response.ok) {
-        const data = await response.json()
-        setProvinces(data.data || [])
-      }
+      const data = await palikaService.getProvinces()
+      setProvinces(data)
     } catch (error) {
       console.error('Error fetching provinces:', error)
     }
@@ -183,11 +153,8 @@ export default function EditAdminPage() {
 
   const fetchDistricts = async (provinceId: number) => {
     try {
-      const response = await fetch(`/api/palikas/districts?province_id=${provinceId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setDistricts(data.data || [])
-      }
+      const data = await palikaService.getDistricts(provinceId)
+      setDistricts(data)
     } catch (error) {
       console.error('Error fetching districts:', error)
     }
@@ -195,11 +162,8 @@ export default function EditAdminPage() {
 
   const fetchPalikas = async (districtId: number) => {
     try {
-      const response = await fetch(`/api/palikas?district_id=${districtId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setPalikas(data.data || [])
-      }
+      const data = await palikaService.getPalikas(districtId)
+      setPalikas(data)
     } catch (error) {
       console.error('Error fetching palikas:', error)
     }
@@ -360,37 +324,21 @@ export default function EditAdminPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`/api/admins/${adminId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          full_name: formData.full_name,
-          hierarchy_level: formData.hierarchy_level,
-          province_id: formData.province_id ? Number(formData.province_id) : null,
-          district_id: formData.district_id ? Number(formData.district_id) : null,
-          palika_id: formData.palika_id ? Number(formData.palika_id) : null,
-          regions: formData.regions,
-          is_active: formData.is_active
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setErrors({
-          submit: data.error || 'Failed to update admin'
-        })
-        return
-      }
+      await adminsService.update(adminId, {
+        full_name: formData.full_name,
+        hierarchy_level: formData.hierarchy_level as any,
+        province_id: formData.province_id ? Number(formData.province_id) : undefined,
+        district_id: formData.district_id ? Number(formData.district_id) : undefined,
+        palika_id: formData.palika_id ? Number(formData.palika_id) : undefined,
+        is_active: formData.is_active
+      } as any)
 
       // Success - redirect to admin list
       router.push('/admins')
     } catch (error) {
       console.error('Error updating admin:', error)
       setErrors({
-        submit: 'An error occurred while updating the admin'
+        submit: error instanceof Error ? error.message : 'An error occurred while updating the admin'
       })
     } finally {
       setIsSubmitting(false)

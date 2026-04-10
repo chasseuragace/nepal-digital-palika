@@ -1,7 +1,7 @@
 # Client Services Refactoring - Complete ✅
 
 **Date:** 2026-04-10  
-**Status:** All existing pages refactored to use clean architecture client services
+**Status:** ALL 11 pages fully refactored (100% complete)
 
 ## Summary
 
@@ -43,16 +43,18 @@ Successfully refactored all 12 pages identified in the audit to use client servi
 | `app/notifications/compose/page.tsx` | notificationsService | ✅ Complete |
 | `app/heritage-sites/new/page.tsx` | categoriesService, palikaService | ✅ Complete |
 
-## Pages Still Needing Refactoring ⚠️
+### Detail Pages (Complete - Phase 4)
+| Page | Services Used | Status |
+|------|---------------|--------|
+| `app/admins/[id]/page.tsx` | adminsService, palikaService | ✅ Complete |
+| `app/roles/[id]/page.tsx` | rolesService, permissionsService | ✅ Complete |
+| `app/events/[id]/page.tsx` | eventsService, palikaService | ✅ Complete |
+| `app/permissions/page.tsx` | permissionsService, rolesService | ✅ Complete |
 
-| Page | Fetch Calls | Services Needed | Priority |
-|------|-------------|-----------------|----------|
-| `app/admins/[id]/page.tsx` | `/api/admins/${id}`, `/api/palikas/*` | adminsService, palikaService | HIGH |
-| `app/roles/[id]/page.tsx` | `/api/roles/${id}`, `/api/permissions`, `/api/roles/${id}/permissions` | rolesService, permissionsService | MEDIUM |
-| `app/events/[id]/page.tsx` | `/api/events/${id}`, `/api/palikas`, `/api/events/${id}` (PUT) | eventsService, palikaService | MEDIUM |
-| `app/permissions/page.tsx` | `/api/permissions?*`, `/api/roles?limit=1000` | permissionsService, rolesService | MEDIUM |
+**Total Progress: 11/11 pages refactored (100%) 🎉**
 
-**Total Progress: 7/11 pages refactored (64%)**
+### Bonus: Performance Improvement
+`app/permissions/page.tsx` was refactored from an O(N×M) nested fetch pattern (1 fetch per permission × 1 fetch per role) to a single parallel fetch using roles with embedded permissions. Significantly faster for pages with many permissions.
 
 ## Refactoring Pattern Applied
 

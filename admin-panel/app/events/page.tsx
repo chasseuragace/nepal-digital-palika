@@ -3,18 +3,7 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
-
-interface Event {
-  id: string
-  name_english: string
-  name_nepali: string
-  event_type: string
-  start_date: string
-  end_date: string
-  status: string
-  palika_name: string
-  created_at: string
-}
+import { eventsService, type Event } from '@/lib/client/events-client.service'
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -27,14 +16,8 @@ export default function EventsPage() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('/api/events')
-      if (response.ok) {
-        const data = await response.json()
-        setEvents(Array.isArray(data) ? data : [])
-      } else {
-        console.error('Failed to fetch events')
-        setEvents([])
-      }
+      const result = await eventsService.getAll()
+      setEvents(result.data)
     } catch (error) {
       console.error('Error fetching events:', error)
       setEvents([])
@@ -43,9 +26,9 @@ export default function EventsPage() {
     }
   }
 
-  const filteredEvents = events.filter(event => 
-    event.name_english?.toLowerCase().includes(filter.toLowerCase()) ||
-    event.name_nepali?.includes(filter) ||
+  const filteredEvents = events.filter(event =>
+    event.name_en?.toLowerCase().includes(filter.toLowerCase()) ||
+    event.name_ne?.includes(filter) ||
     event.event_type?.toLowerCase().includes(filter.toLowerCase())
   )
 
