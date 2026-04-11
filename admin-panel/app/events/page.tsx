@@ -3,23 +3,8 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
-<<<<<<< HEAD
-import './events.css'
-
-interface Event {
-  id: string
-  name_english: string
-  name_nepali: string
-  event_type: string
-  start_date: string
-  end_date: string
-  status: string
-  palika_name: string
-  created_at: string
-}
-=======
 import { eventsService, type Event } from '@/lib/client/events-client.service'
->>>>>>> b850cbaa834e2aab46c670a718a30ff6acf0af8d
+import './events.css'
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -44,10 +29,9 @@ export default function EventsPage() {
     }
   }
 
-<<<<<<< HEAD
   const filteredEvents = events.filter(event => {
-    const matchesSearch = event.name_english?.toLowerCase().includes(filter.toLowerCase()) ||
-      event.name_nepali?.includes(filter) ||
+    const matchesSearch = event.name_en?.toLowerCase().includes(filter.toLowerCase()) ||
+      event.name_ne?.includes(filter) ||
       event.event_type?.toLowerCase().includes(filter.toLowerCase())
     
     const matchesStatus = statusFilter === 'all' || event.status === statusFilter
@@ -62,13 +46,6 @@ export default function EventsPage() {
     draft: events.filter(e => e.status === 'draft').length,
     upcoming: events.filter(e => new Date(e.start_date) > new Date()).length
   }
-=======
-  const filteredEvents = events.filter(event =>
-    event.name_en?.toLowerCase().includes(filter.toLowerCase()) ||
-    event.name_ne?.includes(filter) ||
-    event.event_type?.toLowerCase().includes(filter.toLowerCase())
-  )
->>>>>>> b850cbaa834e2aab46c670a718a30ff6acf0af8d
 
   if (isLoading) {
     return (
@@ -232,8 +209,8 @@ export default function EventsPage() {
                 <tr key={event.id}>
                   <td>
                     <div className="event-name-cell">
-                      <div className="event-name-english">{event.name_english}</div>
-                      <div className="event-name-nepali">{event.name_nepali}</div>
+                      <div className="event-name-english">{event.name_en}</div>
+                      <div className="event-name-nepali">{event.name_ne}</div>
                     </div>
                   </td>
                   <td>
