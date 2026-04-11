@@ -4,11 +4,8 @@ import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { StatCard, InfoBox, ActionButton, SectionHeading } from './components'
 import { styles } from './styles'
-<<<<<<< HEAD
-import './dashboard.css'
-=======
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
->>>>>>> b850cbaa834e2aab46c670a718a30ff6acf0af8d
+import './dashboard.css'
 
 interface DashboardStats {
   palika_profile?: {
