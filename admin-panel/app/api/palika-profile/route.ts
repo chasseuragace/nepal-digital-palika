@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getPalikaProfileDatasource } from '@/lib/palika-profile-config'
+
+const datasource = getPalikaProfileDatasource()
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,21 +15,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Fetch palika profile
-    const { data: profile, error } = await supabaseAdmin
-      .from('palika_profiles')
-      .select('*')
-      .eq('palika_id', palikaId)
-      .single()
-
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = no rows found, which is fine
-      console.error('Error fetching palika profile:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch palika profile' },
-        { status: 500 }
-      )
-    }
+    // Fetch palika profile using datasource
+    const profile = await datasource.getByPalikaId(palikaId)
 
     // If no profile exists, return empty profile structure
     if (!profile) {
@@ -88,75 +77,12 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Check if profile exists
-    const { data: existingProfile } = await supabaseAdmin
-      .from('palika_profiles')
-      .select('id')
-      .eq('palika_id', palikaId)
-      .single()
-
-    let result
-
-    if (existingProfile) {
-      // Update existing profile
-      const { data: updatedProfile, error: updateError } = await supabaseAdmin
-        .from('palika_profiles')
-        .update({
-          description_en: body.description_en || '',
-          description_ne: body.description_ne || '',
-          featured_image: body.featured_image || '',
-          gallery_images: body.gallery_images || [],
-          highlights: body.highlights || [],
-          tourism_info: body.tourism_info || {},
-          demographics: body.demographics || {},
-          videos: body.videos || [],
-          updated_at: new Date().toISOString()
-        })
-        .eq('palika_id', palikaId)
-        .select()
-        .single()
-
-      if (updateError) {
-        console.error('Error updating palika profile:', updateError)
-        return NextResponse.json(
-          { error: 'Failed to update palika profile' },
-          { status: 500 }
-        )
-      }
-
-      result = updatedProfile
-    } else {
-      // Create new profile
-      const { data: newProfile, error: createError } = await supabaseAdmin
-        .from('palika_profiles')
-        .insert({
-          palika_id: palikaId,
-          description_en: body.description_en || '',
-          description_ne: body.description_ne || '',
-          featured_image: body.featured_image || '',
-          gallery_images: body.gallery_images || [],
-          highlights: body.highlights || [],
-          tourism_info: body.tourism_info || {},
-          demographics: body.demographics || {},
-          videos: body.videos || []
-        })
-        .select()
-        .single()
-
-      if (createError) {
-        console.error('Error creating palika profile:', createError)
-        return NextResponse.json(
-          { error: 'Failed to create palika profile' },
-          { status: 500 }
-        )
-      }
-
-      result = newProfile
-    }
+    // Upsert profile using datasource (creates or updates)
+    const profile = await datasource.upsert(palikaId, body)
 
     return NextResponse.json({
       success: true,
-      profile: result
+      profile
     })
   } catch (error) {
     console.error('Error in PUT /api/palika-profile:', error)
