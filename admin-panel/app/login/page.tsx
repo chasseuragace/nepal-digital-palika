@@ -3,11 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, Mail, Lock, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
-<<<<<<< HEAD
-import './login.css'
-=======
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
->>>>>>> b850cbaa834e2aab46c670a718a30ff6acf0af8d
+import './login.css'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
