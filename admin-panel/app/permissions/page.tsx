@@ -2,14 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
-
-interface Permission {
-  id: number
-  name: string
-  resource: string
-  action: string
-  description: string
-}
+import { permissionsService, type Permission } from '@/lib/client/permissions-client.service'
+import { rolesService, type Role as ServiceRole } from '@/lib/client/roles-client.service'
 
 interface Role {
   id: number
@@ -19,13 +13,6 @@ interface Role {
 
 interface PermissionWithRoles extends Permission {
   roles: Role[]
-}
-
-interface ApiResponse {
-  data: Permission[]
-  total: number
-  page: number
-  limit: number
 }
 
 export default function PermissionsPage() {
@@ -49,64 +36,39 @@ export default function PermissionsPage() {
       setIsLoading(true)
       setError(null)
 
-      // Fetch permissions
-      const params = new URLSearchParams()
-      params.append('page', currentPage.toString())
-      params.append('limit', limit.toString())
-      if (resourceFilter) params.append('resource', resourceFilter)
+      // Fetch permissions and all roles in parallel
+      const [permData, rolesData] = await Promise.all([
+        permissionsService.getAll(),
+        rolesService.getAll({ limit: 1000 })
+      ])
 
-      const permResponse = await fetch(`/api/permissions?${params.toString()}`)
+      const allPermissions = permData.data || []
+      const rolesList = (rolesData.data || []) as ServiceRole[]
 
-      if (!permResponse.ok) {
-        if (permResponse.status === 401) {
-          setError('Unauthorized: Please log in')
-        } else if (permResponse.status === 403) {
-          setError('Forbidden: You do not have permission to view permissions')
-        } else {
-          setError('Failed to fetch permissions')
+      setAllRoles(rolesList.map(r => ({
+        id: r.id,
+        name: r.name,
+        hierarchy_level: r.hierarchy_level
+      })))
+
+      // Map each permission to roles that have it (roles already include permissions array)
+      const permissionsWithRoles: PermissionWithRoles[] = allPermissions.map(perm => {
+        const rolesWithPerm: Role[] = rolesList
+          .filter(role => role.permissions?.some(p => p.id === perm.id))
+          .map(role => ({
+            id: role.id,
+            name: role.name,
+            hierarchy_level: role.hierarchy_level
+          }))
+
+        return {
+          ...perm,
+          roles: rolesWithPerm
         }
-        setPermissions([])
-        return
-      }
-
-      const permData: ApiResponse = await permResponse.json()
-
-      // Fetch all roles
-      const rolesResponse = await fetch('/api/roles?limit=1000')
-      if (!rolesResponse.ok) {
-        throw new Error('Failed to fetch roles')
-      }
-      const rolesData = await rolesResponse.json()
-      setAllRoles(rolesData.data || [])
-
-      // Fetch roles for each permission
-      const permissionsWithRoles = await Promise.all(
-        (permData.data || []).map(async (perm) => {
-          const { data: rolePerms, error: rolePermError } = await fetch(
-            `/api/roles?limit=1000`
-          ).then(r => r.json())
-
-          // Find which roles have this permission
-          const rolesWithPerm: Role[] = []
-          for (const role of rolesData.data || []) {
-            const { data: perms } = await fetch(
-              `/api/roles/${role.id}/permissions`
-            ).then(r => r.json())
-
-            if (perms?.some((p: Permission) => p.id === perm.id)) {
-              rolesWithPerm.push(role)
-            }
-          }
-
-          return {
-            ...perm,
-            roles: rolesWithPerm
-          }
-        })
-      )
+      })
 
       setPermissions(permissionsWithRoles)
-      setTotalCount(permData.total || 0)
+      setTotalCount(permData.total || allPermissions.length)
     } catch (err) {
       console.error('Error fetching permissions:', err)
       setError('Error fetching permissions')

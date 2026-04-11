@@ -3,20 +3,16 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import PalikaGallery from '@/components/PalikaGallery'
-
-interface AdminUser {
-  id: string
-  palika_id?: number
-}
+import { adminSessionStore, type AdminSession } from '@/lib/storage/session-storage.service'
 
 export default function PalikaGalleryPage() {
-  const [admin, setAdmin] = useState<AdminUser | null>(null)
+  const [admin, setAdmin] = useState<AdminSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession')
-    if (adminSession) {
-      setAdmin(JSON.parse(adminSession))
+    const session = adminSessionStore.get()
+    if (session) {
+      setAdmin(session)
     }
     setIsLoading(false)
   }, [])

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { eventsService } from '@/lib/client/events-client.service'
+import { palikaService } from '@/lib/client/palika-client.service'
 
 interface FormData {
   name_english: string
@@ -76,13 +78,8 @@ export default function EditEventPage() {
   const fetchEvent = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/events/${eventId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setFormData(data)
-      } else {
-        setError('Failed to load event')
-      }
+      const data = await eventsService.getById(eventId)
+      setFormData(data as any)
     } catch (error) {
       console.error('Error fetching event:', error)
       setError('Error loading event')
@@ -93,11 +90,12 @@ export default function EditEventPage() {
 
   const fetchPalikas = async () => {
     try {
-      const response = await fetch('/api/palikas')
-      if (response.ok) {
-        const data = await response.json()
-        setPalikas(Array.isArray(data) ? data : [])
-      }
+      const data = await palikaService.getPalikas()
+      setPalikas(data.map(p => ({
+        id: p.id.toString(),
+        name_en: p.name_en,
+        name_ne: p.name_ne || ''
+      })))
     } catch (error) {
       console.error('Error fetching palikas:', error)
     }
@@ -117,26 +115,14 @@ export default function EditEventPage() {
     setSuccess('')
 
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setSuccess('Event updated successfully!')
-        setTimeout(() => {
-          router.push('/events')
-        }, 2000)
-      } else {
-        setError(data.error || 'Failed to update event')
-      }
+      await eventsService.update(eventId, formData as any)
+      setSuccess('Event updated successfully!')
+      setTimeout(() => {
+        router.push('/events')
+      }, 2000)
     } catch (error) {
-      setError('Network error. Please try again.')
+      console.error('Error updating event:', error)
+      setError(error instanceof Error ? error.message : 'Failed to update event')
     } finally {
       setIsSaving(false)
     }

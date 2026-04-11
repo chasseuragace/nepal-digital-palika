@@ -1,0 +1,133 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "Nepal Tourism Admin" [ref=e5] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e6]
+          - generic [ref=e10]: Nepal Tourism Admin
+        - generic [ref=e11]:
+          - link "Dashboard" [ref=e12] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e13]
+            - generic [ref=e18]: Dashboard
+          - link "Heritage Sites" [ref=e19] [cursor=pointer]:
+            - /url: /heritage-sites
+            - img [ref=e20]
+            - generic [ref=e22]: Heritage Sites
+          - link "Events" [ref=e23] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e24]
+            - generic [ref=e26]: Events
+          - link "Blog Posts" [ref=e27] [cursor=pointer]:
+            - /url: /blog-posts
+            - img [ref=e28]
+            - generic [ref=e31]: Blog Posts
+          - link "Notifications" [ref=e32] [cursor=pointer]:
+            - /url: /notifications
+            - img [ref=e33]
+            - generic [ref=e36]: Notifications
+          - link "Users" [ref=e37] [cursor=pointer]:
+            - /url: /users
+            - img [ref=e38]
+            - generic [ref=e43]: Users
+          - link "Palika Profile" [ref=e44] [cursor=pointer]:
+            - /url: /palika-profile
+            - img [ref=e45]
+            - generic [ref=e49]: Palika Profile
+          - link "Gallery" [ref=e50] [cursor=pointer]:
+            - /url: /palika-gallery
+            - img [ref=e51]
+            - generic [ref=e55]: Gallery
+          - link "Tiers" [ref=e56] [cursor=pointer]:
+            - /url: /tiers
+            - img [ref=e57]
+            - generic [ref=e59]: Tiers
+          - button "Marketplace" [ref=e61] [cursor=pointer]:
+            - img [ref=e62]
+            - generic [ref=e67]: Marketplace
+            - img [ref=e68]
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - generic [ref=e72]: S
+            - generic [ref=e73]:
+              - generic [ref=e74]: Super Admin
+              - generic [ref=e75]: super admin
+          - button "Logout" [ref=e76] [cursor=pointer]:
+            - img [ref=e77]
+    - main [ref=e80]:
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - img [ref=e84]
+          - generic [ref=e90]:
+            - heading "Heritage Sites" [level=1] [ref=e91]
+            - paragraph [ref=e92]: Manage and preserve cultural heritage locations
+        - link "Add New Site" [ref=e93] [cursor=pointer]:
+          - /url: /heritage-sites/new
+          - img [ref=e94]
+          - text: Add New Site
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - img [ref=e98]
+          - generic [ref=e100]:
+            - generic [ref=e101]: "5"
+            - generic [ref=e102]: Total Sites
+        - generic [ref=e103]:
+          - img [ref=e105]
+          - generic [ref=e107]:
+            - generic [ref=e108]: "0"
+            - generic [ref=e109]: Active
+        - generic [ref=e110]:
+          - img [ref=e112]
+          - generic [ref=e114]:
+            - generic [ref=e115]: "0"
+            - generic [ref=e116]: Under Renovation
+        - generic [ref=e117]:
+          - img [ref=e119]
+          - generic [ref=e122]:
+            - generic [ref=e123]: "0"
+            - generic [ref=e124]: Restricted
+      - generic [ref=e125]:
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - img
+            - textbox "Search by name or category..." [ref=e128]
+          - generic [ref=e129]:
+            - combobox [ref=e130] [cursor=pointer]:
+              - option "All Status" [selected]
+              - option "Active"
+              - option "Under Renovation"
+              - option "Restricted"
+            - combobox [ref=e131] [cursor=pointer]:
+              - option "All Types" [selected]
+              - option "Religious"
+              - option "Historical"
+              - option "Cultural"
+              - option "Archaeological"
+              - option "Natural"
+        - generic [ref=e132]:
+          - text: Showing
+          - strong [ref=e133]: "0"
+          - text: of
+          - strong [ref=e134]: "5"
+          - text: heritage sites
+        - table [ref=e136]:
+          - rowgroup [ref=e137]:
+            - row "Site Name Category Type Status Location Created Actions" [ref=e138]:
+              - columnheader "Site Name" [ref=e139]
+              - columnheader "Category" [ref=e140]
+              - columnheader "Type" [ref=e141]
+              - columnheader "Status" [ref=e142]
+              - columnheader "Location" [ref=e143]
+              - columnheader "Created" [ref=e144]
+              - columnheader "Actions" [ref=e145]
+          - rowgroup
+        - generic [ref=e146]:
+          - img [ref=e148]
+          - heading "No heritage sites yet" [level=3] [ref=e154]
+          - paragraph [ref=e155]: Get started by adding your first heritage site
+          - link "Add First Heritage Site" [ref=e156] [cursor=pointer]:
+            - /url: /heritage-sites/new
+            - img [ref=e157]
+            - text: Add First Heritage Site
+  - alert [ref=e158]

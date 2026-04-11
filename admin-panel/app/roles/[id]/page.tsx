@@ -4,31 +4,10 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
+import { rolesService, type Role } from '@/lib/client/roles-client.service'
+import { permissionsService, type Permission } from '@/lib/client/permissions-client.service'
 
-interface Permission {
-  id: number
-  name: string
-  resource: string
-  action: string
-  description: string
-}
-
-interface Role {
-  id: number
-  name: string
-  hierarchy_level: 'national' | 'province' | 'district' | 'palika'
-  description: string
-  description_ne: string
-  permissions: Permission[]
-}
-
-interface AllPermissions {
-  id: number
-  name: string
-  resource: string
-  action: string
-  description: string
-}
+type AllPermissions = Permission
 
 export default function RoleEditPage() {
   const params = useParams()
@@ -60,29 +39,22 @@ export default function RoleEditPage() {
       setIsLoading(true)
       setError(null)
 
-      // Fetch role details
-      const roleResponse = await fetch(`/api/roles/${roleId}`)
-      if (!roleResponse.ok) {
-        throw new Error('Failed to fetch role')
-      }
-      const roleData = await roleResponse.json()
-      setRole(roleData.data)
+      // Fetch role details and all permissions in parallel
+      const [roleData, permData] = await Promise.all([
+        rolesService.getById(roleId),
+        permissionsService.getAll()
+      ])
 
-      // Fetch all permissions
-      const permResponse = await fetch('/api/permissions')
-      if (!permResponse.ok) {
-        throw new Error('Failed to fetch permissions')
-      }
-      const permData = await permResponse.json()
+      setRole(roleData)
       setAllPermissions(permData.data || [])
 
       // Set form data
       setFormData({
-        name: roleData.data.name,
-        hierarchy_level: roleData.data.hierarchy_level,
-        description: roleData.data.description,
-        description_ne: roleData.data.description_ne,
-        selectedPermissions: new Set(roleData.data.permissions?.map((p: Permission) => p.id) || [])
+        name: roleData.name,
+        hierarchy_level: roleData.hierarchy_level as any,
+        description: roleData.description,
+        description_ne: roleData.description_ne,
+        selectedPermissions: new Set(roleData.permissions?.map((p: Permission) => p.id) || [])
       })
     } catch (err) {
       console.error('Error fetching role:', err)
@@ -114,39 +86,15 @@ export default function RoleEditPage() {
       setSaveSuccess(false)
 
       // Update role
-      const response = await fetch(`/api/roles/${roleId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          hierarchy_level: formData.hierarchy_level,
-          description: formData.description,
-          description_ne: formData.description_ne
-        })
+      await rolesService.update(roleId, {
+        name: formData.name,
+        hierarchy_level: formData.hierarchy_level,
+        description: formData.description,
+        description_ne: formData.description_ne
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update role')
-      }
 
       // Update permissions
-      const permResponse = await fetch(`/api/roles/${roleId}/permissions`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          permissionIds: Array.from(formData.selectedPermissions)
-        })
-      })
-
-      if (!permResponse.ok) {
-        const errorData = await permResponse.json()
-        throw new Error(errorData.error || 'Failed to update permissions')
-      }
+      await rolesService.assignPermissions(roleId, Array.from(formData.selectedPermissions))
 
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)

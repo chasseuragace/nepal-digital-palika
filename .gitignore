@@ -41,6 +41,12 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Playwright
+/admin-panel/test-results/
+/admin-panel/playwright-report/
+/admin-panel/.playwright-mcp/
+/.playwright-mcp/
+
 # Build artifacts
 dist/
 build/

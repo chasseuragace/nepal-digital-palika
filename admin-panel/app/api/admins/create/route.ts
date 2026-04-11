@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { MOCK_ADMIN_USERS } from '@/lib/mock-admin-users'
+
+const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true'
 
 interface CreateAdminRequest {
   email: string
@@ -138,40 +141,76 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateAdm
     }
 
     // Check if email already exists
-    const { data: existingAdmin } = await supabaseAdmin
-      .from('admin_users')
-      .select('id')
-      .eq('email', body.email)
-      .single()
+    if (USE_MOCK_AUTH) {
+      // Check in mock users
+      const existingMockAdmin = MOCK_ADMIN_USERS.find(u => u.email.toLowerCase() === body.email.toLowerCase())
+      if (existingMockAdmin) {
+        return NextResponse.json(
+          { success: false, error: 'Email already exists' },
+          { status: 409 }
+        )
+      }
+    } else {
+      // Check in Supabase
+      const { data: existingAdmin } = await supabaseAdmin
+        .from('admin_users')
+        .select('id')
+        .eq('email', body.email)
+        .single()
 
-    if (existingAdmin) {
-      return NextResponse.json(
-        { success: false, error: 'Email already exists' },
-        { status: 409 }
-      )
+      if (existingAdmin) {
+        return NextResponse.json(
+          { success: false, error: 'Email already exists' },
+          { status: 409 }
+        )
+      }
     }
 
     // Create auth user with temporary password
     const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!'
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: body.email,
-      password: tempPassword,
-      email_confirm: true
-    })
+    let authUserId: string
 
-    if (authError) {
-      console.error('Auth error:', authError)
-      return NextResponse.json(
-        { success: false, error: 'Failed to create auth user' },
-        { status: 500 }
-      )
+    if (USE_MOCK_AUTH) {
+      // Mock auth - create mock user directly
+      const mockUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      MOCK_ADMIN_USERS.push({
+        id: mockUserId,
+        email: body.email,
+        password: tempPassword,
+        full_name: body.full_name,
+        role: body.role as any,
+        palika_id: body.palika_id || undefined,
+        district_id: body.district_id || undefined,
+        created_at: new Date().toISOString(),
+      })
+      authUserId = mockUserId
+      console.log(`[MockAuth] Created user: ${body.email}`)
+    } else {
+      // Real Supabase auth
+      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: body.email,
+        password: tempPassword,
+        email_confirm: true
+      })
+
+      if (authError) {
+        console.error('Auth error:', authError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to create auth user' },
+          { status: 500 }
+        )
+      }
+
+      authUserId = authUser.user.id
     }
 
     // Create admin_users record
-    const { data: admin, error: adminError } = await supabaseAdmin
-      .from('admin_users')
-      .insert({
-        id: authUser.user.id,
+    let admin: any
+
+    if (USE_MOCK_AUTH) {
+      // Mock mode - create admin record in memory
+      admin = {
+        id: authUserId,
         email: body.email,
         full_name: body.full_name,
         role: body.role,
@@ -179,47 +218,73 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateAdm
         province_id: body.province_id || null,
         district_id: body.district_id || null,
         palika_id: body.palika_id || null,
-        is_active: true
-      })
-      .select()
-      .single()
-
-    if (adminError) {
-      console.error('Admin creation error:', adminError)
-      // Clean up auth user if admin creation fails
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      return NextResponse.json(
-        { success: false, error: 'Failed to create admin user' },
-        { status: 500 }
-      )
-    }
-
-    // Create admin_regions records
-    const adminRegions = []
-    if (body.regions && body.regions.length > 0) {
-      const { data: regions, error: regionsError } = await supabaseAdmin
-        .from('admin_regions')
-        .insert(
-          body.regions.map(r => ({
-            admin_id: admin.id,
-            region_type: r.region_type,
-            region_id: r.region_id
-          }))
-        )
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    } else {
+      // Real Supabase
+      const { data: adminData, error: adminError } = await supabaseAdmin
+        .from('admin_users')
+        .insert({
+          id: authUserId,
+          email: body.email,
+          full_name: body.full_name,
+          role: body.role,
+          hierarchy_level: body.hierarchy_level,
+          province_id: body.province_id || null,
+          district_id: body.district_id || null,
+          palika_id: body.palika_id || null,
+          is_active: true
+        })
         .select()
+        .single()
 
-      if (regionsError) {
-        console.error('Admin regions creation error:', regionsError)
-        // Clean up admin and auth user if regions creation fails
-        await supabaseAdmin.from('admin_users').delete().eq('id', admin.id)
-        await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
+      if (adminError) {
+        console.error('Admin creation error:', adminError)
+        // Clean up auth user if admin creation fails
+        await supabaseAdmin.auth.admin.deleteUser(authUserId)
         return NextResponse.json(
-          { success: false, error: 'Failed to create admin regions' },
+          { success: false, error: 'Failed to create admin user' },
           { status: 500 }
         )
       }
 
-      adminRegions.push(...regions)
+      admin = adminData
+    }
+
+    // Create admin_regions records
+    const adminRegions: any[] = []
+    if (body.regions && body.regions.length > 0) {
+      if (USE_MOCK_AUTH) {
+        // Mock mode - skip regions (not essential for basic testing)
+        console.log('[MockAuth] Skipping region assignments in mock mode')
+      } else {
+        // Real Supabase
+        const { data: regions, error: regionsError } = await supabaseAdmin
+          .from('admin_regions')
+          .insert(
+            body.regions.map(r => ({
+              admin_id: admin.id,
+              region_type: r.region_type,
+              region_id: r.region_id
+            }))
+          )
+          .select()
+
+        if (regionsError) {
+          console.error('Admin regions creation error:', regionsError)
+          // Clean up admin and auth user if regions creation fails
+          await supabaseAdmin.from('admin_users').delete().eq('id', admin.id)
+          await supabaseAdmin.auth.admin.deleteUser(authUserId)
+          return NextResponse.json(
+            { success: false, error: 'Failed to create admin regions' },
+            { status: 500 }
+          )
+        }
+
+        adminRegions.push(...regions)
+      }
     }
 
     return NextResponse.json(

@@ -12,12 +12,28 @@ import {
   PaginatedResponse,
   ServiceResponse
 } from './types'
+import { IBlogPostsDatasource } from '@/lib/blog-posts-datasource'
+import { getBlogPostsDatasource } from '@/lib/blog-posts-config'
 
 export class BlogPostsService {
   private db: DatabaseClient
+  private datasource: IBlogPostsDatasource
 
-  constructor(db: DatabaseClient) {
-    this.db = db
+  constructor(db?: DatabaseClient | IBlogPostsDatasource) {
+    // Support both old DatabaseClient and new IBlogPostsDatasource
+    if (db && 'from' in db) {
+      // It's a DatabaseClient
+      this.db = db as DatabaseClient
+      this.datasource = getBlogPostsDatasource()
+    } else if (db) {
+      // It's a datasource
+      this.datasource = db as IBlogPostsDatasource
+      this.db = null as any
+    } else {
+      // No argument, use default
+      this.datasource = getBlogPostsDatasource()
+      this.db = null as any
+    }
   }
 
   /**
@@ -29,57 +45,16 @@ export class BlogPostsService {
   ): Promise<ServiceResponse<PaginatedResponse<BlogPost>>> {
     try {
       const { page = 1, limit = 20 } = pagination
-      const offset = (page - 1) * limit
-
-      let query = this.db
-        .from('blog_posts')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          admin_users!inner(full_name)
-        `)
-
-      // Apply filters
-      if (filters.palika_id) {
-        query = query.eq('palika_id', filters.palika_id)
-      }
-      if (filters.author_id) {
-        query = query.eq('author_id', filters.author_id)
-      }
-      if (filters.category) {
-        query = query.eq('category', filters.category)
-      }
-      if (filters.status) {
-        query = query.eq('status', filters.status)
-      }
-      if (filters.search) {
-        query = query.ilike('title_en', `%${filters.search}%`)
-      }
-      if (filters.tags && filters.tags.length > 0) {
-        query = query.contains('tags', filters.tags)
-      }
-
-      // Apply pagination
-      query = query
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      const { data, error, count } = await query
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch blog posts' }
-      }
-
-      const posts = (data || []).map(this.mapBlogPost)
+      const result = await this.datasource.getAll(filters, { page, limit })
 
       return {
         success: true,
         data: {
-          data: posts,
-          total: count || posts.length,
+          data: result.data,
+          total: result.total,
           page,
           limit,
-          hasMore: posts.length === limit
+          hasMore: result.data.length === limit
         }
       }
     } catch (error) {
@@ -92,21 +67,13 @@ export class BlogPostsService {
    */
   async getById(id: string): Promise<ServiceResponse<BlogPost>> {
     try {
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          admin_users!inner(full_name)
-        `)
-        .eq('id', id)
-        .single()
+      const data = await this.datasource.getById(id)
 
-      if (error || !data) {
+      if (!data) {
         return { success: false, error: 'Blog post not found' }
       }
 
-      return { success: true, data: this.mapBlogPost(data) }
+      return { success: true, data }
     } catch (error) {
       return { success: false, error: 'Failed to fetch blog post' }
     }
@@ -117,21 +84,13 @@ export class BlogPostsService {
    */
   async getBySlug(slug: string): Promise<ServiceResponse<BlogPost>> {
     try {
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          admin_users!inner(full_name)
-        `)
-        .eq('slug', slug)
-        .single()
+      const data = await this.datasource.getBySlug(slug)
 
-      if (error || !data) {
+      if (!data) {
         return { success: false, error: 'Blog post not found' }
       }
 
-      return { success: true, data: this.mapBlogPost(data) }
+      return { success: true, data }
     } catch (error) {
       return { success: false, error: 'Failed to fetch blog post' }
     }
@@ -148,32 +107,11 @@ export class BlogPostsService {
         return { success: false, error: validation.error }
       }
 
-      // Generate slug
-      const slug = this.generateSlug(input.title_en)
-
-      // Prepare data
-      const postData = {
-        ...input,
-        slug,
-        status: input.status || 'draft',
-        view_count: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .insert(postData)
-        .select()
-        .single()
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to create blog post' }
-      }
+      const data = await this.datasource.create(input)
 
       return {
         success: true,
-        data: this.mapBlogPost(data),
+        data,
         message: 'Blog post created successfully'
       }
     } catch (error) {
@@ -186,37 +124,11 @@ export class BlogPostsService {
    */
   async update(id: string, input: Partial<CreateBlogPostInput>): Promise<ServiceResponse<BlogPost>> {
     try {
-      // Check if post exists
-      const existing = await this.getById(id)
-      if (!existing.success) {
-        return { success: false, error: 'Blog post not found' }
-      }
-
-      // Prepare update data
-      const updateData: any = {
-        ...input,
-        updated_at: new Date().toISOString()
-      }
-
-      // Update slug if title changed
-      if (input.title_en && input.title_en !== existing.data?.title_en) {
-        updateData.slug = this.generateSlug(input.title_en)
-      }
-
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to update blog post' }
-      }
+      const data = await this.datasource.update(id, input)
 
       return {
         success: true,
-        data: this.mapBlogPost(data),
+        data,
         message: 'Blog post updated successfully'
       }
     } catch (error) {
@@ -229,14 +141,7 @@ export class BlogPostsService {
    */
   async delete(id: string): Promise<ServiceResponse<void>> {
     try {
-      const { error } = await this.db
-        .from('blog_posts')
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to delete blog post' }
-      }
+      await this.datasource.delete(id)
 
       return { success: true, message: 'Blog post deleted successfully' }
     } catch (error) {
@@ -248,18 +153,24 @@ export class BlogPostsService {
    * Publish a blog post
    */
   async publish(id: string): Promise<ServiceResponse<BlogPost>> {
-    return this.update(id, {
-      status: 'published'
-    } as any)
+    try {
+      const data = await this.datasource.publish(id)
+      return { success: true, data, message: 'Blog post published successfully' }
+    } catch (error) {
+      return { success: false, error: 'Failed to publish blog post' }
+    }
   }
 
   /**
    * Archive a blog post
    */
   async archive(id: string): Promise<ServiceResponse<BlogPost>> {
-    return this.update(id, {
-      status: 'archived'
-    } as any)
+    try {
+      const data = await this.datasource.archive(id)
+      return { success: true, data, message: 'Blog post archived successfully' }
+    } catch (error) {
+      return { success: false, error: 'Failed to archive blog post' }
+    }
   }
 
   /**
@@ -267,16 +178,7 @@ export class BlogPostsService {
    */
   async incrementViewCount(id: string): Promise<ServiceResponse<void>> {
     try {
-      const existing = await this.getById(id)
-      if (!existing.success || !existing.data) {
-        return { success: false, error: 'Blog post not found' }
-      }
-
-      await this.db
-        .from('blog_posts')
-        .update({ view_count: existing.data.view_count + 1 })
-        .eq('id', id)
-
+      await this.datasource.incrementViewCount(id)
       return { success: true }
     } catch (error) {
       return { success: false, error: 'Failed to increment view count' }
@@ -288,22 +190,8 @@ export class BlogPostsService {
    */
   async getRecent(limit: number = 5): Promise<ServiceResponse<BlogPost[]>> {
     try {
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          admin_users!inner(full_name)
-        `)
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
-        .limit(limit)
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch recent posts' }
-      }
-
-      return { success: true, data: (data || []).map(this.mapBlogPost) }
+      const result = await this.datasource.getPublished({ limit })
+      return { success: true, data: result.data }
     } catch (error) {
       return { success: false, error: 'Failed to fetch recent posts' }
     }
@@ -314,22 +202,10 @@ export class BlogPostsService {
    */
   async getPopular(limit: number = 5): Promise<ServiceResponse<BlogPost[]>> {
     try {
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          admin_users!inner(full_name)
-        `)
-        .eq('status', 'published')
-        .order('view_count', { ascending: false })
-        .limit(limit)
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch popular posts' }
-      }
-
-      return { success: true, data: (data || []).map(this.mapBlogPost) }
+      const result = await this.datasource.getPublished({ limit })
+      // Sort by view count (fake and real both support this)
+      const sorted = result.data.sort((a, b) => b.view_count - a.view_count).slice(0, limit)
+      return { success: true, data: sorted }
     } catch (error) {
       return { success: false, error: 'Failed to fetch popular posts' }
     }
@@ -361,16 +237,8 @@ export class BlogPostsService {
    */
   async getCategories(): Promise<ServiceResponse<string[]>> {
     try {
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .select('category')
-        .eq('status', 'published')
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch categories' }
-      }
-
-      const categories = [...new Set((data || []).map(d => d.category).filter(Boolean))]
+      const result = await this.datasource.getPublished({ limit: 1000 })
+      const categories = [...new Set(result.data.map(p => p.category).filter(Boolean))]
       return { success: true, data: categories }
     } catch (error) {
       return { success: false, error: 'Failed to fetch categories' }
@@ -382,16 +250,8 @@ export class BlogPostsService {
    */
   async getTags(): Promise<ServiceResponse<string[]>> {
     try {
-      const { data, error } = await this.db
-        .from('blog_posts')
-        .select('tags')
-        .eq('status', 'published')
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch tags' }
-      }
-
-      const allTags = (data || []).flatMap(d => d.tags || [])
+      const result = await this.datasource.getPublished({ limit: 1000 })
+      const allTags = result.data.flatMap(p => p.tags || [])
       const uniqueTags = [...new Set(allTags)]
       return { success: true, data: uniqueTags }
     } catch (error) {
@@ -407,40 +267,6 @@ export class BlogPostsService {
   }
 
   // Private helper methods
-
-  private mapBlogPost(data: any): BlogPost {
-    return {
-      id: data.id,
-      palika_id: data.palika_id,
-      author_id: data.author_id,
-      title_en: data.title_en,
-      title_ne: data.title_ne,
-      slug: data.slug,
-      excerpt: data.excerpt,
-      excerpt_ne: data.excerpt_ne,
-      content: data.content,
-      content_ne: data.content_ne,
-      featured_image: data.featured_image,
-      category: data.category,
-      tags: data.tags,
-      status: data.status,
-      published_at: data.published_at,
-      view_count: data.view_count || 0,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      author_name: data.admin_users?.full_name,
-      palika_name: data.palikas?.name_en
-    }
-  }
-
-  private generateSlug(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
-  }
 
   private validateInput(input: CreateBlogPostInput): { valid: boolean; error?: string } {
     if (!input.title_en?.trim()) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
+<<<<<<< HEAD
 import './events.css'
 
 interface Event {
@@ -16,6 +17,9 @@ interface Event {
   palika_name: string
   created_at: string
 }
+=======
+import { eventsService, type Event } from '@/lib/client/events-client.service'
+>>>>>>> b850cbaa834e2aab46c670a718a30ff6acf0af8d
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -30,14 +34,8 @@ export default function EventsPage() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('/api/events')
-      if (response.ok) {
-        const data = await response.json()
-        setEvents(Array.isArray(data) ? data : [])
-      } else {
-        console.error('Failed to fetch events')
-        setEvents([])
-      }
+      const result = await eventsService.getAll()
+      setEvents(result.data)
     } catch (error) {
       console.error('Error fetching events:', error)
       setEvents([])
@@ -46,6 +44,7 @@ export default function EventsPage() {
     }
   }
 
+<<<<<<< HEAD
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.name_english?.toLowerCase().includes(filter.toLowerCase()) ||
       event.name_nepali?.includes(filter) ||
@@ -63,6 +62,13 @@ export default function EventsPage() {
     draft: events.filter(e => e.status === 'draft').length,
     upcoming: events.filter(e => new Date(e.start_date) > new Date()).length
   }
+=======
+  const filteredEvents = events.filter(event =>
+    event.name_en?.toLowerCase().includes(filter.toLowerCase()) ||
+    event.name_ne?.includes(filter) ||
+    event.event_type?.toLowerCase().includes(filter.toLowerCase())
+  )
+>>>>>>> b850cbaa834e2aab46c670a718a30ff6acf0af8d
 
   if (isLoading) {
     return (

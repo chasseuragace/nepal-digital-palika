@@ -1,97 +1,101 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { HeritageSitesService } from '@/services/heritage-sites.service'
+import { getHeritageSitesDatasource } from '@/lib/heritage-sites-config'
 
-export async function GET() {
+const service = new HeritageSitesService(getHeritageSitesDatasource())
+
+export async function GET(req: NextRequest) {
   try {
-    const { data: sites, error } = await supabaseAdmin
-      .from('heritage_sites')
-      .select(`
-        id,
-        name_en,
-        name_ne,
-        site_type,
-        heritage_status,
-        status,
-        created_at,
-        palikas!inner(name_en)
-      `)
-      .order('created_at', { ascending: false })
+    const filters: any = {}
+    const { searchParams } = new URL(req.url)
 
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to fetch heritage sites' }, { status: 500 })
+    // Optional filters from query params
+    if (searchParams.get('status')) {
+      filters.status = searchParams.get('status')
+    }
+    if (searchParams.get('palika_id')) {
+      filters.palika_id = parseInt(searchParams.get('palika_id') || '0')
+    }
+    if (searchParams.get('category_id')) {
+      filters.category_id = parseInt(searchParams.get('category_id') || '0')
+    }
+    if (searchParams.get('heritage_status')) {
+      filters.heritage_status = searchParams.get('heritage_status')
+    }
+    if (searchParams.get('search')) {
+      filters.search = searchParams.get('search')
     }
 
-    const formattedSites = sites.map(site => ({
-      id: site.id,
-      name_english: site.name_en,
-      name_nepali: site.name_ne,
-      category: site.site_type,
-      type: site.heritage_status,
-      status: site.status,
-      palika_name: site.palikas?.name_en || 'Unknown',
-      created_at: site.created_at
-    }))
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
 
-    return NextResponse.json(formattedSites)
+    const result = await service.getAll(filters, { page, limit })
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 })
+    }
+
+    return NextResponse.json(result.data)
   } catch (error) {
     console.error('Error fetching heritage sites:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const formData = await request.json()
+    const input = await req.json()
+    const result = await service.create(input)
 
-    // Generate UUID for the heritage site
-    const id = crypto.randomUUID()
-
-    const heritageData = {
-      id,
-      name_nepali: formData.name_nepali,
-      name_english: formData.name_english,
-      category: formData.category,
-      type: formData.type,
-      status: formData.status,
-      address: formData.address,
-      ward_number: formData.ward_number,
-      palika_id: formData.palika_id,
-      latitude: formData.latitude,
-      longitude: formData.longitude,
-      altitude: formData.altitude || null,
-      short_description: formData.short_description,
-      full_description: formData.full_description,
-      opening_hours: formData.opening_hours || null,
-      entry_fee: formData.entry_fee || null,
-      best_time_to_visit: formData.best_time_to_visit || null,
-      time_needed: formData.time_needed || null,
-      accessibility: formData.accessibility || null,
-      facilities: formData.facilities || null,
-      restrictions: formData.restrictions || null,
-      contact_info: formData.contact_info || null,
-      meta_title: formData.meta_title || formData.name_english,
-      meta_description: formData.meta_description || formData.short_description.substring(0, 150),
-      keywords: formData.keywords || null,
-      url_slug: formData.url_slug || formData.name_english.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('heritage_sites')
-      .insert([heritageData])
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to create heritage site' }, { status: 500 })
-    }
-
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json(result.data, { status: 201 })
   } catch (error) {
     console.error('Error creating heritage site:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { id, ...input } = await req.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    const result = await service.update(id, input)
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 })
+    }
+
+    return NextResponse.json(result.data)
+  } catch (error) {
+    console.error('Error updating heritage site:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { id } = await req.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    const result = await service.delete(id)
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 })
+    }
+
+    return NextResponse.json({ success: true, message: result.message })
+  } catch (error) {
+    console.error('Error deleting heritage site:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

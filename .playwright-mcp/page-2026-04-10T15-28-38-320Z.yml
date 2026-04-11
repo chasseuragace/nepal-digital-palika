@@ -1,0 +1,225 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "Nepal Tourism Admin" [ref=e5] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e6]
+          - generic [ref=e10]: Nepal Tourism Admin
+        - generic [ref=e11]:
+          - link "Dashboard" [ref=e12] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e13]
+            - generic [ref=e18]: Dashboard
+          - link "Heritage Sites" [ref=e19] [cursor=pointer]:
+            - /url: /heritage-sites
+            - img [ref=e20]
+            - generic [ref=e22]: Heritage Sites
+          - link "Events" [ref=e23] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e24]
+            - generic [ref=e26]: Events
+          - link "Blog Posts" [ref=e27] [cursor=pointer]:
+            - /url: /blog-posts
+            - img [ref=e28]
+            - generic [ref=e31]: Blog Posts
+          - link "Notifications" [ref=e32] [cursor=pointer]:
+            - /url: /notifications
+            - img [ref=e33]
+            - generic [ref=e36]: Notifications
+          - link "Users" [ref=e37] [cursor=pointer]:
+            - /url: /users
+            - img [ref=e38]
+            - generic [ref=e43]: Users
+          - link "Palika Profile" [ref=e44] [cursor=pointer]:
+            - /url: /palika-profile
+            - img [ref=e45]
+            - generic [ref=e49]: Palika Profile
+          - link "Gallery" [ref=e50] [cursor=pointer]:
+            - /url: /palika-gallery
+            - img [ref=e51]
+            - generic [ref=e55]: Gallery
+          - link "Tiers" [ref=e56] [cursor=pointer]:
+            - /url: /tiers
+            - img [ref=e57]
+            - generic [ref=e59]: Tiers
+          - button "Marketplace" [ref=e61] [cursor=pointer]:
+            - img [ref=e62]
+            - generic [ref=e67]: Marketplace
+            - img [ref=e68]
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - generic [ref=e72]: S
+            - generic [ref=e73]:
+              - generic [ref=e74]: Super Admin
+              - generic [ref=e75]: super admin
+          - button "Logout" [ref=e76] [cursor=pointer]:
+            - img [ref=e77]
+    - main [ref=e80]:
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - img [ref=e84]
+          - generic [ref=e90]:
+            - heading "Heritage Sites" [level=1] [ref=e91]
+            - paragraph [ref=e92]: Manage and preserve cultural heritage locations
+        - link "Add New Site" [ref=e93] [cursor=pointer]:
+          - /url: /heritage-sites/new
+          - img [ref=e94]
+          - text: Add New Site
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - img [ref=e98]
+          - generic [ref=e100]:
+            - generic [ref=e101]: "5"
+            - generic [ref=e102]: Total Sites
+        - generic [ref=e103]:
+          - img [ref=e105]
+          - generic [ref=e107]:
+            - generic [ref=e108]: "0"
+            - generic [ref=e109]: Active
+        - generic [ref=e110]:
+          - img [ref=e112]
+          - generic [ref=e114]:
+            - generic [ref=e115]: "0"
+            - generic [ref=e116]: Under Renovation
+        - generic [ref=e117]:
+          - img [ref=e119]
+          - generic [ref=e122]:
+            - generic [ref=e123]: "0"
+            - generic [ref=e124]: Restricted
+      - generic [ref=e125]:
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - img
+            - textbox "Search by name or category..." [ref=e128]
+          - generic [ref=e129]:
+            - combobox [ref=e130] [cursor=pointer]:
+              - option "All Status" [selected]
+              - option "Active"
+              - option "Under Renovation"
+              - option "Restricted"
+            - combobox [ref=e131] [cursor=pointer]:
+              - option "All Types" [selected]
+              - option "Religious"
+              - option "Historical"
+              - option "Cultural"
+              - option "Archaeological"
+              - option "Natural"
+        - generic [ref=e132]:
+          - text: Showing
+          - strong [ref=e133]: "5"
+          - text: of
+          - strong [ref=e134]: "5"
+          - text: heritage sites
+        - table [ref=e136]:
+          - rowgroup [ref=e137]:
+            - row "Site Name Category Type Status Location Created Actions" [ref=e138]:
+              - columnheader "Site Name" [ref=e139]
+              - columnheader "Category" [ref=e140]
+              - columnheader "Type" [ref=e141]
+              - columnheader "Status" [ref=e142]
+              - columnheader "Location" [ref=e143]
+              - columnheader "Created" [ref=e144]
+              - columnheader "Actions" [ref=e145]
+          - rowgroup [ref=e146]:
+            - row "Patan Durbar Square पाटन दरबार वर्ग Heritage Site heritage_complex published Lalitpur Metropolitan 1/20/2024" [ref=e147]:
+              - cell "Patan Durbar Square पाटन दरबार वर्ग" [ref=e148]:
+                - generic [ref=e149]:
+                  - generic [ref=e150]: Patan Durbar Square
+                  - generic [ref=e151]: पाटन दरबार वर्ग
+              - cell "Heritage Site" [ref=e152]:
+                - generic [ref=e153]: Heritage Site
+              - cell "heritage_complex" [ref=e154]
+              - cell "published" [ref=e155]:
+                - generic [ref=e156]: published
+              - cell "Lalitpur Metropolitan" [ref=e157]
+              - cell "1/20/2024" [ref=e158]
+              - cell [ref=e159]:
+                - generic [ref=e160]:
+                  - link "Edit" [ref=e161] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440003
+                    - img [ref=e162]
+                  - link "View" [ref=e164] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440003/view
+                    - img [ref=e165]
+            - row "Bhaktapur Durbar Square भक्तपुर दरबार वर्ग Heritage Site heritage_complex published Bhaktapur Metropolitan 1/15/2024" [ref=e168]:
+              - cell "Bhaktapur Durbar Square भक्तपुर दरबार वर्ग" [ref=e169]:
+                - generic [ref=e170]:
+                  - generic [ref=e171]: Bhaktapur Durbar Square
+                  - generic [ref=e172]: भक्तपुर दरबार वर्ग
+              - cell "Heritage Site" [ref=e173]:
+                - generic [ref=e174]: Heritage Site
+              - cell "heritage_complex" [ref=e175]
+              - cell "published" [ref=e176]:
+                - generic [ref=e177]: published
+              - cell "Bhaktapur Metropolitan" [ref=e178]
+              - cell "1/15/2024" [ref=e179]
+              - cell [ref=e180]:
+                - generic [ref=e181]:
+                  - link "Edit" [ref=e182] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440001
+                    - img [ref=e183]
+                  - link "View" [ref=e185] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440001/view
+                    - img [ref=e186]
+            - row "Boudhanath Stupa बौद्धनाथ स्तुप Heritage Site stupa published Kathmandu Metropolitan 1/12/2024" [ref=e189]:
+              - cell "Boudhanath Stupa बौद्धनाथ स्तुप" [ref=e190]:
+                - generic [ref=e191]:
+                  - generic [ref=e192]: Boudhanath Stupa
+                  - generic [ref=e193]: बौद्धनाथ स्तुप
+              - cell "Heritage Site" [ref=e194]:
+                - generic [ref=e195]: Heritage Site
+              - cell "stupa" [ref=e196]
+              - cell "published" [ref=e197]:
+                - generic [ref=e198]: published
+              - cell "Kathmandu Metropolitan" [ref=e199]
+              - cell "1/12/2024" [ref=e200]
+              - cell [ref=e201]:
+                - generic [ref=e202]:
+                  - link "Edit" [ref=e203] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440005
+                    - img [ref=e204]
+                  - link "View" [ref=e206] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440005/view
+                    - img [ref=e207]
+            - row "Pashupatinath Temple पशुपतिनाथ मन्दिर Heritage Site temple published Kathmandu Metropolitan 1/10/2024" [ref=e210]:
+              - cell "Pashupatinath Temple पशुपतिनाथ मन्दिर" [ref=e211]:
+                - generic [ref=e212]:
+                  - generic [ref=e213]: Pashupatinath Temple
+                  - generic [ref=e214]: पशुपतिनाथ मन्दिर
+              - cell "Heritage Site" [ref=e215]:
+                - generic [ref=e216]: Heritage Site
+              - cell "temple" [ref=e217]
+              - cell "published" [ref=e218]:
+                - generic [ref=e219]: published
+              - cell "Kathmandu Metropolitan" [ref=e220]
+              - cell "1/10/2024" [ref=e221]
+              - cell [ref=e222]:
+                - generic [ref=e223]:
+                  - link "Edit" [ref=e224] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440002
+                    - img [ref=e225]
+                  - link "View" [ref=e227] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440002/view
+                    - img [ref=e228]
+            - row "Swayambhunath Stupa स्वयम्भूनाथ स्तुप Heritage Site stupa published Kathmandu Metropolitan 1/5/2024" [ref=e231]:
+              - cell "Swayambhunath Stupa स्वयम्भूनाथ स्तुप" [ref=e232]:
+                - generic [ref=e233]:
+                  - generic [ref=e234]: Swayambhunath Stupa
+                  - generic [ref=e235]: स्वयम्भूनाथ स्तुप
+              - cell "Heritage Site" [ref=e236]:
+                - generic [ref=e237]: Heritage Site
+              - cell "stupa" [ref=e238]
+              - cell "published" [ref=e239]:
+                - generic [ref=e240]: published
+              - cell "Kathmandu Metropolitan" [ref=e241]
+              - cell "1/5/2024" [ref=e242]
+              - cell [ref=e243]:
+                - generic [ref=e244]:
+                  - link "Edit" [ref=e245] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440004
+                    - img [ref=e246]
+                  - link "View" [ref=e248] [cursor=pointer]:
+                    - /url: /heritage-sites/550e8400-e29b-41d4-a716-446655440004/view
+                    - img [ref=e249]
+  - alert [ref=e252]

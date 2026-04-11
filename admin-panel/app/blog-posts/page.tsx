@@ -3,16 +3,7 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
-
-interface BlogPost {
-  id: string
-  title: string
-  slug: string
-  status: string
-  author_name: string
-  created_at: string
-  published_at: string | null
-}
+import { blogPostsService, type BlogPost } from '@/lib/client/blog-posts-client.service'
 
 export default function BlogPostsPage() {
   const [posts, setPosts] = useState<BlogPost[]>([])
@@ -25,14 +16,8 @@ export default function BlogPostsPage() {
 
   const fetchBlogPosts = async () => {
     try {
-      const response = await fetch('/api/blog-posts')
-      if (response.ok) {
-        const data = await response.json()
-        setPosts(Array.isArray(data) ? data : [])
-      } else {
-        console.error('Failed to fetch blog posts')
-        setPosts([])
-      }
+      const result = await blogPostsService.getAll()
+      setPosts(result.data)
     } catch (error) {
       console.error('Error fetching blog posts:', error)
       setPosts([])
@@ -41,8 +26,8 @@ export default function BlogPostsPage() {
     }
   }
 
-  const filteredPosts = posts.filter(post => 
-    post.title?.toLowerCase().includes(filter.toLowerCase()) ||
+  const filteredPosts = posts.filter(post =>
+    post.title_en?.toLowerCase().includes(filter.toLowerCase()) ||
     post.author_name?.toLowerCase().includes(filter.toLowerCase()) ||
     post.status?.toLowerCase().includes(filter.toLowerCase())
   )
@@ -90,7 +75,7 @@ export default function BlogPostsPage() {
           <tbody>
             {filteredPosts.map((post) => (
               <tr key={post.id}>
-                <td>{post.title}</td>
+                <td>{post.title_en}</td>
                 <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{post.slug}</td>
                 <td>
                   <span style={{ 

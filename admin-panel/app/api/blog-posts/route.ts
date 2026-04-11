@@ -1,39 +1,56 @@
-import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { NextResponse, NextRequest } from 'next/server'
+import { BlogPostsService } from '@/services/blog-posts.service'
+import { getBlogPostsDatasource } from '@/lib/blog-posts-config'
 
-export async function GET() {
+const service = new BlogPostsService(getBlogPostsDatasource())
+
+export async function GET(req: NextRequest) {
   try {
-    const { data: posts, error } = await supabaseAdmin
-      .from('blog_posts')
-      .select(`
-        id,
-        title_en,
-        slug,
-        status,
-        created_at,
-        published_at,
-        admin_users!inner(full_name)
-      `)
-      .order('created_at', { ascending: false })
+    const filters: any = {}
+    const { searchParams } = new URL(req.url)
 
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to fetch blog posts' }, { status: 500 })
+    // Optional filters from query params
+    if (searchParams.get('status')) {
+      filters.status = searchParams.get('status')
+    }
+    if (searchParams.get('author_id')) {
+      filters.author_id = searchParams.get('author_id')
+    }
+    if (searchParams.get('palika_id')) {
+      filters.palika_id = parseInt(searchParams.get('palika_id') || '0')
+    }
+    if (searchParams.get('search')) {
+      filters.search = searchParams.get('search')
     }
 
-    const formattedPosts = posts.map(post => ({
-      id: post.id,
-      title: post.title_en,
-      slug: post.slug,
-      status: post.status,
-      author_name: post.admin_users?.full_name || 'Unknown Author',
-      created_at: post.created_at,
-      published_at: post.published_at
-    }))
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
 
-    return NextResponse.json(formattedPosts)
+    const result = await service.getAll(filters, { page, limit })
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 })
+    }
+
+    return NextResponse.json(result.data)
   } catch (error) {
     console.error('Error fetching blog posts:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const input = await req.json()
+    const result = await service.create(input)
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 })
+    }
+
+    return NextResponse.json(result.data, { status: 201 })
+  } catch (error) {
+    console.error('Error creating blog post:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 
 export default function HomePage() {
   const router = useRouter()
@@ -9,8 +10,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Check if user is already logged in
-    const adminSession = localStorage.getItem('adminSession')
-    if (adminSession) {
+    if (adminSessionStore.exists()) {
       router.push('/dashboard')
     } else {
       router.push('/login')

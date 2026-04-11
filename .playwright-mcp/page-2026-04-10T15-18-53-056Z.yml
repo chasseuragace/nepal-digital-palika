@@ -1,0 +1,48 @@
+- generic [ref=e2]:
+  - alert [ref=e1]
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - heading "Nepal Tourism Admin" [level=1] [ref=e12]
+        - paragraph [ref=e13]: Sign in to manage your palika
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - text: Email Address
+          - generic [ref=e16]:
+            - img [ref=e17]
+            - textbox "Email Address" [ref=e20]:
+              - /placeholder: admin@example.com
+              - text: superadmin@nepaltourism.dev
+        - generic [ref=e21]:
+          - text: Password
+          - generic [ref=e22]:
+            - img [ref=e23]
+            - textbox "Password" [ref=e26]:
+              - /placeholder: Enter your password
+              - text: SuperSecurePass123!
+            - button [ref=e27]:
+              - img [ref=e28]
+        - button "Sign In" [ref=e31]
+      - generic [ref=e32]: Development Mode
+      - button "Hide Test Credentials" [ref=e36]
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39]: Super Admin
+          - generic [ref=e40]:
+            - paragraph [ref=e41]: superadmin@nepaltourism.dev
+            - paragraph [ref=e42]: SuperSecurePass123!
+          - button "Quick Login" [active] [ref=e43]
+        - generic [ref=e44]:
+          - generic [ref=e45]: Palika Admin
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: palika.admin@kathmandu.gov.np
+            - paragraph [ref=e48]: KathmanduAdmin456!
+          - button "Quick Login" [ref=e49]
+        - generic [ref=e50]:
+          - generic [ref=e51]: Moderator
+          - generic [ref=e52]:
+            - paragraph [ref=e53]: content.moderator@kathmandu.gov.np
+            - paragraph [ref=e54]: ModeratorSecure789!
+          - button "Quick Login" [ref=e55]
+    - paragraph [ref=e35]: © 2026 Nepal Tourism Admin. All rights reserved.

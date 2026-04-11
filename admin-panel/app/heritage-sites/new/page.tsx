@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { useRouter } from 'next/navigation'
+import { categoriesService, type Category } from '@/lib/client/categories-client.service'
+import { palikaService, type Palika } from '@/lib/client/palika-client.service'
+import { heritageSitesService } from '@/lib/client/heritage-sites-client.service'
 import './heritage-sites-new.css'
 
 interface FormData {
@@ -12,7 +15,7 @@ interface FormData {
   category: string
   type: string
   status: string
-  
+
   // Location
   address: string
   ward_number: number
@@ -20,11 +23,11 @@ interface FormData {
   latitude: number
   longitude: number
   altitude: number
-  
+
   // Description Tab
   short_description: string
   full_description: string
-  
+
   // Visitor Information Tab
   opening_hours: string
   entry_fee: string
@@ -34,24 +37,12 @@ interface FormData {
   facilities: string
   restrictions: string
   contact_info: string
-  
+
   // SEO and Metadata
   meta_title: string
   meta_description: string
   keywords: string
   url_slug: string
-}
-
-interface Category {
-  id: string
-  name: string
-  entity_type: string
-}
-
-interface Palika {
-  id: string
-  name_en: string
-  name_ne: string
 }
 
 export default function NewHeritageSitePage() {
@@ -99,14 +90,8 @@ export default function NewHeritageSitePage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories?entity_type=heritage_site')
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(Array.isArray(data) ? data : [])
-      } else {
-        console.error('Failed to fetch categories')
-        setCategories([])
-      }
+      const data = await categoriesService.getByEntityType('heritage_site')
+      setCategories(data)
     } catch (error) {
       console.error('Error fetching categories:', error)
       setCategories([])
@@ -115,14 +100,8 @@ export default function NewHeritageSitePage() {
 
   const fetchPalikas = async () => {
     try {
-      const response = await fetch('/api/palikas')
-      if (response.ok) {
-        const data = await response.json()
-        setPalikas(Array.isArray(data) ? data : [])
-      } else {
-        console.error('Failed to fetch palikas')
-        setPalikas([])
-      }
+      const data = await palikaService.getPalikas()
+      setPalikas(data.map(p => ({ id: p.id.toString(), name_en: p.name_en, name_ne: p.name_ne || '' })))
     } catch (error) {
       console.error('Error fetching palikas:', error)
       setPalikas([])
@@ -156,26 +135,14 @@ export default function NewHeritageSitePage() {
     setSuccess('')
 
     try {
-      const response = await fetch('/api/heritage-sites', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setSuccess('Heritage site created successfully!')
-        setTimeout(() => {
-          router.push('/heritage-sites')
-        }, 2000)
-      } else {
-        setError(data.error || 'Failed to create heritage site')
-      }
-    } catch (error) {
-      setError('Network error. Please try again.')
+      await heritageSitesService.create(formData as any)
+      setSuccess('Heritage site created successfully!')
+      setTimeout(() => {
+        router.push('/heritage-sites')
+      }, 2000)
+    } catch (err) {
+      console.error('Error creating heritage site:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create heritage site')
     } finally {
       setIsLoading(false)
     }

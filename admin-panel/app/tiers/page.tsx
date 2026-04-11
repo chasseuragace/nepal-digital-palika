@@ -2,52 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-
-interface Tier {
-  id: string
-  name: string
-  display_name: string
-  description: string
-  cost_per_month: number
-  cost_per_year: number
-}
-
-interface CurrentSubscription {
-  id: number
-  name_en: string
-  subscription_tier_id: string
-  subscription_start_date: string
-  subscription_end_date: string
-  cost_per_month: number
-  subscription_tiers: {
-    id: string
-    name: string
-    display_name: string
-    description: string
-    cost_per_month: number
-    cost_per_year: number
-  }
-}
-
-interface TierChangeRequest {
-  id: string
-  current_tier_id: string
-  requested_tier_id: string
-  reason: string
-  status: string
-  requested_at: string
-  reviewed_at: string
-  review_notes: string
-  subscription_tiers: {
-    id: string
-    name: string
-    display_name: string
-  }
-}
+import { tierChangeRequestsService, type Tier, type CurrentSubscription, type TierChangeRequest } from '@/lib/client/tier-change-requests-client.service'
+import { adminSessionStore, type AdminSession } from '@/lib/storage/session-storage.service'
 
 export default function TiersPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<AdminSession | null>(null)
   const [palikaId, setPalikaId] = useState<number | null>(null)
   const [tiers, setTiers] = useState<Tier[]>([])
   const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null)
@@ -59,12 +19,12 @@ export default function TiersPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession')
-    if (adminSession) {
-      const userData = JSON.parse(adminSession)
-      setUser(userData)
-      const palika = userData.palika_id ? parseInt(userData.palika_id, 10) : null
-      setPalikaId(palika)
+    const session = adminSessionStore.get()
+    if (session) {
+      setUser(session)
+      // Defensive: coerce to number in case legacy sessions stored it as string
+      const palika = session.palika_id != null ? Number(session.palika_id) : null
+      setPalikaId(Number.isNaN(palika) ? null : palika)
     } else {
       router.push('/login')
     }
@@ -79,9 +39,7 @@ export default function TiersPage() {
   const fetchTierData = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/tiers?palika_id=${palikaId}`)
-      if (!response.ok) throw new Error('Failed to fetch tier data')
-      const data = await response.json()
+      const data = await tierChangeRequestsService.getTierData(palikaId!)
       setTiers(data.tiers)
       setCurrentSubscription(data.currentSubscription)
       setTierChangeRequests(data.tierChangeRequests)
@@ -106,23 +64,10 @@ export default function TiersPage() {
 
     try {
       setIsSubmitting(true)
-      const response = await fetch('/api/tier-change-requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Palika-ID': palikaId!.toString(),
-          'X-User-ID': user.id
-        },
-        body: JSON.stringify({
-          requested_tier_id: selectedTier,
-          reason: reason || null
-        })
+      await tierChangeRequestsService.createRequest(palikaId!, user.id, {
+        requested_tier_id: selectedTier,
+        reason: reason || undefined
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to submit tier change request')
-      }
 
       setMessage({ type: 'success', text: 'Tier change request submitted successfully' })
       setSelectedTier(null)
@@ -140,14 +85,7 @@ export default function TiersPage() {
     if (!confirm('Are you sure you want to cancel this tier change request?')) return
 
     try {
-      const response = await fetch(`/api/tier-change-requests/${requestId}`, {
-        method: 'DELETE',
-        headers: {
-          'X-User-ID': user.id
-        }
-      })
-
-      if (!response.ok) throw new Error('Failed to cancel request')
+      await tierChangeRequestsService.deleteRequest(requestId, user.id)
 
       setMessage({ type: 'success', text: 'Tier change request cancelled' })
       fetchTierData()

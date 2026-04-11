@@ -4,29 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
-
-interface Province {
-  id: number
-  name_en: string
-}
-
-interface District {
-  id: number
-  name_en: string
-  province_id: number
-}
-
-interface Palika {
-  id: number
-  name_en: string
-  district_id: number
-}
-
-interface Role {
-  id: number
-  name: string
-  hierarchy_level: 'national' | 'province' | 'district' | 'palika'
-}
+import { rolesService, type Role } from '@/lib/client/roles-client.service'
+import { palikaService, type Province, type District, type Palika } from '@/lib/client/palika-client.service'
+import { adminsService } from '@/lib/client/admins-client.service'
 
 interface FormData {
   email: string
@@ -107,11 +87,8 @@ export default function NewAdminPage() {
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch('/api/roles')
-      if (response.ok) {
-        const data = await response.json()
-        setRoles(data.data || [])
-      }
+      const data = await rolesService.getAll()
+      setRoles(data.data || [])
     } catch (error) {
       console.error('Error fetching roles:', error)
     }
@@ -119,11 +96,8 @@ export default function NewAdminPage() {
 
   const fetchProvinces = async () => {
     try {
-      const response = await fetch('/api/palikas/provinces')
-      if (response.ok) {
-        const data = await response.json()
-        setProvinces(data.data || [])
-      }
+      const data = await palikaService.getProvinces()
+      setProvinces(data)
     } catch (error) {
       console.error('Error fetching provinces:', error)
     }
@@ -131,11 +105,8 @@ export default function NewAdminPage() {
 
   const fetchDistricts = async (provinceId: number) => {
     try {
-      const response = await fetch(`/api/palikas/districts?province_id=${provinceId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setDistricts(data.data || [])
-      }
+      const data = await palikaService.getDistricts(provinceId)
+      setDistricts(data)
     } catch (error) {
       console.error('Error fetching districts:', error)
     }
@@ -143,11 +114,8 @@ export default function NewAdminPage() {
 
   const fetchPalikas = async (districtId: number) => {
     try {
-      const response = await fetch(`/api/palikas?district_id=${districtId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setPalikas(data.data || [])
-      }
+      const data = await palikaService.getPalikas(districtId)
+      setPalikas(data)
     } catch (error) {
       console.error('Error fetching palikas:', error)
     }
@@ -313,38 +281,23 @@ export default function NewAdminPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch('/api/admins/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          full_name: formData.full_name,
-          role: formData.role,
-          hierarchy_level: formData.hierarchy_level,
-          province_id: formData.province_id ? Number(formData.province_id) : null,
-          district_id: formData.district_id ? Number(formData.district_id) : null,
-          palika_id: formData.palika_id ? Number(formData.palika_id) : null,
-          regions: formData.regions
-        })
+      await adminsService.create({
+        email: formData.email,
+        full_name: formData.full_name,
+        role: formData.role,
+        hierarchy_level: formData.hierarchy_level,
+        province_id: formData.province_id ? Number(formData.province_id) : undefined,
+        district_id: formData.district_id ? Number(formData.district_id) : undefined,
+        palika_id: formData.palika_id ? Number(formData.palika_id) : undefined,
+        regions: formData.regions
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setErrors({
-          submit: data.error || 'Failed to create admin'
-        })
-        return
-      }
 
       // Success - redirect to admin list
       router.push('/admins')
     } catch (error) {
       console.error('Error creating admin:', error)
       setErrors({
-        submit: 'An error occurred while creating the admin'
+        submit: error instanceof Error ? error.message : 'An error occurred while creating the admin'
       })
     } finally {
       setIsSubmitting(false)

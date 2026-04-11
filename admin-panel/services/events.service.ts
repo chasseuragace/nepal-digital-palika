@@ -12,12 +12,28 @@ import {
   PaginatedResponse,
   ServiceResponse
 } from './types'
+import { IEventsDatasource } from '@/lib/events-datasource'
+import { getEventsDatasource } from '@/lib/events-config'
 
 export class EventsService {
   private db: DatabaseClient
+  private datasource: IEventsDatasource
 
-  constructor(db: DatabaseClient) {
-    this.db = db
+  constructor(db?: DatabaseClient | IEventsDatasource) {
+    // Support both old DatabaseClient and new IEventsDatasource
+    if (db && 'from' in db) {
+      // It's a DatabaseClient
+      this.db = db as DatabaseClient
+      this.datasource = getEventsDatasource()
+    } else if (db) {
+      // It's a datasource
+      this.datasource = db as IEventsDatasource
+      this.db = null as any
+    } else {
+      // No argument, use default
+      this.datasource = getEventsDatasource()
+      this.db = null as any
+    }
   }
 
   /**
@@ -29,63 +45,16 @@ export class EventsService {
   ): Promise<ServiceResponse<PaginatedResponse<Event>>> {
     try {
       const { page = 1, limit = 20 } = pagination
-      const offset = (page - 1) * limit
-
-      let query = this.db
-        .from('events')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          categories(name_en)
-        `)
-
-      // Apply filters
-      if (filters.palika_id) {
-        query = query.eq('palika_id', filters.palika_id)
-      }
-      if (filters.category_id) {
-        query = query.eq('category_id', filters.category_id)
-      }
-      if (filters.event_type) {
-        query = query.eq('event_type', filters.event_type)
-      }
-      if (filters.is_festival !== undefined) {
-        query = query.eq('is_festival', filters.is_festival)
-      }
-      if (filters.status) {
-        query = query.eq('status', filters.status)
-      }
-      if (filters.start_date_from) {
-        query = query.gte('start_date', filters.start_date_from)
-      }
-      if (filters.start_date_to) {
-        query = query.lte('start_date', filters.start_date_to)
-      }
-      if (filters.search) {
-        query = query.ilike('name_en', `%${filters.search}%`)
-      }
-
-      // Apply pagination
-      query = query
-        .order('start_date', { ascending: true })
-        .range(offset, offset + limit - 1)
-
-      const { data, error, count } = await query
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch events' }
-      }
-
-      const events = (data || []).map(this.mapEvent)
+      const result = await this.datasource.getAll(filters, { page, limit })
 
       return {
         success: true,
         data: {
-          data: events,
-          total: count || events.length,
+          data: result.data,
+          total: result.total,
           page,
           limit,
-          hasMore: events.length === limit
+          hasMore: result.data.length === limit
         }
       }
     } catch (error) {
@@ -98,21 +67,13 @@ export class EventsService {
    */
   async getById(id: string): Promise<ServiceResponse<Event>> {
     try {
-      const { data, error } = await this.db
-        .from('events')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          categories(name_en)
-        `)
-        .eq('id', id)
-        .single()
+      const data = await this.datasource.getById(id)
 
-      if (error || !data) {
+      if (!data) {
         return { success: false, error: 'Event not found' }
       }
 
-      return { success: true, data: this.mapEvent(data) }
+      return { success: true, data }
     } catch (error) {
       return { success: false, error: 'Failed to fetch event' }
     }
@@ -123,21 +84,13 @@ export class EventsService {
    */
   async getBySlug(slug: string): Promise<ServiceResponse<Event>> {
     try {
-      const { data, error } = await this.db
-        .from('events')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          categories(name_en)
-        `)
-        .eq('slug', slug)
-        .single()
+      const data = await this.datasource.getBySlug(slug)
 
-      if (error || !data) {
+      if (!data) {
         return { success: false, error: 'Event not found' }
       }
 
-      return { success: true, data: this.mapEvent(data) }
+      return { success: true, data }
     } catch (error) {
       return { success: false, error: 'Failed to fetch event' }
     }
@@ -154,32 +107,11 @@ export class EventsService {
         return { success: false, error: validation.error }
       }
 
-      // Generate slug
-      const slug = this.generateSlug(input.name_en, input.start_date)
-
-      // Prepare data
-      const eventData = {
-        ...input,
-        slug,
-        status: input.status || 'draft',
-        is_festival: input.is_festival || false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-
-      const { data, error } = await this.db
-        .from('events')
-        .insert(eventData)
-        .select()
-        .single()
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to create event' }
-      }
+      const data = await this.datasource.create(input)
 
       return {
         success: true,
-        data: this.mapEvent(data),
+        data,
         message: 'Event created successfully'
       }
     } catch (error) {
@@ -192,39 +124,11 @@ export class EventsService {
    */
   async update(id: string, input: Partial<CreateEventInput>): Promise<ServiceResponse<Event>> {
     try {
-      // Check if event exists
-      const existing = await this.getById(id)
-      if (!existing.success) {
-        return { success: false, error: 'Event not found' }
-      }
-
-      // Prepare update data
-      const updateData: any = {
-        ...input,
-        updated_at: new Date().toISOString()
-      }
-
-      // Update slug if name or date changed
-      if (input.name_en || input.start_date) {
-        const name = input.name_en || existing.data?.name_en || ''
-        const date = input.start_date || existing.data?.start_date || ''
-        updateData.slug = this.generateSlug(name, date)
-      }
-
-      const { data, error } = await this.db
-        .from('events')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to update event' }
-      }
+      const data = await this.datasource.update(id, input)
 
       return {
         success: true,
-        data: this.mapEvent(data),
+        data,
         message: 'Event updated successfully'
       }
     } catch (error) {
@@ -237,14 +141,7 @@ export class EventsService {
    */
   async delete(id: string): Promise<ServiceResponse<void>> {
     try {
-      const { error } = await this.db
-        .from('events')
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to delete event' }
-      }
+      await this.datasource.delete(id)
 
       return { success: true, message: 'Event deleted successfully' }
     } catch (error) {
@@ -256,14 +153,24 @@ export class EventsService {
    * Publish an event
    */
   async publish(id: string): Promise<ServiceResponse<Event>> {
-    return this.update(id, { status: 'published' } as any)
+    try {
+      const data = await this.datasource.publish(id)
+      return { success: true, data, message: 'Event published successfully' }
+    } catch (error) {
+      return { success: false, error: 'Failed to publish event' }
+    }
   }
 
   /**
    * Archive an event
    */
   async archive(id: string): Promise<ServiceResponse<Event>> {
-    return this.update(id, { status: 'archived' } as any)
+    try {
+      const data = await this.datasource.archive(id)
+      return { success: true, data, message: 'Event archived successfully' }
+    } catch (error) {
+      return { success: false, error: 'Failed to archive event' }
+    }
   }
 
   /**
@@ -271,25 +178,8 @@ export class EventsService {
    */
   async getUpcoming(limit: number = 10): Promise<ServiceResponse<Event[]>> {
     try {
-      const today = new Date().toISOString().split('T')[0]
-
-      const { data, error } = await this.db
-        .from('events')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          categories(name_en)
-        `)
-        .gte('start_date', today)
-        .eq('status', 'published')
-        .order('start_date', { ascending: true })
-        .limit(limit)
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch upcoming events' }
-      }
-
-      return { success: true, data: (data || []).map(this.mapEvent) }
+      const data = await this.datasource.getUpcoming(limit)
+      return { success: true, data }
     } catch (error) {
       return { success: false, error: 'Failed to fetch upcoming events' }
     }
@@ -301,24 +191,11 @@ export class EventsService {
   async getPast(limit: number = 10): Promise<ServiceResponse<Event[]>> {
     try {
       const today = new Date().toISOString().split('T')[0]
-
-      const { data, error } = await this.db
-        .from('events')
-        .select(`
-          *,
-          palikas!inner(name_en),
-          categories(name_en)
-        `)
-        .lt('end_date', today)
-        .eq('status', 'published')
-        .order('end_date', { ascending: false })
-        .limit(limit)
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch past events' }
-      }
-
-      return { success: true, data: (data || []).map(this.mapEvent) }
+      const result = await this.datasource.getAll(
+        { start_date_to: today, status: 'published' },
+        { limit }
+      )
+      return { success: true, data: result.data }
     } catch (error) {
       return { success: false, error: 'Failed to fetch past events' }
     }
@@ -401,63 +278,6 @@ export class EventsService {
   }
 
   // Private helper methods
-
-  private mapEvent(data: any): Event {
-    return {
-      id: data.id,
-      palika_id: data.palika_id,
-      name_en: data.name_en,
-      name_ne: data.name_ne,
-      slug: data.slug,
-      category_id: data.category_id,
-      event_type: data.event_type,
-      is_festival: data.is_festival || false,
-      nepali_calendar_date: data.nepali_calendar_date,
-      recurrence_pattern: data.recurrence_pattern,
-      start_date: data.start_date,
-      end_date: data.end_date,
-      location: data.location ? this.parseLocation(data.location) : undefined,
-      venue_name: data.venue_name,
-      short_description: data.short_description,
-      short_description_ne: data.short_description_ne,
-      full_description: data.full_description,
-      full_description_ne: data.full_description_ne,
-      featured_image: data.featured_image,
-      images: data.images,
-      status: data.status,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      palika_name: data.palikas?.name_en,
-      category_name: data.categories?.name_en
-    }
-  }
-
-  private parseLocation(location: any): { lat: number; lng: number } | undefined {
-    if (!location) return undefined
-    
-    if (typeof location === 'string' && location.startsWith('POINT')) {
-      const match = location.match(/POINT\(([^ ]+) ([^)]+)\)/)
-      if (match) {
-        return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) }
-      }
-    }
-    
-    if (location.coordinates) {
-      return { lng: location.coordinates[0], lat: location.coordinates[1] }
-    }
-    
-    return undefined
-  }
-
-  private generateSlug(name: string, date: string): string {
-    const year = date.split('-')[0]
-    return `${name}-${year}`
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
-  }
 
   private validateInput(input: CreateEventInput): { valid: boolean; error?: string } {
     if (!input.name_en?.trim()) {

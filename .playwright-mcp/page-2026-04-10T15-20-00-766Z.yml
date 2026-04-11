@@ -1,0 +1,27 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - img [ref=e7]
+        - heading "Nepal Tourism Admin" [level=1] [ref=e11]
+        - paragraph [ref=e12]: Sign in to manage your palika
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - text: Email Address
+          - generic [ref=e15]:
+            - img [ref=e16]
+            - textbox "Email Address" [ref=e19]:
+              - /placeholder: admin@example.com
+        - generic [ref=e20]:
+          - text: Password
+          - generic [ref=e21]:
+            - img [ref=e22]
+            - textbox "Password" [ref=e25]:
+              - /placeholder: Enter your password
+            - button [ref=e26]:
+              - img [ref=e27]
+        - button "Sign In" [ref=e30]
+      - generic [ref=e31]: Development Mode
+      - button "Show Test Credentials" [ref=e32]
+    - paragraph [ref=e34]: © 2026 Nepal Tourism Admin. All rights reserved.
+  - alert [ref=e35]

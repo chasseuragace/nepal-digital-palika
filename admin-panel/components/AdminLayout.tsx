@@ -21,21 +21,14 @@ import {
   Menu,
   X
 } from 'lucide-react'
-
-interface AdminUser {
-  id: string
-  email: string
-  full_name: string
-  role: string
-  palika_id?: string
-}
+import { adminSessionStore, type AdminSession } from '@/lib/storage/session-storage.service'
 
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [user, setUser] = useState<AdminUser | null>(null)
+  const [user, setUser] = useState<AdminSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMarketplaceOpen, setIsMarketplaceOpen] = useState(false)
@@ -43,9 +36,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname()
 
   useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession')
-    if (adminSession) {
-      setUser(JSON.parse(adminSession))
+    const session = adminSessionStore.get()
+    if (session) {
+      setUser(session)
     } else {
       router.push('/login')
     }
@@ -53,7 +46,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem('adminSession')
+    adminSessionStore.clear()
     router.push('/login')
   }
 

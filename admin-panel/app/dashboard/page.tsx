@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { StatCard, InfoBox, ActionButton, SectionHeading } from './components'
 import { styles } from './styles'
+<<<<<<< HEAD
 import './dashboard.css'
+=======
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
+>>>>>>> b850cbaa834e2aab46c670a718a30ff6acf0af8d
 
 interface DashboardStats {
   palika_profile?: {
@@ -50,12 +54,11 @@ export default function DashboardPage() {
 
   const fetchDashboardStats = async () => {
     try {
-      const adminSession = localStorage.getItem('adminSession')
-      const admin = adminSession ? JSON.parse(adminSession) : null
+      const admin = adminSessionStore.get()
 
       const params = new URLSearchParams()
       if (admin?.palika_id) {
-        params.append('palika_id', admin.palika_id)
+        params.append('palika_id', String(admin.palika_id))
       }
 
       const response = await fetch(`/api/dashboard/stats?${params.toString()}`)
