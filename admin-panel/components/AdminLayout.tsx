@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             fontSize: '18px',
           }}>
             <Building2 size={24} />
-            <span>Nepal Tourism Admin</span>
+            <span>Digital Palika</span>
           </Link>
 
           <button 
