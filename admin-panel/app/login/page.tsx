@@ -57,7 +57,7 @@ export default function LoginPage() {
             <div className="login-logo">
               <Building2 size={40} />
             </div>
-            <h1 className="login-title">Nepal Tourism Admin</h1>
+            <h1 className="login-title">Nepal Digital Palika Admin</h1>
             <p className="login-subtitle">Sign in to manage your palika</p>
           </div>
 
@@ -149,12 +149,12 @@ export default function LoginPage() {
                   <span className="credential-badge super-admin">Super Admin</span>
                 </div>
                 <div className="credential-details">
-                  <p className="credential-email">superadmin@nepaltourism.dev</p>
-                  <p className="credential-password">SuperSecurePass123!</p>
+                  <p className="credential-email">super@admin.com</p>
+                  <p className="credential-password">super123456</p>
                 </div>
                 <button 
                   className="quick-login-btn"
-                  onClick={() => quickLogin('superadmin@nepaltourism.dev', 'SuperSecurePass123!')}
+                  onClick={() => quickLogin('super@admin.com', 'super123456')}
                 >
                   Quick Login
                 </button>
@@ -165,12 +165,12 @@ export default function LoginPage() {
                   <span className="credential-badge palika-admin">Palika Admin</span>
                 </div>
                 <div className="credential-details">
-                  <p className="credential-email">palika.admin@kathmandu.gov.np</p>
-                  <p className="credential-password">KathmanduAdmin456!</p>
+                  <p className="credential-email">palika@admin.com</p>
+                  <p className="credential-password">palika123456</p>
                 </div>
                 <button 
                   className="quick-login-btn"
-                  onClick={() => quickLogin('palika.admin@kathmandu.gov.np', 'KathmanduAdmin456!')}
+                  onClick={() => quickLogin('palika@admin.com', 'palika123456')}
                 >
                   Quick Login
                 </button>
@@ -178,15 +178,31 @@ export default function LoginPage() {
 
               <div className="credential-item">
                 <div className="credential-header">
-                  <span className="credential-badge moderator">Moderator</span>
+                  <span className="credential-badge moderator">District Admin</span>
                 </div>
                 <div className="credential-details">
-                  <p className="credential-email">content.moderator@kathmandu.gov.np</p>
-                  <p className="credential-password">ModeratorSecure789!</p>
+                  <p className="credential-email">district@admin.com</p>
+                  <p className="credential-password">district123456</p>
                 </div>
                 <button 
                   className="quick-login-btn"
-                  onClick={() => quickLogin('content.moderator@kathmandu.gov.np', 'ModeratorSecure789!')}
+                  onClick={() => quickLogin('district@admin.com', 'district123456')}
+                >
+                  Quick Login
+                </button>
+              </div>
+
+              <div className="credential-item">
+                <div className="credential-header">
+                  <span className="credential-badge test">Test Admin</span>
+                </div>
+                <div className="credential-details">
+                  <p className="credential-email">test@admin.com</p>
+                  <p className="credential-password">testpass123456</p>
+                </div>
+                <button 
+                  className="quick-login-btn"
+                  onClick={() => quickLogin('test@admin.com', 'testpass123456')}
                 >
                   Quick Login
                 </button>
