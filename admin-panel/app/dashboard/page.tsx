@@ -181,7 +181,7 @@ export default function DashboardPage() {
             {/* Recent Activity */}
             <div className="activity-card">
               <h3 className="card-title">Recent Activity</h3>
-              {stats.recent_activity.length > 0 ? (
+              {stats?.recent_activity?.length > 0 ? (
                 <div>
                   {stats.recent_activity.map((item, index) => (
                     <div key={item.id} className="activity-item">
