@@ -1,5 +1,12 @@
 /* Heritage Sites New Page - Stunning UI */
 
+/* Heritage Container */
+.heritage-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 /* Page Header */
 .heritage-page-header {
   display: flex;
