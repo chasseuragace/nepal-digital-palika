@@ -210,13 +210,14 @@ export default function NotificationComposePage() {
 
   return (
     <AdminLayout>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      <div className="notifications-container">
+        {toast && (
+          <Toast
+            type={toast.type}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        )}
 
       <div className="compose-page-header">
         <Link href="/notifications" className="compose-back-btn">
@@ -1329,6 +1330,7 @@ export default function NotificationComposePage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </AdminLayout>
   )
