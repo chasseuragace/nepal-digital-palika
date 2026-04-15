@@ -83,7 +83,8 @@ export default function DashboardPage() {
 
   return (
     <AdminLayout>
-      <div className="dashboard-header">
+      <div className="dashboard-container">
+        <div className="dashboard-header">
         <h1 className="dashboard-title">Dashboard</h1>
         <p className="dashboard-subtitle">Welcome back! Here's what's happening with your Palika.</p>
       </div>
@@ -215,6 +216,7 @@ export default function DashboardPage() {
         </>
       )}
 
+      </div>
       <style jsx>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
