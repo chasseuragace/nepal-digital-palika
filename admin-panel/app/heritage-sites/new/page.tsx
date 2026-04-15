@@ -101,7 +101,7 @@ export default function NewHeritageSitePage() {
   const fetchPalikas = async () => {
     try {
       const data = await palikaService.getPalikas()
-      setPalikas(data.map(p => ({ id: p.id.toString(), name_en: p.name_en, name_ne: p.name_ne || '' })))
+      setPalikas(data)
     } catch (error) {
       console.error('Error fetching palikas:', error)
       setPalikas([])
@@ -160,122 +160,122 @@ export default function NewHeritageSitePage() {
 
   return (
     <AdminLayout>
-      <div className="heritage-page-header">
-        <div className="header-content">
-          <div className="header-icon-box">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-              <path d="M4 22h16"></path>
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-            </svg>
+      <div className="heritage-container">
+        <div className="heritage-page-header">
+          <div className="header-content">
+            <div className="header-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                <path d="M4 22h16"></path>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+              </svg>
+            </div>
+            <div>
+              <h1 className="page-title">Create Heritage Site</h1>
+              <p className="page-subtitle">Preserve history, share culture, inspire visitors</p>
+            </div>
           </div>
-          <div>
-            <h1 className="page-title">Create Heritage Site</h1>
-            <p className="page-subtitle">Preserve history, share culture, inspire visitors</p>
-          </div>
+          <button 
+            type="button" 
+            className="btn btn-secondary header-cancel-btn"
+            onClick={() => router.push('/heritage-sites')}
+          >
+            ← Back to Sites
+          </button>
         </div>
-        <button 
-          type="button" 
-          className="btn btn-secondary header-cancel-btn"
-          onClick={() => router.push('/heritage-sites')}
-        >
-          ← Back to Sites
-        </button>
-      </div>
+        
+        {error && (
+          <div className="alert alert-error slide-in-up">
+            <span className="alert-icon">✕</span>
+            <span>{error}</span>
+          </div>
+        )}
       
-      {error && (
-        <div className="alert alert-error slide-in-up">
-          <span className="alert-icon">✕</span>
-          <span>{error}</span>
-        </div>
-      )}
-      
-      {success && (
-        <div className="alert alert-success slide-in-up">
-          <span className="alert-icon">✓</span>
-          <span>{success}</span>
-        </div>
-      )}
-
-      <div className="heritage-form-container">
-        {/* Progress Bar */}
-        <div className="progress-section">
-          <div className="progress-bar-container">
-            <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
+        {success && (
+          <div className="alert alert-success slide-in-up">
+            <span className="alert-icon">✓</span>
+            <span>{success}</span>
           </div>
-          <div className="progress-text">
-            Step {getCurrentStepIndex() + 1} of {tabs.length}
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="tabs-container">
-          {tabs.map((tab, index) => (
-            <button
-              key={tab.id}
-              className={`tab-button ${activeTab === tab.id ? 'active' : ''} ${index < getCurrentStepIndex() ? 'completed' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <div className="tab-icon">{tab.icon}</div>
-              <div className="tab-content">
-                <div className="tab-label">{tab.label}</div>
-                <div className="tab-description">{tab.description}</div>
+        )}
+        
+        <div className="heritage-form-container">
+          <form onSubmit={handleSubmit}>
+            <div className="progress-section">
+              <div className="progress-bar-container">
+                <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
               </div>
-              {index < getCurrentStepIndex() && <div className="tab-check">✓</div>}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit} className="heritage-form">
-          {activeTab === 'basic' && (
-            <div className="form-section fade-in">
-              <div className="section-header">
-                <h3 className="section-title">Basic Information</h3>
-                <p className="section-subtitle">Essential details about the heritage site</p>
+              <div className="progress-text">
+                Step {getCurrentStepIndex() + 1} of {tabs.length}
               </div>
-              
-              <div className="form-card">
-                <div className="form-card-header">
-                  <span className="form-card-icon-text">Names</span>
-                  <h4>Site Names</h4>
-                </div>
-                <div className="grid grid-2">
-                  <div className="form-group">
-                    <label htmlFor="name_nepali" className="form-label">
-                      Site Name (Nepali) <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="name_nepali"
-                      className="form-input"
-                      value={formData.name_nepali}
-                      onChange={(e) => handleInputChange('name_nepali', e.target.value)}
-                      required
-                      placeholder="श्री स्वयम्भू महाचैत्य"
-                    />
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="tabs-container">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`tab-button ${activeTab === tab.id ? 'active' : ''} ${index < getCurrentStepIndex() ? 'completed' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <div className="tab-icon">{tab.icon}</div>
+                  <div className="tab-content">
+                    <div className="tab-label">{tab.label}</div>
+                    <div className="tab-description">{tab.description}</div>
                   </div>
+                </button>
+              ))}
+            </div>
 
-                  <div className="form-group">
-                    <label htmlFor="name_english" className="form-label">
-                      Site Name (English) <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="name_english"
-                      className="form-input"
-                      value={formData.name_english}
-                      onChange={(e) => handleInputChange('name_english', e.target.value)}
-                      required
-                      placeholder="Swayambhunath Stupa"
-                    />
+            {activeTab === 'basic' && (
+              <div className="form-section fade-in">
+                <div className="section-header">
+                  <h3 className="section-title">Basic Information</h3>
+                  <p className="section-subtitle">Name, category & location</p>
+                </div>
+
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Name</span>
+                    <h4>Site Name</h4>
+                  </div>
+                  <div className="grid grid-2">
+                    <div className="form-group">
+                      <label htmlFor="name_nepali" className="form-label">
+                        Site Name (Nepali) <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="name_nepali"
+                        className="form-input"
+                        value={formData.name_nepali}
+                        onChange={(e) => handleInputChange('name_nepali', e.target.value)}
+                        required
+                        placeholder="श्री स्वयम्भू महाचैत्य"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="name_english" className="form-label">
+                        Site Name (English) <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="name_english"
+                        className="form-input"
+                        value={formData.name_english}
+                        onChange={(e) => handleInputChange('name_english', e.target.value)}
+                        required
+                        placeholder="Swayambhunath Stupa"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="form-card">
+                <div className="form-card">
                 <div className="form-card-header">
                   <span className="form-card-icon-text">Category</span>
                   <h4>Classification</h4>
@@ -389,7 +389,7 @@ export default function NewHeritageSitePage() {
                     >
                       <option value="">Select Palika</option>
                       {palikas.map(palika => (
-                        <option key={palika.id} value={palika.id}>
+                        <option key={palika.id} value={palika.id.toString()}>
                           {palika.name_en}
                         </option>
                       ))}
@@ -452,7 +452,7 @@ export default function NewHeritageSitePage() {
                 </div>
               </div>
             </div>
-          )}
+            )}
 
           {activeTab === 'description' && (
             <div className="form-section fade-in">
@@ -815,6 +815,7 @@ export default function NewHeritageSitePage() {
             </div>
           </div>
         </form>
+      </div>
       </div>
     </AdminLayout>
   )
