@@ -113,16 +113,17 @@ export default function NotificationsPage() {
 
   return (
     <AdminLayout>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      <div className="notifications-container">
+        {toast && (
+          <Toast
+            type={toast.type}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        )}
 
-      {/* Page Header */}
-      <div className="notifications-page-header">
+        {/* Page Header */}
+        <div className="notifications-page-header">
         <div className="header-content">
           <div className="header-icon-box">
             <Bell size={32} />
@@ -366,6 +367,7 @@ export default function NotificationsPage() {
             </>
           )}
         </div>
+      </div>
       </div>
     </AdminLayout>
   )
