@@ -1,5 +1,12 @@
 /* Dashboard Page - Stunning UI matching Heritage Sites & Notifications */
 
+/* Dashboard Container */
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 /* Loading State */
 .dashboard-loading {
   display: flex;
