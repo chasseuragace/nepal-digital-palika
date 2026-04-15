@@ -174,7 +174,8 @@ export default function NewEventPage() {
 
   return (
     <AdminLayout>
-      <div className="heritage-page-header">
+      <div className="events-container">
+        <div className="heritage-page-header">
         <div className="header-content">
           <div className="header-icon-box">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -731,6 +732,7 @@ export default function NewEventPage() {
           to { transform: rotate(360deg); }
         }
       `}</style>
+      </div>
     </AdminLayout>
   )
 }
