@@ -411,8 +411,8 @@ export default function NewHeritageSitePage() {
                         type="number"
                         id="latitude"
                         className="form-input"
-                        value={formData.latitude}
-                        onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value))}
+                        value={formData.latitude || ''}
+                        onChange={(e) => handleInputChange('latitude', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                         required
                         step="0.000001"
                         placeholder="27.7172"
@@ -427,8 +427,8 @@ export default function NewHeritageSitePage() {
                         type="number"
                         id="longitude"
                         className="form-input"
-                        value={formData.longitude}
-                        onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value))}
+                        value={formData.longitude || ''}
+                        onChange={(e) => handleInputChange('longitude', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                         required
                         step="0.000001"
                         placeholder="85.2903"
@@ -443,8 +443,8 @@ export default function NewHeritageSitePage() {
                         type="number"
                         id="altitude"
                         className="form-input"
-                        value={formData.altitude}
-                        onChange={(e) => handleInputChange('altitude', parseFloat(e.target.value))}
+                        value={formData.altitude || ''}
+                        onChange={(e) => handleInputChange('altitude', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                         placeholder="77"
                       />
                     </div>
