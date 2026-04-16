@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { tierChangeRequestsService, type Tier, type CurrentSubscription, type TierChangeRequest } from '@/lib/client/tier-change-requests-client.service'
 import { adminSessionStore, type AdminSession } from '@/lib/storage/session-storage.service'
+import AdminLayout from '@/components/AdminLayout'
 
 export default function TiersPage() {
   const router = useRouter()
@@ -110,14 +111,19 @@ export default function TiersPage() {
   }
 
   if (isLoading) {
-    return <div className="container"><p>Loading tier information...</p></div>
+    return (
+      <AdminLayout>
+        <div className="container"><p>Loading tier information...</p></div>
+      </AdminLayout>
+    )
   }
 
   const pendingRequest = tierChangeRequests.find(r => r.status === 'pending')
   const hasPendingRequest = !!pendingRequest
 
   return (
-    <div className="container">
+    <AdminLayout>
+      <div className="container">
       <h1>Subscription Tiers</h1>
 
       {message && (
@@ -350,6 +356,7 @@ export default function TiersPage() {
           </div>
         </section>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   )
 }
