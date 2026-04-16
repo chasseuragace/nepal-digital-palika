@@ -1175,7 +1175,7 @@ export default function NotificationComposePage() {
                   gap: '10px',
                 }}>
                   <Eye size={18} style={{ color: '#3b82f6' }} />
-                  Preview — as seen on m-place
+                  Preview
                 </div>
 
                 {/* Card preview */}
