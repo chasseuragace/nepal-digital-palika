@@ -354,16 +354,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '2px',
+                maxWidth: '150px',
+                minWidth: '0',
               }}>
                 <span style={{
                   color: '#fff',
                   fontSize: '14px',
                   fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}>{user.full_name}</span>
                 <span style={{
                   color: '#94a3b8',
                   fontSize: '12px',
                   textTransform: 'capitalize',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}>{user.role.replace('_', ' ')}</span>
               </div>
             </div>
