@@ -62,6 +62,11 @@ export default function TiersPage() {
       return
     }
 
+    if (!user) {
+      setMessage({ type: 'error', text: 'User session not found' })
+      return
+    }
+
     try {
       setIsSubmitting(true)
       await tierChangeRequestsService.createRequest(palikaId!, user.id, {
@@ -83,6 +88,11 @@ export default function TiersPage() {
 
   const handleCancelRequest = async (requestId: string) => {
     if (!confirm('Are you sure you want to cancel this tier change request?')) return
+
+    if (!user) {
+      setMessage({ type: 'error', text: 'User session not found' })
+      return
+    }
 
     try {
       await tierChangeRequestsService.deleteRequest(requestId, user.id)
