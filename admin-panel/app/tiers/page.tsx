@@ -33,8 +33,12 @@ export default function TiersPage() {
   useEffect(() => {
     if (palikaId) {
       fetchTierData()
+    } else if (palikaId === null && user !== null) {
+      // If we have a user but no palikaId, stop loading and show error
+      setIsLoading(false)
+      setMessage({ type: 'error', text: 'No Palika ID found in your session. Please contact support.' })
     }
-  }, [palikaId])
+  }, [palikaId, user])
 
   const fetchTierData = async () => {
     try {
