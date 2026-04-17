@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Shield, ChevronDown, ChevronRight, Filter, Info, CheckCircle, AlertCircle } from 'lucide-react'
 import AdminLayout from '@/components/AdminLayout'
 import { permissionsService, type Permission } from '@/lib/client/permissions-client.service'
 import { rolesService, type Role as ServiceRole } from '@/lib/client/roles-client.service'
+import './permissions.css'
 
 interface Role {
   id: number
@@ -91,186 +93,235 @@ export default function PermissionsPage() {
   if (isLoading && permissions.length === 0) {
     return (
       <AdminLayout>
-        <div style={{ padding: '20px' }}>Loading permissions...</div>
+        <div className="loading-container">
+          <div className="spinner"></div>
+        </div>
       </AdminLayout>
     )
   }
 
   return (
     <AdminLayout>
-      <h1>Permissions Management</h1>
-
-      {error && (
-        <div style={{
-          padding: '12px',
-          marginBottom: '20px',
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          borderRadius: '4px',
-          border: '1px solid #f5c6cb'
-        }}>
-          {error}
-        </div>
-      )}
-
-      <div className="card">
-        <div style={{ marginBottom: '20px' }}>
-          <div className="form-group">
-            <label htmlFor="resource-filter">Filter by Resource</label>
-            <select
-              id="resource-filter"
-              value={resourceFilter}
-              onChange={(e) => handleResourceFilter(e.target.value)}
-            >
-              <option value="">All Resources</option>
-              {resources.map(resource => (
-                <option key={resource} value={resource}>
-                  {resource.replace(/_/g, ' ').toUpperCase()}
-                </option>
-              ))}
-            </select>
+      <div className="permissions-container">
+        {/* Page Header */}
+        <div className="permissions-page-header">
+          <div className="header-content">
+            <div className="header-icon-box">
+              <Shield size={32} />
+            </div>
+            <div>
+              <h1 className="page-title">Permissions Management</h1>
+              <p className="page-subtitle">Manage system permissions and role assignments</p>
+            </div>
           </div>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <p style={{ color: '#666', marginBottom: '15px' }}>
-            Click on a permission to see which roles have it assigned
-          </p>
+        <div className="permissions-content">
+          {/* Stats Cards */}
+          <div className="stats-grid">
+            <StatCard 
+              label="Total Permissions" 
+              value={totalCount} 
+              icon={<Shield size={20} />} 
+              color="#3b82f6" 
+              description="All system permissions"
+            />
+            <StatCard 
+              label="Resources" 
+              value={resources.length} 
+              icon={<Filter size={20} />} 
+              color="#10b981" 
+              description="Unique resources"
+            />
+            <StatCard 
+              label="Roles" 
+              value={allRoles.length} 
+              icon={<CheckCircle size={20} />} 
+              color="#8b5cf6" 
+              description="System roles"
+            />
+            <StatCard 
+              label="Filtered Results" 
+              value={permissions.length} 
+              icon={<Info size={20} />} 
+              color="#f59e0b" 
+              description="Current view"
+            />
+          </div>
 
-          {permissions.map((permission) => (
-            <div
-              key={permission.id}
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                marginBottom: '10px',
-                overflow: 'hidden'
-              }}
-            >
-              <div
-                onClick={() => setExpandedPermission(
-                  expandedPermission === permission.id ? null : permission.id
-                )}
-                style={{
-                  padding: '15px',
-                  backgroundColor: '#f8f9fa',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  userSelect: 'none'
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '5px' }}>
-                    {permission.name}
-                  </div>
-                  <div style={{ fontSize: '0.9em', color: '#666' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '2px 8px',
-                      backgroundColor: '#e7f3ff',
-                      color: '#004085',
-                      borderRadius: '3px',
-                      marginRight: '10px'
-                    }}>
-                      {permission.resource}
-                    </span>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '2px 8px',
-                      backgroundColor: '#e2e3e5',
-                      color: '#383d41',
-                      borderRadius: '3px'
-                    }}>
-                      {permission.action}
-                    </span>
-                  </div>
-                  {permission.description && (
-                    <div style={{ fontSize: '0.85em', color: '#999', marginTop: '5px' }}>
-                      {permission.description}
-                    </div>
-                  )}
-                </div>
-                <div style={{ fontSize: '1.2em', color: '#666' }}>
-                  {expandedPermission === permission.id ? '▼' : '▶'}
-                </div>
+          {/* Filters */}
+          <div className="filters-card">
+            <div className="filters-header">
+              <div className="filters-title">
+                <Filter size={18} />
+                <span>Filters</span>
               </div>
+              
+              <div className="filter-controls">
+                <select
+                  value={resourceFilter}
+                  onChange={(e) => handleResourceFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="">All Resources</option>
+                  {resources.map(resource => (
+                    <option key={resource} value={resource}>
+                      {resource.replace(/_/g, ' ').toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="results-info">
+              <Info size={16} />
+              <span>
+                {permissions.length} permission{permissions.length !== 1 ? 's' : ''} found
+                {resourceFilter && ' • Filter applied'}
+              </span>
+            </div>
+          </div>
 
-              {expandedPermission === permission.id && (
-                <div style={{ padding: '15px', backgroundColor: '#fff', borderTop: '1px solid #ddd' }}>
-                  <h4 style={{ marginTop: 0, marginBottom: '10px' }}>
-                    Roles with this permission ({permission.roles?.length || 0})
-                  </h4>
-                  {permission.roles && permission.roles.length > 0 ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
-                      {permission.roles.map(role => (
-                        <div
-                          key={role.id}
-                          style={{
-                            padding: '10px',
-                            backgroundColor: '#d4edda',
-                            border: '1px solid #c3e6cb',
-                            borderRadius: '4px',
-                            color: '#155724'
-                          }}
-                        >
-                          <div style={{ fontWeight: 'bold' }}>{role.name}</div>
-                          <div style={{ fontSize: '0.9em' }}>
-                            Level: {role.hierarchy_level}
-                          </div>
+          {/* Permissions List */}
+          <div className="permissions-table-card">
+            {error && (
+              <div className="message-alert error">
+                <AlertCircle size={20} />
+                {error}
+              </div>
+            )}
+
+            <div style={{ marginBottom: '20px' }}>
+              <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '14px' }}>
+                Click on a permission to see which roles have it assigned
+              </p>
+
+              {permissions.length > 0 ? (
+                permissions.map((permission) => (
+                  <div key={permission.id} className="permission-item">
+                    <div
+                      className="permission-header"
+                      onClick={() => setExpandedPermission(
+                        expandedPermission === permission.id ? null : permission.id
+                      )}
+                    >
+                      <div className="permission-info">
+                        <div className="permission-name">{permission.name}</div>
+                        <div className="permission-meta">
+                          <span className="permission-badge resource-badge">
+                            {permission.resource}
+                          </span>
+                          <span className="permission-badge action-badge">
+                            {permission.action}
+                          </span>
                         </div>
-                      ))}
+                        {permission.description && (
+                          <div className="permission-description">
+                            {permission.description}
+                          </div>
+                        )}
+                      </div>
+                      <div className={`permission-expand-icon ${expandedPermission === permission.id ? 'expanded' : ''}`}>
+                        <ChevronDown size={20} />
+                      </div>
                     </div>
-                  ) : (
-                    <div style={{ color: '#666', fontStyle: 'italic' }}>
-                      No roles have this permission assigned
-                    </div>
-                  )}
+
+                    {expandedPermission === permission.id && (
+                      <div className="permission-details">
+                        <h4>
+                          Roles with this permission ({permission.roles?.length || 0})
+                        </h4>
+                        {permission.roles && permission.roles.length > 0 ? (
+                          <div className="roles-grid">
+                            {permission.roles.map(role => (
+                              <div key={role.id} className="role-card">
+                                <div className="role-name">{role.name}</div>
+                                <div className="role-level">
+                                  Level: {role.hierarchy_level}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="no-roles">
+                            No roles have this permission assigned
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <Shield size={48} className="empty-state-icon" />
+                  <div className="empty-state-title">No permissions found</div>
+                  <div className="empty-state-description">
+                    {resourceFilter
+                      ? 'Try adjusting your filter to see more results.'
+                      : 'No permissions are available in the system.'}
+                  </div>
                 </div>
               )}
             </div>
-          ))}
 
-          {permissions.length === 0 && !isLoading && (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-              {resourceFilter
-                ? 'No permissions found for this resource.'
-                : 'No permissions found.'}
-            </div>
-          )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <div className="pagination-info">
+                  Showing {permissions.length > 0 ? (currentPage - 1) * limit + 1 : 0} to {Math.min(currentPage * limit, totalCount)} of {totalCount} permissions
+                </div>
+                <div className="pagination-controls">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="pagination-btn"
+                  >
+                    Previous
+                  </button>
+                  <div className="pagination-current">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="pagination-btn"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+    </AdminLayout>
+  )
+}
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-            <div style={{ color: '#666', fontSize: '0.9em' }}>
-              Showing {permissions.length > 0 ? (currentPage - 1) * limit + 1 : 0} to {Math.min(currentPage * limit, totalCount)} of {totalCount} permissions
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="btn btn-secondary"
-                style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
-              >
-                Previous
-              </button>
-              <span style={{ display: 'flex', alignItems: 'center', padding: '0 10px' }}>
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="btn btn-secondary"
-                style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
-              >
-                Next
-              </button>
-            </div>
+// ─── Sub-components ───
+
+function StatCard({ label, value, icon, color, description }: {
+  label: string
+  value: number | string
+  icon: React.ReactNode
+  color: string
+  description?: string
+}) {
+  return (
+    <div className="stat-card">
+      <div className="stat-icon" style={{ backgroundColor: `${color}15`, color: color }}>
+        {icon}
+      </div>
+      <div className="stat-content">
+        <div className="stat-value">{value}</div>
+        <div className="stat-label">{label}</div>
+        {description && (
+          <div className="stat-description">
+            <Info size={10} />
+            {description}
           </div>
         )}
       </div>
-    </AdminLayout>
+    </div>
   )
 }
