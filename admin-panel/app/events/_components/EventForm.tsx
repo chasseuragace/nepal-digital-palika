@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { categoriesService, type Category } from '@/lib/client/categories-client.service'
 import { palikaService, type Palika } from '@/lib/client/palika-client.service'
+import { LocationPicker } from '@/components/LocationPicker'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 
 /**
  * Shape of the event form state.
@@ -14,6 +16,9 @@ import { palikaService, type Palika } from '@/lib/client/palika-client.service'
  * the `mode` prop on <EventForm> ("event" vs "festival"). `event_type`
  * has been dropped from the UI entirely; `category_id` is the real
  * classification and the DB column stays null for new records.
+ *
+ * Note: `palika_id` is auto-assigned from the logged-in admin's session
+ * and is not part of form state.
  */
 export interface EventFormState {
   // Basic
@@ -29,7 +34,6 @@ export interface EventFormState {
   recurrence_pattern: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
 
   // Location
-  palika_id: string // select value is a string; we coerce to number on submit
   venue_name: string
   latitude: string // keep as string in state so empty ≠ 0
   longitude: string
@@ -53,7 +57,6 @@ export const EMPTY_EVENT_FORM: EventFormState = {
   end_date: '',
   nepali_calendar_date: '',
   recurrence_pattern: 'none',
-  palika_id: '',
   venue_name: '',
   latitude: '',
   longitude: '',
@@ -98,10 +101,13 @@ export interface EventSubmitPayload {
  * `mode` drives `is_festival` — the form no longer asks the user.
  * `event_type` is intentionally omitted: the DB column stays null, and
  * `category_id` is the canonical classification going forward.
+ *
+ * `palika_id` is auto-assigned from the logged-in admin's session.
  */
 export function buildEventPayload(
   form: EventFormState,
-  mode: EventFormMode
+  mode: EventFormMode,
+  palikaId: number
 ): EventSubmitPayload {
   const toNum = (s: string): number | undefined => {
     if (s === '' || s === null || s === undefined) return undefined
@@ -117,7 +123,7 @@ export function buildEventPayload(
   return {
     name_en: form.name_en.trim(),
     name_ne: form.name_ne.trim(),
-    palika_id: toInt(form.palika_id) ?? 0,
+    palika_id: palikaId,
     category_id: toInt(form.category_id),
     // event_type deliberately omitted — column stays null for new records.
     event_type: undefined,
@@ -181,7 +187,7 @@ export default function EventForm({
 }: EventFormProps) {
   const [activeTab, setActiveTab] = useState<TabId>('basic')
   const [categories, setCategories] = useState<Category[]>([])
-  const [palikas, setPalikas] = useState<Palika[]>([])
+  const [palika, setPalika] = useState<Palika | null>(null)
 
   useEffect(() => {
     categoriesService
@@ -191,13 +197,17 @@ export default function EventForm({
         console.error('Error fetching categories:', err)
         setCategories([])
       })
-    palikaService
-      .getPalikas()
-      .then(setPalikas)
-      .catch((err) => {
-        console.error('Error fetching palikas:', err)
-        setPalikas([])
-      })
+
+    // Fetch palika data for map center
+    const session = adminSessionStore.get()
+    if (session?.palika_id) {
+      palikaService
+        .getById(session.palika_id)
+        .then(setPalika)
+        .catch((err) => {
+          console.error('Error fetching palika:', err)
+        })
+    }
   }, [])
 
   const setField = <K extends keyof EventFormState>(key: K, v: EventFormState[K]) => {
@@ -447,27 +457,6 @@ export default function EventForm({
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="palika_id" className="form-label">
-                    Palika <span className="required">*</span>
-                  </label>
-                  <select
-                    id="palika_id"
-                    className="form-select"
-                    value={value.palika_id}
-                    onChange={(e) => setField('palika_id', e.target.value)}
-                    required
-                  >
-                    <option value="">Select Palika</option>
-                    {palikas.map((palika) => (
-                      <option key={palika.id} value={palika.id.toString()}>
-                        {palika.name_en}
-                        {palika.name_ne ? ` (${palika.name_ne})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
                   <label htmlFor="venue_name" className="form-label">
                     Venue Name
                   </label>
@@ -481,41 +470,28 @@ export default function EventForm({
                   />
                 </div>
 
-                <div className="coordinates-section">
-                  <div className="coordinates-header">
-                    <span>Geographic Coordinates</span>
-                    <small className="help-text">Used to render the map pin on the m-place</small>
-                  </div>
-                  <div className="grid grid-2">
-                    <div className="form-group">
-                      <label htmlFor="latitude" className="form-label">
-                        Latitude
-                      </label>
-                      <input
-                        type="number"
-                        id="latitude"
-                        className="form-input"
-                        value={value.latitude}
-                        onChange={(e) => setField('latitude', e.target.value)}
-                        step="0.000001"
-                        placeholder="27.7172"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="longitude" className="form-label">
-                        Longitude
-                      </label>
-                      <input
-                        type="number"
-                        id="longitude"
-                        className="form-input"
-                        value={value.longitude}
-                        onChange={(e) => setField('longitude', e.target.value)}
-                        step="0.000001"
-                        placeholder="85.3240"
-                      />
-                    </div>
+                <div className="form-group">
+                  <label className="form-label">
+                    Location on Map
+                  </label>
+                  <LocationPicker
+                    value={
+                      value.latitude && value.longitude
+                        ? { latitude: parseFloat(value.latitude), longitude: parseFloat(value.longitude) }
+                        : null
+                    }
+                    onChange={(location) => {
+                      // Update both fields in a single onChange call to avoid race condition
+                      onChange({
+                        ...value,
+                        latitude: location.latitude.toString(),
+                        longitude: location.longitude.toString()
+                      })
+                    }}
+                    defaultCenter={palika?.center_point || null}
+                  />
+                  <div className="help-text">
+                    Click on the map or use GPS to pin the event location
                   </div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
 import EventForm, {
@@ -9,6 +9,7 @@ import EventForm, {
   type EventFormState
 } from '../../events/_components/EventForm'
 import { eventsService } from '@/lib/client/events-client.service'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 import '../../events/new/events-new.css'
 
 /**
@@ -22,6 +23,12 @@ export default function NewFestivalPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [session, setSession] = useState(adminSessionStore.get())
+
+  useEffect(() => {
+    const currentSession = adminSessionStore.get()
+    setSession(currentSession)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,13 +37,13 @@ export default function NewFestivalPage() {
     setSuccess('')
 
     try {
-      const payload = buildEventPayload(formData, 'festival')
-
-      if (!payload.palika_id) {
-        setError('Palika is required')
+      if (!session?.palika_id) {
+        setError('Unable to determine your palika. Please contact support.')
         setIsSubmitting(false)
         return
       }
+
+      const payload = buildEventPayload(formData, 'festival', session.palika_id)
 
       await eventsService.create(payload as any)
       setSuccess('Festival created successfully!')

@@ -27,6 +27,10 @@ export interface FakePalika {
   name_ne: string
   code: string
   district_id: number
+  center_point?: {
+    latitude: number
+    longitude: number
+  } | null
 }
 
 const PROVINCES: FakeProvince[] = [
@@ -47,20 +51,20 @@ const DISTRICTS: FakeDistrict[] = [
 ]
 
 const PALIKAS: FakePalika[] = [
-  { id: 1, name_en: 'Biratnagar Metropolitan', name_ne: 'विराटनगर महानगरपालिका', code: 'PK-BRT', district_id: 101 },
+  { id: 1, name_en: 'Biratnagar Metropolitan', name_ne: 'विराटनगर महानगरपालिका', code: 'PK-BRT', district_id: 101, center_point: { latitude: 26.4847, longitude: 87.2834 } },
   { id: 2, name_en: 'Letang Municipality', name_ne: 'लेटाङ नगरपालिका', code: 'PK-LTG', district_id: 101 },
-  { id: 3, name_en: 'Itahari Sub-Metropolitan', name_ne: 'इटहरी उपमहानगरपालिका', code: 'PK-ITH', district_id: 102 },
-  { id: 4, name_en: 'Dharan Sub-Metropolitan', name_ne: 'धरान उपमहानगरपालिका', code: 'PK-DHR', district_id: 102 },
-  { id: 5, name_en: 'Kathmandu Metropolitan', name_ne: 'काठमाडौं महानगरपालिका', code: 'PK-KTM', district_id: 301 },
+  { id: 3, name_en: 'Itahari Sub-Metropolitan', name_ne: 'इटहरी उपमहानगरपालिका', code: 'PK-ITH', district_id: 102, center_point: { latitude: 26.6561, longitude: 87.2801 } },
+  { id: 4, name_en: 'Dharan Sub-Metropolitan', name_ne: 'धरान उपमहानगरपालिका', code: 'PK-DHR', district_id: 102, center_point: { latitude: 26.8276, longitude: 87.2846 } },
+  { id: 5, name_en: 'Kathmandu Metropolitan', name_ne: 'काठमाडौं महानगरपालिका', code: 'PK-KTM', district_id: 301, center_point: { latitude: 27.7172, longitude: 85.3240 } },
   { id: 6, name_en: 'Kirtipur Municipality', name_ne: 'कीर्तिपुर नगरपालिका', code: 'PK-KRT', district_id: 301 },
   { id: 7, name_en: 'Tokha Municipality', name_ne: 'टोखा नगरपालिका', code: 'PK-TKH', district_id: 301 },
-  { id: 8, name_en: 'Lalitpur Metropolitan', name_ne: 'ललितपुर महानगरपालिका', code: 'PK-LAL', district_id: 302 },
+  { id: 8, name_en: 'Lalitpur Metropolitan', name_ne: 'ललितपुर महानगरपालिका', code: 'PK-LAL', district_id: 302, center_point: { latitude: 27.6710, longitude: 85.3180 } },
   { id: 9, name_en: 'Godawari Municipality', name_ne: 'गोदावरी नगरपालिका', code: 'PK-GOD', district_id: 302 },
-  { id: 10, name_en: 'Bhaktapur Municipality', name_ne: 'भक्तपुर नगरपालिका', code: 'PK-BKT', district_id: 303 },
+  { id: 10, name_en: 'Bhaktapur Municipality', name_ne: 'भक्तपुर नगरपालिका', code: 'PK-BKT', district_id: 303, center_point: { latitude: 27.6710, longitude: 85.4275 } },
   { id: 11, name_en: 'Madhyapur Thimi Municipality', name_ne: 'मध्यपुर थिमी नगरपालिका', code: 'PK-MDT', district_id: 303 },
-  { id: 12, name_en: 'Pokhara Metropolitan', name_ne: 'पोखरा महानगरपालिका', code: 'PK-PKR', district_id: 401 },
+  { id: 12, name_en: 'Pokhara Metropolitan', name_ne: 'पोखरा महानगरपालिका', code: 'PK-PKR', district_id: 401, center_point: { latitude: 28.2096, longitude: 84.0079 } },
   { id: 13, name_en: 'Annapurna Rural Municipality', name_ne: 'अन्नपूर्ण गाउँपालिका', code: 'PK-ANP', district_id: 401 },
-  { id: 14, name_en: 'Butwal Sub-Metropolitan', name_ne: 'बुटवल उपमहानगरपालिका', code: 'PK-BTW', district_id: 501 },
+  { id: 14, name_en: 'Butwal Sub-Metropolitan', name_ne: 'बुटवल उपमहानगरपालिका', code: 'PK-BTW', district_id: 501, center_point: { latitude: 27.7017, longitude: 83.4523 } },
   { id: 15, name_en: 'Siddharthanagar Municipality', name_ne: 'सिद्धार्थनगर नगरपालिका', code: 'PK-SDH', district_id: 501 },
 ]
 

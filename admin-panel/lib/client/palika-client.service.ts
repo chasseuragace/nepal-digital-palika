@@ -21,6 +21,10 @@ export interface Palika {
   name_en: string
   name_ne?: string
   district_id: number
+  center_point?: {
+    latitude: number
+    longitude: number
+  } | null
 }
 
 export interface PalikaHierarchyResponse {

@@ -16,7 +16,14 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('palikas')
-      .select('id, name_en, name_ne, code, district_id')
+      .select(`
+        id,
+        name_en,
+        name_ne,
+        code,
+        district_id,
+        center_point
+      `)
 
     if (districtId !== undefined) {
       query = query.eq('district_id', districtId)
@@ -29,7 +36,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch palikas' }, { status: 500 })
     }
 
-    return NextResponse.json({ data: palikas })
+    // Convert PostGIS center_point to lat/lng format
+    const formattedPalikas = palikas?.map(palika => ({
+      ...palika,
+      center_point: palika.center_point
+        ? {
+            latitude: (palika.center_point as any).coordinates[1], // PostGIS returns [lng, lat]
+            longitude: (palika.center_point as any).coordinates[0]
+          }
+        : null
+    })) || []
+
+    return NextResponse.json({ data: formattedPalikas })
   } catch (error) {
     console.error('Error fetching palikas:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
