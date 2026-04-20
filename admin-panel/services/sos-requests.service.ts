@@ -3,7 +3,6 @@
  * Framework-agnostic operations for emergency request management
  */
 
-import { DatabaseClient } from './database-client'
 import {
   SOSRequest,
   SOSRequestFilters,
@@ -13,12 +12,14 @@ import {
   PaginatedResponse,
   ServiceResponse
 } from './types'
+import { ISOSRequestsDatasource } from '@/lib/sos-requests-datasource'
+import { getSOSRequestsDatasource } from '@/lib/sos-requests-config'
 
 export class SOSRequestsService {
-  private db: DatabaseClient
+  private datasource: ISOSRequestsDatasource
 
-  constructor(db: DatabaseClient) {
-    this.db = db
+  constructor(datasource?: ISOSRequestsDatasource) {
+    this.datasource = datasource || getSOSRequestsDatasource()
   }
 
   async getAll(
@@ -26,63 +27,18 @@ export class SOSRequestsService {
     pagination: PaginationParams = {}
   ): Promise<ServiceResponse<PaginatedResponse<SOSRequest>>> {
     try {
+      const requests = await this.datasource.getAll({ status: filters.status, palika_id: filters.palika_id })
       const { page = 1, limit = 25 } = pagination
       const offset = (page - 1) * limit
-
-      let query = this.db
-        .from('sos_requests')
-        .select(`
-          *,
-          palikas!inner(name_en)
-        `)
-
-      if (filters.palika_id) {
-        query = query.eq('palika_id', filters.palika_id)
-      }
-      if (filters.status) {
-        query = query.eq('status', filters.status)
-      }
-      if (filters.emergency_type) {
-        query = query.eq('emergency_type', filters.emergency_type)
-      }
-      if (filters.service_type) {
-        query = query.eq('service_type', filters.service_type)
-      }
-      if (filters.priority) {
-        query = query.eq('priority', filters.priority)
-      }
-      if (filters.search) {
-        query = query.or(
-          `user_name.ilike.%${filters.search}%,user_phone.ilike.%${filters.search}%,request_code.ilike.%${filters.search}%,details.ilike.%${filters.search}%`
-        )
-      }
-      if (filters.date_from) {
-        query = query.gte('created_at', filters.date_from)
-      }
-      if (filters.date_to) {
-        query = query.lte('created_at', filters.date_to)
-      }
-
-      query = query
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      const { data, error, count } = await query
-
-      if (error) {
-        return { success: false, error: error.message || 'Failed to fetch SOS requests' }
-      }
-
-      const requests = (data || []).map(this.mapRequest)
-
+      const paginated = requests.slice(offset, offset + limit)
       return {
         success: true,
         data: {
-          data: requests,
-          total: count || requests.length,
+          data: paginated,
+          total: requests.length,
           page,
           limit,
-          hasMore: requests.length === limit
+          hasMore: paginated.length === limit
         }
       }
     } catch (error) {
@@ -92,35 +48,10 @@ export class SOSRequestsService {
 
   async getById(id: string): Promise<ServiceResponse<SOSRequest>> {
     try {
-      const { data, error } = await this.db
-        .from('sos_requests')
-        .select(`
-          *,
-          palikas!inner(name_en)
-        `)
-        .eq('id', id)
-        .single()
-
-      if (error || !data) {
+      const request = await this.datasource.getById(id)
+      if (!request) {
         return { success: false, error: 'SOS request not found' }
       }
-
-      const request = this.mapRequest(data)
-
-      // Fetch assignments for this request
-      const { data: assignments } = await this.db
-        .from('sos_request_assignments')
-        .select(`
-          *,
-          service_providers!inner(name_en, service_type, phone)
-        `)
-        .eq('sos_request_id', id)
-        .order('assigned_at', { ascending: false })
-
-      if (assignments) {
-        request.assignments = assignments.map(this.mapAssignment)
-      }
-
       return { success: true, data: request }
     } catch (error) {
       return { success: false, error: 'Failed to fetch SOS request' }

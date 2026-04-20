@@ -232,6 +232,80 @@ The same architecture is applied to `BusinessTargetingService`:
 
 Future: Extract abstract datasource interface for consistency with notification module.
 
+## Recently Refactored Modules (Clean Architecture)
+
+The following 7 services have been refactored to follow the clean architecture pattern with datasource abstraction:
+
+### 1. Analytics Service
+- **Abstraction**: `lib/analytics-datasource.ts` - `IAnalyticsDatasource` interface
+- **Fake Implementation**: `lib/fake-analytics-datasource.ts`
+- **Real Implementation**: `lib/supabase-analytics-datasource.ts`
+- **Config**: `lib/analytics-config.ts`
+- **Service**: `services/analytics.service.ts`
+- **Methods**: `getDashboardStats`, `getContentAnalytics`, `getTopContent`, `getContentFreshnessReport`, `getPalikaActivityReport`, `getBusinessInquiryAnalytics`, `getUserEngagementMetrics`
+
+### 2. Business Approval Service
+- **Abstraction**: `lib/business-approval-datasource.ts` - `IBusinessApprovalDatasource` interface
+- **Fake Implementation**: `lib/fake-business-approval-datasource.ts`
+- **Real Implementation**: `lib/supabase-business-approval-datasource.ts`
+- **Config**: `lib/business-approval-config.ts`
+- **Service**: `services/business-approval.service.ts` (refactored from static to instance-based)
+- **API Routes**: `/api/businesses`, `/api/businesses/[id]/verify`, `/api/businesses/[id]/reject`
+- **Methods**: `verifyBusiness`, `rejectBusiness`, `getBusinessApprovalStatus`, `getAdminName`, `getPendingBusinesses`, `getBusinesses`, `getBusinessVerificationStats`
+
+### 3. Marketplace Products Service
+- **Abstraction**: `lib/marketplace-products-datasource.ts` - `IMarketplaceProductsDatasource` interface
+- **Fake Implementation**: `lib/fake-marketplace-products-datasource.ts`
+- **Real Implementation**: `lib/supabase-marketplace-products-datasource.ts`
+- **Config**: `lib/marketplace-products-config.ts`
+- **Service**: `services/marketplace-products.service.ts`
+- **API Routes**: `/api/products`, `/api/products/[id]`, `/api/products/[id]/verify`, `/api/products/[id]/reject`
+- **Methods**: `listProducts`, `getProductDetails`, `verifyProduct`, `rejectProduct`
+
+### 4. Service Providers Service
+- **Abstraction**: `lib/service-providers-datasource.ts` - `IServiceProvidersDatasource` interface
+- **Fake Implementation**: `lib/fake-service-providers-datasource.ts`
+- **Real Implementation**: `lib/supabase-service-providers-datasource.ts`
+- **Config**: `lib/service-providers-config.ts`
+- **Service**: `services/service-providers.service.ts`
+- **Methods**: `getAll`, `getById`, `create`, `update`, `delete`
+
+### 5. SOS Requests Service
+- **Abstraction**: `lib/sos-requests-datasource.ts` - `ISOSRequestsDatasource` interface
+- **Fake Implementation**: `lib/fake-sos-requests-datasource.ts`
+- **Real Implementation**: `lib/supabase-sos-requests-datasource.ts`
+- **Config**: `lib/sos-requests-config.ts`
+- **Service**: `services/sos-requests.service.ts` (basic CRUD refactored)
+- **Methods**: `getAll`, `getById`, `create`, `updateStatus`, `delete`
+
+### 6. Auth Service
+- **Abstraction**: `lib/auth-datasource.ts` - `IAuthDatasource` interface
+- **Fake Implementation**: `lib/fake-auth-datasource.ts`
+- **Real Implementation**: `lib/supabase-auth-datasource.ts`
+- **Config**: `lib/auth-config.ts`
+- **Service**: (datasource ready, service refactoring pending)
+- **Methods**: `signIn`, `signOut`, `getAdminProfile`
+
+### 7. Tier Validation Service
+- **Abstraction**: `lib/tier-validation-datasource.ts` - `ITierValidationDatasource` interface
+- **Fake Implementation**: `lib/fake-tier-validation-datasource.ts`
+- **Real Implementation**: `lib/supabase-tier-validation-datasource.ts`
+- **Config**: `lib/tier-validation-config.ts`
+- **Service**: (datasource ready, service refactoring pending)
+- **Methods**: `validateTier`, `getTierLimits`, `checkUpgradeEligibility`
+
+## Global Datasource Switching
+
+All refactored modules respect the `NEXT_PUBLIC_USE_FAKE_DATASOURCES` environment variable:
+
+```bash
+# Enable fake datasources for all refactored modules
+NEXT_PUBLIC_USE_FAKE_DATASOURCES=true
+
+# Use real Supabase datasources
+NEXT_PUBLIC_USE_FAKE_DATASOURCES=false
+```
+
 ## Design Principles
 
 1. **Single Responsibility**: Each layer has one reason to change

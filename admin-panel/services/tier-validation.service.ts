@@ -1,4 +1,5 @@
-import { DatabaseClient } from './database-client'
+import { ITierValidationDatasource, PalikaTierInfo } from '@/lib/tier-validation-datasource'
+import { getTierValidationDatasource } from '@/lib/tier-validation-config'
 
 export interface TierInfo {
   palikaId: number
@@ -15,56 +16,26 @@ export interface ServiceResponse<T> {
 }
 
 export class TierValidationService {
-  constructor(private db: DatabaseClient) {}
+  private datasource: ITierValidationDatasource
+
+  constructor(datasource?: ITierValidationDatasource) {
+    this.datasource = datasource || getTierValidationDatasource()
+  }
 
   /**
    * Get tier information for a palika
    */
   async getPalikaTierInfo(palikaId: number): Promise<ServiceResponse<TierInfo>> {
     try {
-      const { data: palika, error: palikaError } = await this.db
-        .from('palikas')
-        .select('id, subscription_tier_id')
-        .eq('id', palikaId)
-        .single()
-
-      if (palikaError || !palika) {
+      const info = await this.datasource.getPalikaTierInfo(palikaId)
+      if (!info) {
         return {
           error: 'Palika not found',
           status: 404
         }
       }
-
-      const { data: tier, error: tierError } = await this.db
-        .from('subscription_tiers')
-        .select('id, name, tier_level')
-        .eq('id', palika.subscription_tier_id)
-        .single()
-
-      if (tierError || !tier) {
-        return {
-          error: 'Tier not found',
-          status: 404
-        }
-      }
-
-      // Get palika settings for approval_required
-      const { data: settings, error: settingsError } = await this.db
-        .from('palika_settings')
-        .select('approval_required')
-        .eq('palika_id', palikaId)
-        .single()
-
-      const approvalRequired = settings?.approval_required ?? false
-
       return {
-        data: {
-          palikaId,
-          tierId: tier.id,
-          tierLevel: tier.tier_level,
-          tierName: tier.name,
-          approvalRequired
-        },
+        data: info as TierInfo,
         status: 200
       }
     } catch (error) {
@@ -169,20 +140,8 @@ export class TierValidationService {
       }
 
       // Verify product belongs to this palika
-      const { data: product, error: productError } = await this.db
-        .from('marketplace_products')
-        .select('id, palika_id')
-        .eq('id', productId)
-        .single()
-
-      if (productError || !product) {
-        return {
-          error: 'Product not found',
-          status: 404
-        }
-      }
-
-      if (product.palika_id !== palikaId) {
+      const belongs = await this.datasource.productBelongsToPalika(productId, palikaId)
+      if (!belongs) {
         return {
           error: 'Product does not belong to this palika',
           status: 403
@@ -212,7 +171,17 @@ export class TierValidationService {
     productId: string
   ): Promise<ServiceResponse<{ canReject: boolean; reason?: string }>> {
     // Same logic as verification
-    return this.validateProductVerification(palikaId, productId)
+    const result = await this.validateProductVerification(palikaId, productId)
+    if (result.error) {
+      return result
+    }
+    return {
+      data: {
+        canReject: result.data?.canVerify || false,
+        reason: result.data?.reason
+      },
+      status: result.status
+    }
   }
 
   /**
@@ -347,20 +316,8 @@ export class TierValidationService {
       }
 
       // Verify business belongs to this palika
-      const { data: business, error: businessError } = await this.db
-        .from('businesses')
-        .select('id, palika_id')
-        .eq('id', businessId)
-        .single()
-
-      if (businessError || !business) {
-        return {
-          error: 'Business not found',
-          status: 404
-        }
-      }
-
-      if (business.palika_id !== palikaId) {
+      const belongs = await this.datasource.businessBelongsToPalika(businessId, palikaId)
+      if (!belongs) {
         return {
           error: 'Business does not belong to this palika',
           status: 403
@@ -390,6 +347,16 @@ export class TierValidationService {
     businessId: string
   ): Promise<ServiceResponse<{ canReject: boolean; reason?: string }>> {
     // Same logic as verification
-    return this.validateBusinessVerification(palikaId, businessId)
+    const result = await this.validateBusinessVerification(palikaId, businessId)
+    if (result.error) {
+      return result
+    }
+    return {
+      data: {
+        canReject: result.data?.canVerify || false,
+        reason: result.data?.reason
+      },
+      status: result.status
+    }
   }
 }

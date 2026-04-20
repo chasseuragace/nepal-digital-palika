@@ -26,8 +26,7 @@ export async function PUT(
       )
     }
 
-    const db = createSupabaseClient(supabaseAdmin)
-    const tierValidationService = new TierValidationService(db)
+    const tierValidationService = new TierValidationService()
 
     // Check if palika can access verification workflow
     const validationRes = await tierValidationService.validateProductVerification(
@@ -52,7 +51,7 @@ export async function PUT(
     const body = await request.json()
     const { notes } = body
 
-    const productsService = new MarketplaceProductsService(db)
+    const productsService = new MarketplaceProductsService()
     const result = await productsService.verifyProduct(
       params.id,
       parseInt(palikaId),

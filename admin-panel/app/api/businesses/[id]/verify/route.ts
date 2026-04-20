@@ -35,7 +35,8 @@ export async function PUT(
     const palikaIdNum = parseInt(palikaId);
 
     // Validate tier eligibility for business approval
-    const tierValidation = await TierValidationService.validateBusinessApprovalAccess(
+    const tierValidationService = new TierValidationService();
+    const tierValidation = await tierValidationService.validateBusinessApprovalAccess(
       palikaIdNum,
       adminId
     );
@@ -52,7 +53,8 @@ export async function PUT(
     const notes = body.notes;
 
     // Verify business
-    const result = await BusinessApprovalService.verifyBusiness({
+    const service = new BusinessApprovalService();
+    const result = await service.verifyBusiness({
       businessId,
       palikaId: palikaIdNum,
       adminId,

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { createSupabaseClient } from '@/services/database-client'
 import { MarketplaceProductsService } from '@/services/marketplace-products.service'
 
 export async function GET(
@@ -17,8 +15,7 @@ export async function GET(
       )
     }
 
-    const db = createSupabaseClient(supabaseAdmin)
-    const productsService = new MarketplaceProductsService(db)
+    const productsService = new MarketplaceProductsService()
 
     const result = await productsService.getProductDetails(params.id, parseInt(palikaId))
 
