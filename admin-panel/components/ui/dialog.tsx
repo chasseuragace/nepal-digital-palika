@@ -78,6 +78,13 @@ export const DialogTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttrib
 );
 DialogTitle.displayName = 'DialogTitle';
 
+export const DialogDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className = '', ...props }, ref) => (
+    <p ref={ref} className={`text-sm text-gray-600 ${className}`} {...props} />
+  )
+);
+DialogDescription.displayName = 'DialogDescription';
+
 export const DialogFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className = '', ...props }, ref) => (
     <div ref={ref} className={`flex flex-row-reverse gap-2 px-6 py-4 border-t border-gray-200 ${className}`} {...props} />
