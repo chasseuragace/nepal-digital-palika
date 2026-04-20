@@ -49,6 +49,19 @@ export interface LoginCredentials {
 }
 
 // ============ Heritage Site Types ============
+export type HeritageStatus = 'world_heritage' | 'national' | 'provincial' | 'local' | 'proposed'
+export type HeritageSiteStatus = 'draft' | 'published' | 'archived'
+export type HeritageWeekday =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday'
+
+export type OpeningHours = Record<HeritageWeekday, string>
+
 export interface HeritageSite {
   id: string
   palika_id: number
@@ -57,7 +70,7 @@ export interface HeritageSite {
   slug: string
   category_id: number
   site_type?: string
-  heritage_status?: 'world_heritage' | 'national' | 'provincial' | 'local' | 'proposed'
+  heritage_status?: HeritageStatus
   ward_number?: number
   address?: string
   location?: { lat: number; lng: number }
@@ -65,17 +78,18 @@ export interface HeritageSite {
   short_description_ne?: string
   full_description?: string
   full_description_ne?: string
-  opening_hours?: Record<string, string>
+  opening_hours?: OpeningHours
   entry_fee?: EntryFee
   featured_image?: string
   images?: string[]
   audio_guide_url?: string
+  languages_available?: string[]
   accessibility_info?: AccessibilityInfo
   best_time_to_visit?: string
   average_visit_duration_minutes?: number
   qr_code_url?: string
   view_count: number
-  status: 'draft' | 'published' | 'archived'
+  status: HeritageSiteStatus
   published_at?: string
   is_featured: boolean
   created_at: string
@@ -103,8 +117,8 @@ export interface AccessibilityInfo {
 export interface HeritageSiteFilters {
   palika_id?: number
   category_id?: number
-  heritage_status?: string
-  status?: string
+  heritage_status?: HeritageStatus
+  status?: HeritageSiteStatus
   is_featured?: boolean
   search?: string
 }
@@ -115,7 +129,7 @@ export interface CreateHeritageSiteInput {
   palika_id: number
   category_id: number
   site_type?: string
-  heritage_status?: string
+  heritage_status?: HeritageStatus
   ward_number?: number
   address?: string
   latitude?: number
@@ -124,11 +138,14 @@ export interface CreateHeritageSiteInput {
   short_description_ne?: string
   full_description?: string
   full_description_ne?: string
-  opening_hours?: Record<string, string>
+  opening_hours?: OpeningHours
   entry_fee?: EntryFee
+  accessibility_info?: AccessibilityInfo
+  audio_guide_url?: string
+  languages_available?: string[]
   best_time_to_visit?: string
   average_visit_duration_minutes?: number
-  status?: string
+  status?: HeritageSiteStatus
   is_featured?: boolean
 }
 
@@ -143,7 +160,7 @@ export interface Event {
   event_type?: string
   is_festival: boolean
   nepali_calendar_date?: string
-  recurrence_pattern?: string
+  recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
   start_date: string
   end_date: string
   location?: { lat: number; lng: number }
@@ -181,15 +198,18 @@ export interface CreateEventInput {
   event_type?: string
   is_festival?: boolean
   nepali_calendar_date?: string
-  recurrence_pattern?: string
+  recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
   start_date: string
   end_date: string
   venue_name?: string
+  latitude?: number
+  longitude?: number
   short_description?: string
   short_description_ne?: string
   full_description?: string
   full_description_ne?: string
-  status?: string
+  featured_image?: string
+  status?: 'draft' | 'published' | 'archived'
 }
 
 // ============ Blog Post Types ============
@@ -231,13 +251,15 @@ export interface CreateBlogPostInput {
   title_ne: string
   palika_id: number
   author_id: string
+  slug?: string
   excerpt?: string
   excerpt_ne?: string
   content: string
   content_ne?: string
+  featured_image?: string
   category?: string
   tags?: string[]
-  status?: string
+  status?: 'draft' | 'published' | 'archived'
 }
 
 // ============ Business Types ============

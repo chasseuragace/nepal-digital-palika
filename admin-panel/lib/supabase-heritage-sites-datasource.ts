@@ -248,6 +248,7 @@ export class SupabaseHeritageSitesDatasource implements IHeritageSitesDatasource
       featured_image: data.featured_image,
       images: data.images,
       audio_guide_url: data.audio_guide_url,
+      languages_available: data.languages_available,
       accessibility_info: data.accessibility_info,
       best_time_to_visit: data.best_time_to_visit,
       average_visit_duration_minutes: data.average_visit_duration_minutes,

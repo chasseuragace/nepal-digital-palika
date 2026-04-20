@@ -6,13 +6,41 @@
 
 export interface BlogPost {
   id: string
+  palika_id?: number
+  author_id?: string
   title_en: string
   title_ne: string
   slug: string
+  excerpt?: string
+  excerpt_ne?: string
+  content?: string
+  content_ne?: string
+  featured_image?: string
+  category?: string
+  tags?: string[]
   status: string
   author_name?: string
+  palika_name?: string
   created_at: string
+  updated_at?: string
   published_at?: string
+  view_count?: number
+}
+
+export interface BlogPostPayload {
+  title_en: string
+  title_ne: string
+  palika_id: number
+  author_id: string
+  slug?: string
+  excerpt?: string
+  excerpt_ne?: string
+  content: string
+  content_ne?: string
+  featured_image?: string
+  category?: string
+  tags?: string[]
+  status?: 'draft' | 'published' | 'archived'
 }
 
 export interface BlogPostsResponse {
@@ -89,7 +117,7 @@ class BlogPostsClientService {
   /**
    * Create a new blog post
    */
-  async create(post: Partial<BlogPost>): Promise<BlogPost> {
+  async create(post: BlogPostPayload): Promise<BlogPost> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -97,7 +125,8 @@ class BlogPostsClientService {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to create blog post')
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err.error || 'Failed to create blog post')
     }
 
     return response.json()
@@ -106,7 +135,7 @@ class BlogPostsClientService {
   /**
    * Update a blog post
    */
-  async update(id: string, updates: Partial<BlogPost>): Promise<BlogPost> {
+  async update(id: string, updates: Partial<BlogPostPayload>): Promise<BlogPost> {
     const response = await fetch(`${this.baseUrl}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -114,7 +143,8 @@ class BlogPostsClientService {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to update blog post')
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err.error || 'Failed to update blog post')
     }
 
     return response.json()

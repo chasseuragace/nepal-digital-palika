@@ -5,6 +5,7 @@ import AdminLayout from '@/components/AdminLayout'
 import PalikaGallery from '@/components/PalikaGallery'
 import { palikaProfileService, type PalikaProfile } from '@/lib/client/palika-profile-client.service'
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
+import './palika-profile.css'
 
 interface GalleryItem {
   id: string
@@ -12,7 +13,7 @@ interface GalleryItem {
   storage_path: string
 }
 
-interface FormData {
+interface PalikaProfileFormData {
   description_en: string
   description_ne: string
   featured_image: string
@@ -30,12 +31,28 @@ interface FormData {
     established_year?: number
   }
   videos: string[]
+
+  // Contact info (palikas table)
+  office_phone?: string
+  office_email?: string
+  website?: string
+  total_wards?: number
 }
 
+type TabId = 'overview' | 'tourism' | 'highlights' | 'media'
+
+const TABS: Array<{ id: TabId; label: string; icon: string; description: string }> = [
+  { id: 'overview', label: 'Overview', icon: '1', description: 'Descriptions & contact' },
+  { id: 'tourism', label: 'Tourism', icon: '2', description: 'Visitor information' },
+  { id: 'highlights', label: 'Highlights & Gallery', icon: '3', description: 'Attractions & photos' },
+  { id: 'media', label: 'Media', icon: '4', description: 'YouTube videos' }
+]
+
 export default function PalikaProfilePage() {
+  const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [profile, setProfile] = useState<PalikaProfile | null>(null)
   const [palikaId, setPalikaId] = useState<number | null>(null)
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<PalikaProfileFormData>({
     description_en: '',
     description_ne: '',
     featured_image: '',
@@ -51,11 +68,15 @@ export default function PalikaProfilePage() {
       area_sq_km: 0,
       established_year: 0
     },
-    videos: []
+    videos: [],
+    office_phone: '',
+    office_email: '',
+    website: '',
+    total_wards: 0
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null)
   const [showGalleryModal, setShowGalleryModal] = useState(false)
   const [selectedImageField, setSelectedImageField] = useState<'featured_image' | `highlight_${number}` | 'tourism_info' | null>(null)
 
@@ -83,7 +104,7 @@ export default function PalikaProfilePage() {
           description_en: data.profile.description_en || '',
           description_ne: data.profile.description_ne || '',
           featured_image: data.profile.featured_image || '',
-          highlights: data.profile.highlights || [{ title: '', description: '' }],
+          highlights: data.profile.highlights?.length ? data.profile.highlights : [{ title: '', description: '' }],
           tourism_info: data.profile.tourism_info || {
             best_time_to_visit: '',
             accessibility: '',
@@ -95,7 +116,11 @@ export default function PalikaProfilePage() {
             area_sq_km: 0,
             established_year: 0
           },
-          videos: data.profile.videos || []
+          videos: data.profile.videos || [],
+          office_phone: data.profile.office_phone || '',
+          office_email: data.profile.office_email || '',
+          website: data.profile.website || '',
+          total_wards: data.profile.total_wards ?? 0
         })
       }
     } catch (error) {
@@ -106,36 +131,24 @@ export default function PalikaProfilePage() {
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const handleInputChange = (field: keyof PalikaProfileFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleNestedChange = (parent: string, field: string, value: any) => {
-    setFormData(prev => {
-      const parentData = prev[parent as keyof FormData]
-      if (typeof parentData === 'object' && parentData !== null) {
-        return {
-          ...prev,
-          [parent]: {
-            ...parentData,
-            [field]: value
-          }
-        }
+  const handleNestedChange = (parent: 'tourism_info' | 'demographics', field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [parent]: {
+        ...(prev[parent] as Record<string, any>),
+        [field]: value
       }
-      return prev
-    })
+    }))
   }
 
   const handleHighlightChange = (index: number, field: string, value: string) => {
     const newHighlights = [...formData.highlights]
     newHighlights[index] = { ...newHighlights[index], [field]: value }
-    setFormData(prev => ({
-      ...prev,
-      highlights: newHighlights
-    }))
+    setFormData(prev => ({ ...prev, highlights: newHighlights }))
   }
 
   const addHighlight = () => {
@@ -153,10 +166,7 @@ export default function PalikaProfilePage() {
   }
 
   const addVideo = () => {
-    setFormData(prev => ({
-      ...prev,
-      videos: [...prev.videos, '']
-    }))
+    setFormData(prev => ({ ...prev, videos: [...prev.videos, ''] }))
   }
 
   const removeVideo = (index: number) => {
@@ -169,10 +179,7 @@ export default function PalikaProfilePage() {
   const handleVideoChange = (index: number, value: string) => {
     const newVideos = [...formData.videos]
     newVideos[index] = value
-    setFormData(prev => ({
-      ...prev,
-      videos: newVideos
-    }))
+    setFormData(prev => ({ ...prev, videos: newVideos }))
   }
 
   const extractYouTubeId = (url: string): string | null => {
@@ -194,33 +201,21 @@ export default function PalikaProfilePage() {
 
   const handleImageSelect = (item: GalleryItem) => {
     const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/${item.storage_path}`
-    
+
     if (selectedImageField === 'featured_image') {
-      setFormData(prev => ({
-        ...prev,
-        featured_image: publicUrl
-      }))
+      setFormData(prev => ({ ...prev, featured_image: publicUrl }))
     } else if (selectedImageField === 'tourism_info') {
       setFormData(prev => ({
         ...prev,
-        tourism_info: {
-          ...prev.tourism_info,
-          image_url: publicUrl
-        }
+        tourism_info: { ...prev.tourism_info, image_url: publicUrl }
       }))
     } else if (selectedImageField?.startsWith('highlight_')) {
       const highlightIndex = parseInt(selectedImageField.split('_')[1])
       const newHighlights = [...formData.highlights]
-      newHighlights[highlightIndex] = {
-        ...newHighlights[highlightIndex],
-        image_url: publicUrl
-      }
-      setFormData(prev => ({
-        ...prev,
-        highlights: newHighlights
-      }))
+      newHighlights[highlightIndex] = { ...newHighlights[highlightIndex], image_url: publicUrl }
+      setFormData(prev => ({ ...prev, highlights: newHighlights }))
     }
-    
+
     setShowGalleryModal(false)
     setSelectedImageField(null)
   }
@@ -245,499 +240,650 @@ export default function PalikaProfilePage() {
 
       const data = await palikaProfileService.update(admin.palika_id, formData)
 
-      setMessage({ type: 'success', text: 'Palika profile updated successfully!' })
+      if (data.warning) {
+        setMessage({ type: 'warning', text: data.warning })
+      } else {
+        setMessage({ type: 'success', text: 'Palika profile updated successfully!' })
+      }
       setProfile(data.profile)
     } catch (error) {
       console.error('Error saving palika profile:', error)
-      setMessage({ type: 'error', text: 'Failed to save palika profile' })
+      const text = error instanceof Error ? error.message : 'Failed to save palika profile'
+      setMessage({ type: 'error', text })
     } finally {
       setIsSaving(false)
     }
   }
 
+  const currentStepIndex = TABS.findIndex(t => t.id === activeTab)
+  const progress = ((currentStepIndex + 1) / TABS.length) * 100
+  const isLastStep = currentStepIndex === TABS.length - 1
+
   if (isLoading) {
     return (
       <AdminLayout>
-        <div>Loading palika profile...</div>
+        <div className="heritage-container">
+          <div className="loading-container">
+            <div className="spinner-large" />
+            <p>Loading palika profile...</p>
+          </div>
+        </div>
       </AdminLayout>
     )
   }
 
   return (
     <AdminLayout>
-      <h1>Palika Profile Management</h1>
-
-      {message && (
-        <div style={{
-          padding: '15px',
-          marginBottom: '20px',
-          borderRadius: '4px',
-          backgroundColor: message.type === 'success' ? '#d4edda' : '#f8d7da',
-          color: message.type === 'success' ? '#155724' : '#721c24',
-          border: `1px solid ${message.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`
-        }}>
-          {message.text}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* Descriptions */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h2>Descriptions</h2>
-          
-          <div className="form-group">
-            <label htmlFor="description_en">Description (English)</label>
-            <textarea
-              id="description_en"
-              value={formData.description_en}
-              onChange={(e) => handleInputChange('description_en', e.target.value)}
-              rows={4}
-              placeholder="Enter English description of the palika"
-              style={{ width: '100%', padding: '10px', fontFamily: 'monospace' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description_ne">Description (Nepali)</label>
-            <textarea
-              id="description_ne"
-              value={formData.description_ne}
-              onChange={(e) => handleInputChange('description_ne', e.target.value)}
-              rows={4}
-              placeholder="पालिकाको नेपाली विवरण प्रविष्ट गर्नुहोस्"
-              style={{ width: '100%', padding: '10px', fontFamily: 'monospace' }}
-            />
-          </div>
-        </div>
-
-        {/* Featured Image */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h2>Featured Image</h2>
-          
-          <div className="form-group">
-            <label htmlFor="featured_image">Featured Image URL</label>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <input
-                type="text"
-                id="featured_image"
-                value={formData.featured_image}
-                onChange={(e) => handleInputChange('featured_image', e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                style={{ flex: 1, padding: '10px' }}
-              />
-              <button
-                type="button"
-                onClick={() => openGalleryModal('featured_image')}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                📷 Select from Gallery
-              </button>
+      <div className="heritage-container">
+        {/* Page Header */}
+        <div className="heritage-page-header">
+          <div className="header-content">
+            <div className="header-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 21h18" />
+                <path d="M5 21V7l7-4 7 4v14" />
+                <path d="M9 9h1" />
+                <path d="M9 13h1" />
+                <path d="M9 17h1" />
+                <path d="M14 9h1" />
+                <path d="M14 13h1" />
+                <path d="M14 17h1" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="page-title">Palika Profile</h1>
+              <p className="page-subtitle">Showcase your palika to the world</p>
             </div>
           </div>
-
-          {formData.featured_image && (
-            <div style={{ marginTop: '10px' }}>
-              <img
-                src={formData.featured_image}
-                alt="Featured"
-                style={{ maxWidth: '300px', maxHeight: '200px', borderRadius: '4px' }}
-              />
-            </div>
-          )}
+          <button
+            type="button"
+            className="btn btn-secondary header-cancel-btn"
+            onClick={() => window.history.back()}
+          >
+            ← Back
+          </button>
         </div>
 
-        {/* Highlights */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h2>Highlights</h2>
-          
-          {formData.highlights.map((highlight, index) => (
-            <div key={index} style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-              <div className="form-group">
-                <label>Highlight {index + 1} Title</label>
-                <input
-                  type="text"
-                  value={highlight.title}
-                  onChange={(e) => handleHighlightChange(index, 'title', e.target.value)}
-                  placeholder="e.g., Ancient Temple"
-                  style={{ width: '100%', padding: '8px' }}
-                />
-              </div>
+        {/* Alerts */}
+        {message && message.type === 'error' && (
+          <div className="alert alert-error slide-in-up">
+            <span className="alert-icon">✕</span>
+            <span>{message.text}</span>
+          </div>
+        )}
+        {message && message.type === 'success' && (
+          <div className="alert alert-success slide-in-up">
+            <span className="alert-icon">✓</span>
+            <span>{message.text}</span>
+          </div>
+        )}
+        {message && message.type === 'warning' && (
+          <div className="alert alert-warning slide-in-up">
+            <span className="alert-icon">!</span>
+            <span>{message.text}</span>
+          </div>
+        )}
 
-              <div className="form-group">
-                <label>Highlight {index + 1} Description</label>
-                <textarea
-                  value={highlight.description}
-                  onChange={(e) => handleHighlightChange(index, 'description', e.target.value)}
-                  placeholder="Describe this highlight"
-                  rows={2}
-                  style={{ width: '100%', padding: '8px' }}
-                />
+        {/* Form */}
+        <div className="heritage-form-container">
+          <form onSubmit={handleSubmit}>
+            {/* Progress */}
+            <div className="progress-section">
+              <div className="progress-bar-container">
+                <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
               </div>
+              <div className="progress-text">
+                Step {currentStepIndex + 1} of {TABS.length}
+              </div>
+            </div>
 
-              <div className="form-group">
-                <label>Highlight {index + 1} Image</label>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                  <input
-                    type="text"
-                    value={highlight.image_url || ''}
-                    onChange={(e) => handleHighlightChange(index, 'image_url', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    style={{ flex: 1, padding: '8px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => openGalleryModal(`highlight_${index}` as `highlight_${number}`)}
-                    style={{
-                      padding: '8px 15px',
-                      backgroundColor: '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      fontSize: '12px'
-                    }}
-                  >
-                    📷 Select
+            {/* Tabs */}
+            <div className="tabs-container">
+              {TABS.map((tab, index) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`tab-button ${activeTab === tab.id ? 'active' : ''} ${index < currentStepIndex ? 'completed' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <div className="tab-icon">{tab.icon}</div>
+                  <div className="tab-content">
+                    <div className="tab-label">{tab.label}</div>
+                    <div className="tab-description">{tab.description}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* ---- Overview Tab ---- */}
+            {activeTab === 'overview' && (
+              <div className="form-section fade-in">
+                <div className="section-header">
+                  <h3 className="section-title">Overview</h3>
+                  <p className="section-subtitle">Descriptions, featured image, and contact information</p>
+                </div>
+
+                {/* Descriptions */}
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Story</span>
+                    <h4>Descriptions</h4>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="description_en" className="form-label">
+                      Description (English) <span className="required">*</span>
+                    </label>
+                    <textarea
+                      id="description_en"
+                      className="form-textarea"
+                      value={formData.description_en}
+                      onChange={(e) => handleInputChange('description_en', e.target.value)}
+                      rows={5}
+                      placeholder="Enter English description of the palika"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="description_ne" className="form-label">
+                      Description (Nepali)
+                    </label>
+                    <textarea
+                      id="description_ne"
+                      className="form-textarea"
+                      value={formData.description_ne}
+                      onChange={(e) => handleInputChange('description_ne', e.target.value)}
+                      rows={5}
+                      placeholder="पालिकाको नेपाली विवरण प्रविष्ट गर्नुहोस्"
+                    />
+                  </div>
+                </div>
+
+                {/* Featured Image */}
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Image</span>
+                    <h4>Featured Image</h4>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="featured_image" className="form-label">
+                      Featured Image URL
+                    </label>
+                    <div className="image-picker-row">
+                      <input
+                        type="text"
+                        id="featured_image"
+                        className="form-input"
+                        value={formData.featured_image}
+                        onChange={(e) => handleInputChange('featured_image', e.target.value)}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => openGalleryModal('featured_image')}
+                      >
+                        Select from Gallery
+                      </button>
+                    </div>
+
+                    {formData.featured_image && (
+                      <div className="image-preview">
+                        <img src={formData.featured_image} alt="Featured" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Contact</span>
+                    <h4>Contact Information</h4>
+                  </div>
+
+                  <div className="grid grid-2">
+                    <div className="form-group">
+                      <label htmlFor="office_phone" className="form-label">Office Phone</label>
+                      <input
+                        type="text"
+                        id="office_phone"
+                        className="form-input"
+                        value={formData.office_phone || ''}
+                        onChange={(e) => handleInputChange('office_phone', e.target.value)}
+                        placeholder="+977-1-XXXXXXX"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="office_email" className="form-label">Office Email</label>
+                      <input
+                        type="email"
+                        id="office_email"
+                        className="form-input"
+                        value={formData.office_email || ''}
+                        onChange={(e) => handleInputChange('office_email', e.target.value)}
+                        placeholder="info@palika.gov.np"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-2">
+                    <div className="form-group">
+                      <label htmlFor="website" className="form-label">Website</label>
+                      <input
+                        type="url"
+                        id="website"
+                        className="form-input"
+                        value={formData.website || ''}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                        placeholder="https://palika.gov.np"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="total_wards" className="form-label">Total Wards</label>
+                      <input
+                        type="number"
+                        id="total_wards"
+                        className="form-input"
+                        value={formData.total_wards ?? 0}
+                        onChange={(e) => handleInputChange('total_wards', e.target.value === '' ? 0 : parseInt(e.target.value, 10))}
+                        min={0}
+                        max={50}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Demographics */}
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Stats</span>
+                    <h4>Demographics</h4>
+                  </div>
+
+                  <div className="grid grid-3">
+                    <div className="form-group">
+                      <label htmlFor="population" className="form-label">Population</label>
+                      <input
+                        type="number"
+                        id="population"
+                        className="form-input"
+                        value={formData.demographics.population || 0}
+                        onChange={(e) => handleNestedChange('demographics', 'population', parseInt(e.target.value, 10) || 0)}
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="area" className="form-label">Area (sq km)</label>
+                      <input
+                        type="number"
+                        id="area"
+                        className="form-input"
+                        value={formData.demographics.area_sq_km || 0}
+                        onChange={(e) => handleNestedChange('demographics', 'area_sq_km', parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                        step="0.01"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="established" className="form-label">Established Year</label>
+                      <input
+                        type="number"
+                        id="established"
+                        className="form-input"
+                        value={formData.demographics.established_year || 0}
+                        onChange={(e) => handleNestedChange('demographics', 'established_year', parseInt(e.target.value, 10) || 0)}
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ---- Tourism Tab ---- */}
+            {activeTab === 'tourism' && (
+              <div className="form-section fade-in">
+                <div className="section-header">
+                  <h3 className="section-title">Tourism Information</h3>
+                  <p className="section-subtitle">Help visitors plan their trip</p>
+                </div>
+
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Visit</span>
+                    <h4>Visitor Details</h4>
+                  </div>
+
+                  <div className="grid grid-2">
+                    <div className="form-group">
+                      <label htmlFor="best_time" className="form-label">Best Time to Visit</label>
+                      <input
+                        type="text"
+                        id="best_time"
+                        className="form-input"
+                        value={formData.tourism_info.best_time_to_visit || ''}
+                        onChange={(e) => handleNestedChange('tourism_info', 'best_time_to_visit', e.target.value)}
+                        placeholder="e.g., October to November"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="currency" className="form-label">Currency</label>
+                      <input
+                        type="text"
+                        id="currency"
+                        className="form-input"
+                        value={formData.tourism_info.currency || 'NPR'}
+                        onChange={(e) => handleNestedChange('tourism_info', 'currency', e.target.value)}
+                        placeholder="NPR"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="accessibility" className="form-label">Accessibility Information</label>
+                    <textarea
+                      id="accessibility"
+                      className="form-textarea"
+                      value={formData.tourism_info.accessibility || ''}
+                      onChange={(e) => handleNestedChange('tourism_info', 'accessibility', e.target.value)}
+                      placeholder="Describe accessibility features — roads, airports, public transport"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="languages" className="form-label">Languages (comma-separated)</label>
+                    <input
+                      type="text"
+                      id="languages"
+                      className="form-input"
+                      value={formData.tourism_info.languages?.join(', ') || ''}
+                      onChange={(e) => handleNestedChange('tourism_info', 'languages', e.target.value.split(',').map(l => l.trim()).filter(Boolean))}
+                      placeholder="e.g., English, Nepali, Chinese"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Image</span>
+                    <h4>Tourism Image</h4>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="tourism_image" className="form-label">Tourism Information Image</label>
+                    <div className="image-picker-row">
+                      <input
+                        type="text"
+                        id="tourism_image"
+                        className="form-input"
+                        value={formData.tourism_info.image_url || ''}
+                        onChange={(e) => handleNestedChange('tourism_info', 'image_url', e.target.value)}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => openGalleryModal('tourism_info')}
+                      >
+                        Select from Gallery
+                      </button>
+                    </div>
+
+                    {formData.tourism_info.image_url && (
+                      <div className="image-preview">
+                        <img src={formData.tourism_info.image_url} alt="Tourism" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ---- Highlights & Gallery Tab ---- */}
+            {activeTab === 'highlights' && (
+              <div className="form-section fade-in">
+                <div className="section-header">
+                  <h3 className="section-title">Highlights & Gallery</h3>
+                  <p className="section-subtitle">Notable attractions and image library</p>
+                </div>
+
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Highlights</span>
+                    <h4>Palika Highlights</h4>
+                  </div>
+
+                  {formData.highlights.map((highlight, index) => (
+                    <div key={index} className="repeater-card">
+                      <div className="repeater-card-header">
+                        <span className="repeater-card-title">Highlight #{index + 1}</span>
+                        {formData.highlights.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn-danger-sm"
+                            onClick={() => removeHighlight(index)}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Title</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={highlight.title}
+                          onChange={(e) => handleHighlightChange(index, 'title', e.target.value)}
+                          placeholder="e.g., Ancient Temple"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <textarea
+                          className="form-textarea"
+                          value={highlight.description}
+                          onChange={(e) => handleHighlightChange(index, 'description', e.target.value)}
+                          placeholder="Describe this highlight"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Image</label>
+                        <div className="image-picker-row">
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={highlight.image_url || ''}
+                            onChange={(e) => handleHighlightChange(index, 'image_url', e.target.value)}
+                            placeholder="https://example.com/image.jpg"
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => openGalleryModal(`highlight_${index}` as `highlight_${number}`)}
+                          >
+                            Select
+                          </button>
+                        </div>
+                        {highlight.image_url && (
+                          <div className="image-preview image-preview-sm">
+                            <img src={highlight.image_url} alt={`Highlight ${index + 1}`} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <button type="button" className="btn-add" onClick={addHighlight}>
+                    + Add Highlight
                   </button>
                 </div>
-                {highlight.image_url && (
-                  <img
-                    src={highlight.image_url}
-                    alt={`Highlight ${index + 1}`}
-                    style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginBottom: '10px' }}
-                  />
+
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Gallery</span>
+                    <h4>Image Library</h4>
+                  </div>
+                  <p style={{ margin: '0 0 16px 0', color: '#64748b', fontSize: '14px' }}>
+                    Uploaded images are synced to the public m-place site on save.
+                  </p>
+
+                  {palikaId && (
+                    <PalikaGallery palikaId={palikaId} />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ---- Media Tab ---- */}
+            {activeTab === 'media' && (
+              <div className="form-section fade-in">
+                <div className="section-header">
+                  <h3 className="section-title">Media</h3>
+                  <p className="section-subtitle">Featured YouTube videos</p>
+                </div>
+
+                <div className="form-card">
+                  <div className="form-card-header">
+                    <span className="form-card-icon-text">Videos</span>
+                    <h4>YouTube Videos</h4>
+                  </div>
+
+                  {formData.videos.map((video, index) => (
+                    <div key={index} className="repeater-card">
+                      <div className="repeater-card-header">
+                        <span className="repeater-card-title">Video #{index + 1}</span>
+                        {formData.videos.length > 0 && (
+                          <button
+                            type="button"
+                            className="btn-danger-sm"
+                            onClick={() => removeVideo(index)}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">YouTube URL</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={video}
+                          onChange={(e) => handleVideoChange(index, e.target.value)}
+                          placeholder="https://www.youtube.com/watch?v=VIDEO_ID"
+                        />
+                      </div>
+
+                      {video && getYouTubeEmbedUrl(video) ? (
+                        <div className="video-preview">
+                          <iframe
+                            src={getYouTubeEmbedUrl(video) || ''}
+                            title={`Video ${index + 1}`}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      ) : video ? (
+                        <div className="alert alert-warning" style={{ marginBottom: 0 }}>
+                          <span className="alert-icon">!</span>
+                          <span>Invalid YouTube URL. Use https://youtube.com/watch?v=... or https://youtu.be/...</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+
+                  <button type="button" className="btn-add" onClick={addVideo}>
+                    + Add Video
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Form Actions */}
+            <div className="form-actions">
+              <div className="form-actions-left">
+                {currentStepIndex > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setActiveTab(TABS[currentStepIndex - 1].id)}
+                  >
+                    ← Previous
+                  </button>
                 )}
               </div>
+              <div className="form-actions-right">
+                {!isLastStep ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setActiveTab(TABS[currentStepIndex + 1].id)}
+                  >
+                    Next Step →
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="btn-submit"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <>
+                        <span className="spinner" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <span>✓</span>
+                        Save Palika Profile
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
 
-              {formData.highlights.length > 1 && (
+        {/* Gallery Modal */}
+        {showGalleryModal && palikaId && (
+          <div className="gallery-modal-overlay">
+            <div className="gallery-modal">
+              <div className="gallery-modal-header">
+                <h2>Select Image from Gallery</h2>
                 <button
                   type="button"
-                  onClick={() => removeHighlight(index)}
-                  style={{
-                    padding: '8px 12px',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowGalleryModal(false)
+                    setSelectedImageField(null)
                   }}
                 >
-                  Remove Highlight
+                  Close
                 </button>
-              )}
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={addHighlight}
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Add Highlight
-          </button>
-        </div>
-
-        {/* Tourism Info */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h2>Tourism Information</h2>
-          
-          <div className="form-group">
-            <label htmlFor="best_time">Best Time to Visit</label>
-            <input
-              type="text"
-              id="best_time"
-              value={formData.tourism_info.best_time_to_visit || ''}
-              onChange={(e) => handleNestedChange('tourism_info', 'best_time_to_visit', e.target.value)}
-              placeholder="e.g., October to November"
-              style={{ width: '100%', padding: '10px' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="accessibility">Accessibility Information</label>
-            <textarea
-              id="accessibility"
-              value={formData.tourism_info.accessibility || ''}
-              onChange={(e) => handleNestedChange('tourism_info', 'accessibility', e.target.value)}
-              placeholder="Describe accessibility features"
-              rows={3}
-              style={{ width: '100%', padding: '10px' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="languages">Languages (comma-separated)</label>
-            <input
-              type="text"
-              id="languages"
-              value={formData.tourism_info.languages?.join(', ') || ''}
-              onChange={(e) => handleNestedChange('tourism_info', 'languages', e.target.value.split(',').map(l => l.trim()))}
-              placeholder="e.g., English, Nepali, Chinese"
-              style={{ width: '100%', padding: '10px' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="currency">Currency</label>
-            <input
-              type="text"
-              id="currency"
-              value={formData.tourism_info.currency || 'NPR'}
-              onChange={(e) => handleNestedChange('tourism_info', 'currency', e.target.value)}
-              placeholder="NPR"
-              style={{ width: '100%', padding: '10px' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="tourism_image">Tourism Information Image</label>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <input
-                type="text"
-                id="tourism_image"
-                value={formData.tourism_info.image_url || ''}
-                onChange={(e) => handleNestedChange('tourism_info', 'image_url', e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                style={{ flex: 1, padding: '10px' }}
-              />
-              <button
-                type="button"
-                onClick={() => openGalleryModal('tourism_info')}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                📷 Select from Gallery
-              </button>
-            </div>
-            {formData.tourism_info.image_url && (
-              <img
-                src={formData.tourism_info.image_url}
-                alt="Tourism Info"
-                style={{ maxWidth: '300px', maxHeight: '200px', borderRadius: '4px' }}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Demographics */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h2>Demographics</h2>
-          
-          <div className="form-group">
-            <label htmlFor="population">Population</label>
-            <input
-              type="number"
-              id="population"
-              value={formData.demographics.population || 0}
-              onChange={(e) => handleNestedChange('demographics', 'population', parseInt(e.target.value))}
-              placeholder="0"
-              style={{ width: '100%', padding: '10px' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="area">Area (sq km)</label>
-            <input
-              type="number"
-              id="area"
-              value={formData.demographics.area_sq_km || 0}
-              onChange={(e) => handleNestedChange('demographics', 'area_sq_km', parseFloat(e.target.value))}
-              placeholder="0"
-              step="0.01"
-              style={{ width: '100%', padding: '10px' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="established">Established Year</label>
-            <input
-              type="number"
-              id="established"
-              value={formData.demographics.established_year || 0}
-              onChange={(e) => handleNestedChange('demographics', 'established_year', parseInt(e.target.value))}
-              placeholder="0"
-              style={{ width: '100%', padding: '10px' }}
-            />
-          </div>
-        </div>
-
-        {/* Videos */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h2>YouTube Videos</h2>
-          
-          {formData.videos.map((video, index) => (
-            <div key={index} style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-              <div className="form-group">
-                <label>Video {index + 1} URL</label>
-                <input
-                  type="text"
-                  value={video}
-                  onChange={(e) => handleVideoChange(index, e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ or https://youtu.be/dQw4w9WgXcQ"
-                  style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-                />
               </div>
 
-              {video && getYouTubeEmbedUrl(video) ? (
-                <div style={{ marginBottom: '10px' }}>
-                  <p style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>Preview:</p>
-                  <iframe
-                    width="100%"
-                    height="200"
-                    src={getYouTubeEmbedUrl(video) || ''}
-                    title={`Video ${index + 1}`}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    style={{ borderRadius: '4px' }}
-                  />
-                </div>
-              ) : video ? (
-                <div style={{
-                  padding: '10px',
-                  backgroundColor: '#fff3cd',
-                  color: '#856404',
-                  borderRadius: '4px',
-                  marginBottom: '10px',
-                  fontSize: '12px'
-                }}>
-                  ⚠️ Invalid YouTube URL. Please use: https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID
-                </div>
-              ) : null}
-
-              {formData.videos.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeVideo(index)}
-                  style={{
-                    padding: '8px 12px',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Remove Video
-                </button>
-              )}
+              <PalikaGallery
+                palikaId={palikaId}
+                selectMode={true}
+                onImageSelect={handleImageSelect}
+              />
             </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={addVideo}
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Add Video
-          </button>
-        </div>
-
-        {/* Submit Button */}
-        <div style={{ marginTop: '30px' }}>
-          <button
-            type="submit"
-            disabled={isSaving}
-            style={{
-              padding: '12px 30px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              opacity: isSaving ? 0.6 : 1
-            }}
-          >
-            {isSaving ? 'Saving...' : 'Save Palika Profile'}
-          </button>
-        </div>
-      </form>
-
-      {/* Gallery Modal */}
-      {showGalleryModal && palikaId && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            maxWidth: '900px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            padding: '20px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Select Image from Gallery</h2>
-              <button
-                onClick={() => {
-                  setShowGalleryModal(false)
-                  setSelectedImageField(null)
-                }}
-                style={{
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Close
-              </button>
-            </div>
-            
-            <PalikaGallery 
-              palikaId={palikaId}
-              selectMode={true}
-              onImageSelect={handleImageSelect}
-            />
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </AdminLayout>
   )
 }

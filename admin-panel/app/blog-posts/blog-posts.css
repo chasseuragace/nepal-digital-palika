@@ -1,0 +1,206 @@
+/* Blog Posts — Form-specific overrides
+ * Layered on top of heritage-sites-new.css vocabulary.
+ * Only add styles for things heritage-sites CSS doesn't already cover:
+ *   - React Quill editor sizing / chrome
+ *   - Tag chip input
+ *   - Featured image preview
+ *   - Loading state
+ */
+
+/* ===== Page shell ===== */
+.blog-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.blog-form-container {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  animation: blogFadeIn 0.5s ease-out;
+}
+
+@keyframes blogFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.blog-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 15px;
+  color: #64748b;
+}
+
+/* ===== Rich text (React Quill) ===== */
+.blog-editor-wrapper {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #e9ecef;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  background: white;
+}
+
+.blog-editor-wrapper:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.blog-editor-wrapper .ql-toolbar.ql-snow {
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8fafc;
+  padding: 10px 12px;
+}
+
+.blog-editor-wrapper .ql-container.ql-snow {
+  border: none;
+  font-size: 15px;
+  font-family: inherit;
+  min-height: 260px;
+}
+
+.blog-editor-wrapper .ql-editor {
+  min-height: 260px;
+  line-height: 1.6;
+  color: #1e293b;
+}
+
+.blog-editor-wrapper .ql-editor.ql-blank::before {
+  color: #94a3b8;
+  font-style: normal;
+}
+
+/* ===== Slug row ===== */
+.slug-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slug-prefix {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 10px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* ===== Tag chips ===== */
+.tag-input-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  background: white;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  min-height: 52px;
+  align-items: center;
+}
+
+.tag-input-wrapper:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.tag-chip-remove {
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+  color: white;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.tag-chip-remove:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.tag-input-field {
+  flex: 1;
+  min-width: 140px;
+  border: none;
+  outline: none;
+  padding: 6px 4px;
+  font-size: 14px;
+  font-family: inherit;
+  background: transparent;
+  color: #1e293b;
+}
+
+/* ===== Featured image preview ===== */
+.featured-image-preview {
+  margin-top: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px dashed #e9ecef;
+  background: #f8fafc;
+  max-width: 320px;
+}
+
+.featured-image-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: cover;
+}
+
+.featured-image-placeholder {
+  padding: 24px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* ===== Error line under a field ===== */
+.field-error {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .blog-form-container {
+    padding: 20px;
+  }
+
+  .slug-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .slug-prefix {
+    text-align: center;
+  }
+}
