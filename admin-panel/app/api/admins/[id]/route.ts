@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getCallerFromRequest } from '@/lib/server/session'
+import { assertCallerCanUpdate } from '@/lib/server/rbac'
 
 interface UpdateAdminRequest {
   full_name?: string
@@ -208,6 +210,33 @@ export async function PUT(
       return NextResponse.json(
         { success: false, error: 'Failed to fetch admin' },
         { status: 500 }
+      )
+    }
+
+    // Scope enforcement: caller must be allowed to modify this admin.
+    const caller = await getCallerFromRequest(request)
+    const authz = assertCallerCanUpdate(
+      caller,
+      {
+        id: existingAdmin.id,
+        role: existingAdmin.role,
+        hierarchy_level: existingAdmin.hierarchy_level,
+        palika_id: existingAdmin.palika_id,
+        district_id: existingAdmin.district_id,
+        province_id: existingAdmin.province_id,
+      },
+      {
+        role: (body as any).role ?? existingAdmin.role,
+        hierarchy_level: body.hierarchy_level ?? existingAdmin.hierarchy_level,
+        palika_id: body.palika_id !== undefined ? body.palika_id : existingAdmin.palika_id,
+        district_id: body.district_id !== undefined ? body.district_id : existingAdmin.district_id,
+        province_id: (body as any).province_id !== undefined ? (body as any).province_id : existingAdmin.province_id,
+      }
+    )
+    if (!authz.ok) {
+      return NextResponse.json(
+        { success: false, error: `${authz.rule}: ${authz.reason}` },
+        { status: authz.status }
       )
     }
 

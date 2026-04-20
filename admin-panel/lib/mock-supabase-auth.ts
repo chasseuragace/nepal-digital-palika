@@ -70,8 +70,10 @@ class MockAdminAuthApi {
       password: credentials.password || 'temp_password_123456',
       full_name: credentials.user_metadata?.full_name || 'New Admin',
       role: credentials.user_metadata?.role || 'palika_admin',
-      palika_id: credentials.user_metadata?.palika_id,
+      hierarchy_level: credentials.user_metadata?.hierarchy_level || 'palika',
+      province_id: credentials.user_metadata?.province_id,
       district_id: credentials.user_metadata?.district_id,
+      palika_id: credentials.user_metadata?.palika_id,
       created_at: newUser.created_at,
     })
 
@@ -235,6 +237,7 @@ class MockAuthApi {
       password: credentials.password,
       full_name: 'New User',
       role: 'palika_admin',
+      hierarchy_level: 'palika',
       created_at: newUser.created_at,
     })
 

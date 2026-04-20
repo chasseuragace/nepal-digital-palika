@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getCallerFromRequest } from '@/lib/server/session'
+import { assertCallerCanDelete } from '@/lib/server/rbac'
 
 interface DeleteAdminResponse {
   success: boolean
@@ -18,10 +20,10 @@ export async function POST(
   try {
     const adminId = params.id
 
-    // Verify admin exists
+    // Verify admin exists (select scope fields too for RBAC check)
     const { data: admin, error: fetchError } = await supabaseAdmin
       .from('admin_users')
-      .select('id, full_name')
+      .select('id, full_name, role, hierarchy_level, palika_id, district_id, province_id')
       .eq('id', adminId)
       .single()
 
@@ -36,6 +38,23 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: 'Failed to fetch admin' },
         { status: 500 }
+      )
+    }
+
+    // Scope enforcement.
+    const caller = await getCallerFromRequest(request)
+    const authz = assertCallerCanDelete(caller, {
+      id: admin.id,
+      role: admin.role,
+      hierarchy_level: admin.hierarchy_level,
+      palika_id: admin.palika_id,
+      district_id: admin.district_id,
+      province_id: admin.province_id,
+    })
+    if (!authz.ok) {
+      return NextResponse.json(
+        { success: false, error: `${authz.rule}: ${authz.reason}` },
+        { status: authz.status }
       )
     }
 

@@ -46,7 +46,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     setIsLoading(false)
   }, [router])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {
+      // Cookie clear is best-effort; local clear still runs.
+    }
     adminSessionStore.clear()
     router.push('/login')
   }

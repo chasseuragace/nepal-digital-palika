@@ -24,6 +24,7 @@ Verify that the **admin-panel forms**, **Supabase SQL schema**, and **m-place di
 | 05 | [`05-master-fix-plan.md`](./05-master-fix-plan.md) | Prioritized execution roadmap across all features |
 | 06 | [`06-phase1-completion-status.md`](./06-phase1-completion-status.md) | Phase 1 admin-form alignment completion report |
 | 07 | [`07-rbac-future-option-c.md`](./07-rbac-future-option-c.md) | Runway to Option C: RBAC tables, scope-enforced admin creation, migration checklist |
+| 08 | [`08-rbac-palika-scope-shipped.md`](./08-rbac-palika-scope-shipped.md) | Palika-scope session + scope-enforced admin CRUD that shipped on `main`; corrections to 07; what's deferred to the Option C Full branch |
 
 ## Summary of what was found
 

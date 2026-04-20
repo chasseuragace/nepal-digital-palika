@@ -3,32 +3,58 @@
  * Pre-generated test accounts for development
  *
  * Passwords stored in plain text (ONLY FOR MOCK/DEV - never do this in production)
- * All users are pre-assigned to palikas to avoid region selection
+ * Region IDs align with lib/fake-regions-datasource.ts.
  */
+
+export type MockAdminRole =
+  | 'super_admin'
+  | 'province_admin'
+  | 'district_admin'
+  | 'palika_admin'
+  | 'moderator'
+  | 'support_agent'
+  | 'content_editor'
+  | 'content_reviewer'
+
+export type MockHierarchyLevel = 'national' | 'province' | 'district' | 'palika'
 
 export interface MockAdminUser {
   id: string
   email: string
   password: string
   full_name: string
-  role: 'super_admin' | 'district_admin' | 'palika_admin'
-  palika_id?: number
+  role: MockAdminRole
+  hierarchy_level: MockHierarchyLevel
+  province_id?: number
   district_id?: number
+  palika_id?: number
   created_at: string
 }
 
 /**
- * Pre-generated mock admins for testing
- * Linked to real palika/district hierarchy
+ * Pre-generated mock admins. IDs below match fake-regions-datasource.ts:
+ *   Bagmati province = 3, Kathmandu district = 301,
+ *   Kathmandu Metro palika = 5, Bhaktapur Muni palika = 10.
  */
 export const MOCK_ADMIN_USERS: MockAdminUser[] = [
   {
     id: '550e8400-e29b-41d4-a716-446655440000',
     email: 'super@admin.com',
-    password: 'super123456', // min 8 chars
+    password: 'super123456',
     full_name: 'Super Admin',
     role: 'super_admin',
+    hierarchy_level: 'national',
     created_at: new Date('2026-01-01').toISOString(),
+  },
+  {
+    id: '550e8400-e29b-41d4-a716-446655440010',
+    email: 'province@admin.com',
+    password: 'province123456',
+    full_name: 'Province Admin - Bagmati',
+    role: 'province_admin',
+    hierarchy_level: 'province',
+    province_id: 3,
+    created_at: new Date('2026-01-10').toISOString(),
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440001',
@@ -36,73 +62,59 @@ export const MOCK_ADMIN_USERS: MockAdminUser[] = [
     password: 'district123456',
     full_name: 'District Admin - Kathmandu',
     role: 'district_admin',
-    district_id: 3, // Kathmandu District
+    hierarchy_level: 'district',
+    province_id: 3,
+    district_id: 301,
     created_at: new Date('2026-01-15').toISOString(),
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440002',
     email: 'palika@admin.com',
     password: 'palika123456',
-    full_name: 'Palika Admin - Kathmandu',
+    full_name: 'Palika Admin - Kathmandu Metro',
     role: 'palika_admin',
-    palika_id: 1, // Kathmandu Metropolitan City
-    district_id: 3,
+    hierarchy_level: 'palika',
+    province_id: 3,
+    district_id: 301,
+    palika_id: 5,
     created_at: new Date('2026-02-01').toISOString(),
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440003',
     email: 'test@admin.com',
     password: 'testpass123456',
-    full_name: 'Test Admin',
+    full_name: 'Test Admin - Bhaktapur',
     role: 'palika_admin',
-    palika_id: 2, // Bhaktapur Municipality
-    district_id: 3,
+    hierarchy_level: 'palika',
+    province_id: 3,
+    district_id: 303,
+    palika_id: 10,
     created_at: new Date('2026-02-15').toISOString(),
   },
 ]
 
-/**
- * Find user by email
- */
 export function findMockAdminByEmail(email: string): MockAdminUser | undefined {
   return MOCK_ADMIN_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase())
 }
 
-/**
- * Find user by ID
- */
 export function findMockAdminById(id: string): MockAdminUser | undefined {
   return MOCK_ADMIN_USERS.find((u) => u.id === id)
 }
 
-/**
- * Validate password against user
- */
 export function validatePassword(user: MockAdminUser, password: string): boolean {
-  // In mock mode, simple string comparison (not production-safe)
   return user.password === password
 }
 
-/**
- * Generate mock JWT token (not real JWT, just mock)
- */
 export function generateMockToken(userId: string): string {
-  // Format: mock_<userId>_<timestamp>_<random>
-  // This is NOT a real JWT - just for mock testing
   const timestamp = Date.now()
   const random = Math.random().toString(36).substring(2, 15)
   return `mock_${userId}_${timestamp}_${random}`
 }
 
-/**
- * Convert MockAdminUser to auth response (excludes password)
- */
 export function mockAdminToDTO(user: MockAdminUser) {
   return {
     id: user.id,
     email: user.email,
-    user_metadata: {
-      full_name: user.full_name,
-    },
+    user_metadata: { full_name: user.full_name },
   }
 }

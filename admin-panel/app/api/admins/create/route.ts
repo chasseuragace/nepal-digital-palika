@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { MOCK_ADMIN_USERS } from '@/lib/mock-admin-users'
+import { getCallerFromRequest } from '@/lib/server/session'
+import { assertCallerCanCreate } from '@/lib/server/rbac'
 
 const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true'
 
@@ -115,6 +117,22 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateAdm
       )
     }
 
+    // Scope enforcement: who is asking, and are they allowed to create this target?
+    const caller = await getCallerFromRequest(request)
+    const authz = assertCallerCanCreate(caller, {
+      role: body.role,
+      hierarchy_level: body.hierarchy_level,
+      palika_id: body.palika_id ?? null,
+      district_id: body.district_id ?? null,
+      province_id: body.province_id ?? null,
+    })
+    if (!authz.ok) {
+      return NextResponse.json(
+        { success: false, error: `${authz.rule}: ${authz.reason}` },
+        { status: authz.status }
+      )
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(body.email)) {
@@ -179,8 +197,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateAdm
         password: tempPassword,
         full_name: body.full_name,
         role: body.role as any,
-        palika_id: body.palika_id || undefined,
+        hierarchy_level: (body.hierarchy_level || 'palika') as any,
+        province_id: body.province_id || undefined,
         district_id: body.district_id || undefined,
+        palika_id: body.palika_id || undefined,
         created_at: new Date().toISOString(),
       })
       authUserId = mockUserId
