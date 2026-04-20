@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getFakePalikas } from '@/lib/fake-regions-datasource'
+
+const useFake = process.env.NEXT_PUBLIC_USE_FAKE_DATASOURCES === 'true'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const districtId = searchParams.get('district_id')
+    const districtIdParam = searchParams.get('district_id')
+    const districtId = districtIdParam ? Number(districtIdParam) : undefined
+
+    if (useFake) {
+      return NextResponse.json({ data: getFakePalikas(districtId) })
+    }
 
     let query = supabaseAdmin
       .from('palikas')
       .select('id, name_en, name_ne, code, district_id')
 
-    if (districtId) {
-      query = query.eq('district_id', Number(districtId))
+    if (districtId !== undefined) {
+      query = query.eq('district_id', districtId)
     }
 
     const { data: palikas, error } = await query.order('name_en')

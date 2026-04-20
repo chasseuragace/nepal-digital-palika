@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getFakeDistricts } from '@/lib/fake-regions-datasource'
+
+const useFake = process.env.NEXT_PUBLIC_USE_FAKE_DATASOURCES === 'true'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const provinceId = searchParams.get('province_id')
+    const provinceIdParam = searchParams.get('province_id')
 
-    if (!provinceId) {
+    if (!provinceIdParam) {
       return NextResponse.json({ error: 'province_id is required' }, { status: 400 })
+    }
+
+    const provinceId = Number(provinceIdParam)
+
+    if (useFake) {
+      return NextResponse.json({ data: getFakeDistricts(provinceId) })
     }
 
     const { data: districts, error } = await supabaseAdmin
       .from('districts')
       .select('id, name_en, name_ne, code, province_id')
-      .eq('province_id', Number(provinceId))
+      .eq('province_id', provinceId)
       .order('name_en')
 
     if (error) {

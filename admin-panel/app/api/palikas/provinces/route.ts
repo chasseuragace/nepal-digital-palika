@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getFakeProvinces } from '@/lib/fake-regions-datasource'
+
+const useFake = process.env.NEXT_PUBLIC_USE_FAKE_DATASOURCES === 'true'
 
 export async function GET() {
   try {
+    if (useFake) {
+      return NextResponse.json({ data: getFakeProvinces() })
+    }
+
     const { data: provinces, error } = await supabaseAdmin
       .from('provinces')
       .select('id, name_en, name_ne, code')
