@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { createSupabaseClient } from '@/services/database-client'
-import { MarketplaceProductsService, ProductFilters } from '@/services/marketplace-products.service'
+import { MarketplaceProductsService } from '@/services/marketplace-products.service'
+import { ProductFilters } from '@/lib/marketplace-products-datasource'
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,8 +25,7 @@ export async function GET(request: NextRequest) {
       limit: parseInt(request.nextUrl.searchParams.get('limit') || '25')
     }
 
-    const db = createSupabaseClient(supabaseAdmin)
-    const productsService = new MarketplaceProductsService(db)
+    const productsService = new MarketplaceProductsService()
 
     const result = await productsService.listProducts(parseInt(palikaId), filters)
 

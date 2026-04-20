@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
       search: search || undefined,
     };
 
-    const result = await BusinessApprovalService.getBusinesses(
+    const service = new BusinessApprovalService();
+    const result = await service.getBusinesses(
       palikaIdNum,
       filters,
       limit,
