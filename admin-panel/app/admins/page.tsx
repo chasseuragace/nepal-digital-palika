@@ -229,13 +229,6 @@ export default function AdminsPage() {
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
-              className="btn btn-secondary"
-              onClick={() => router.push('/permissions')}
-            >
-              <Shield size={18} />
-              Manage Permissions
-            </button>
-            <button
               className="btn btn-primary header-add-btn"
               onClick={() => router.push('/admins/new')}
             >
