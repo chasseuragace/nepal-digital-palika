@@ -1,11 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import {
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle,
+  Shield,
+  MapPin,
+  User as UserIcon,
+  Edit,
+  Trash2,
+} from 'lucide-react'
 import AdminLayout from '@/components/AdminLayout'
-import Link from 'next/link'
 import { adminsService } from '@/lib/client/admins-client.service'
-import { palikaService, type Province, type District, type Palika } from '@/lib/client/palika-client.service'
+import {
+  palikaService,
+  type Province,
+  type District,
+  type Palika,
+} from '@/lib/client/palika-client.service'
+import '../admins.css'
 
 interface AdminRegion {
   id: number
@@ -46,12 +61,13 @@ interface FormErrors {
   submit?: string
 }
 
-export default function EditAdminPage() {
+export default function AdminDetailPage() {
   const router = useRouter()
   const params = useParams()
   const adminId = params.id as string
 
   const [admin, setAdmin] = useState<AdminData | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     full_name: '',
     hierarchy_level: '',
@@ -59,80 +75,84 @@ export default function EditAdminPage() {
     district_id: '',
     palika_id: '',
     regions: [],
-    is_active: true
+    is_active: true,
   })
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const [provinces, setProvinces] = useState<Province[]>([])
   const [districts, setDistricts] = useState<District[]>([])
   const [palikas, setPalikas] = useState<Palika[]>([])
   const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set())
-  const [availableRegions, setAvailableRegions] = useState<Array<{ id: number; name: string; type: string }>>([])
+  const [availableRegions, setAvailableRegions] = useState<
+    Array<{ id: number; name: string; type: string }>
+  >([])
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    isDeleting: boolean
+    error: string | null
+  }>({ isOpen: false, isDeleting: false, error: null })
 
-  // Fetch admin data on mount
   useEffect(() => {
     fetchAdmin()
     fetchProvinces()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminId])
 
-  // Fetch districts when province changes
   useEffect(() => {
     if (formData.province_id) {
       fetchDistricts(Number(formData.province_id))
     } else {
       setDistricts([])
-      setFormData(prev => ({ ...prev, district_id: '', palika_id: '' }))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.province_id])
 
-  // Fetch palikas when district changes
   useEffect(() => {
     if (formData.district_id) {
       fetchPalikas(Number(formData.district_id))
     } else {
       setPalikas([])
-      setFormData(prev => ({ ...prev, palika_id: '' }))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.district_id])
 
-  // Update available regions based on hierarchy level
   useEffect(() => {
     updateAvailableRegions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.hierarchy_level, provinces, districts, palikas])
 
   const fetchAdmin = async () => {
     try {
       setIsLoading(true)
       const adminData: any = await adminsService.getById(adminId)
+      // The API wraps in { success, data } — handle both shapes
+      const payload: AdminData = adminData?.data ?? adminData
 
-      setAdmin(adminData)
+      setAdmin(payload)
       setFormData({
-        full_name: adminData.full_name,
-        hierarchy_level: adminData.hierarchy_level,
-        province_id: adminData.province_id || '',
-        district_id: adminData.district_id || '',
-        palika_id: adminData.palika_id || '',
-        regions: adminData.regions || [],
-        is_active: adminData.is_active
+        full_name: payload.full_name,
+        hierarchy_level: payload.hierarchy_level,
+        province_id: payload.province_id || '',
+        district_id: payload.district_id || '',
+        palika_id: payload.palika_id || '',
+        regions: payload.regions || [],
+        is_active: payload.is_active,
       })
 
-      // Set selected regions
       const selected = new Set<string>()
-      ;(adminData.regions || []).forEach((r: AdminRegion) => {
+      ;(payload.regions || []).forEach((r: AdminRegion) => {
         selected.add(`${r.region_type}-${r.region_id}`)
       })
       setSelectedRegions(selected)
 
-      // Fetch districts if province is set
-      if (adminData.province_id) {
-        await fetchDistricts(adminData.province_id)
+      if (payload.province_id) {
+        await fetchDistricts(payload.province_id)
       }
-
-      // Fetch palikas if district is set
-      if (adminData.district_id) {
-        await fetchPalikas(adminData.district_id)
+      if (payload.district_id) {
+        await fetchPalikas(payload.district_id)
       }
     } catch (error) {
       console.error('Error fetching admin:', error)
@@ -173,17 +193,11 @@ export default function EditAdminPage() {
     const regions: Array<{ id: number; name: string; type: string }> = []
 
     if (formData.hierarchy_level === 'province') {
-      provinces.forEach(p => {
-        regions.push({ id: p.id, name: p.name_en, type: 'province' })
-      })
+      provinces.forEach((p) => regions.push({ id: p.id, name: p.name_en, type: 'province' }))
     } else if (formData.hierarchy_level === 'district') {
-      districts.forEach(d => {
-        regions.push({ id: d.id, name: d.name_en, type: 'district' })
-      })
+      districts.forEach((d) => regions.push({ id: d.id, name: d.name_en, type: 'district' }))
     } else if (formData.hierarchy_level === 'palika') {
-      palikas.forEach(p => {
-        regions.push({ id: p.id, name: p.name_en, type: 'palika' })
-      })
+      palikas.forEach((p) => regions.push({ id: p.id, name: p.name_en, type: 'palika' }))
     }
 
     setAvailableRegions(regions)
@@ -191,35 +205,25 @@ export default function EditAdminPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-    // Clear error for this field
+    setFormData((prev) => ({ ...prev, [name]: value }))
     if (errors[name as keyof FormErrors]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }))
+      setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
   }
 
   const handleHierarchyLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value as 'national' | 'province' | 'district' | 'palika' | ''
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       hierarchy_level: value,
       province_id: '',
       district_id: '',
       palika_id: '',
-      regions: []
+      regions: [],
     }))
     setSelectedRegions(new Set())
     if (errors.hierarchy_level) {
-      setErrors(prev => ({
-        ...prev,
-        hierarchy_level: undefined
-      }))
+      setErrors((prev) => ({ ...prev, hierarchy_level: undefined }))
     }
   }
 
@@ -235,79 +239,46 @@ export default function EditAdminPage() {
 
     setSelectedRegions(newSelected)
 
-    // Update regions array
-    const regions = Array.from(newSelected).map(key => {
-      const [type, id] = key.split('-')
+    const regions = Array.from(newSelected).map((k) => {
+      const [type, id] = k.split('-')
       return {
         region_type: type as 'province' | 'district' | 'palika',
-        region_id: Number(id)
+        region_id: Number(id),
       }
     })
 
-    setFormData(prev => ({
-      ...prev,
-      regions
-    }))
+    setFormData((prev) => ({ ...prev, regions }))
 
     if (errors.regions) {
-      setErrors(prev => ({
-        ...prev,
-        regions: undefined
-      }))
+      setErrors((prev) => ({ ...prev, regions: undefined }))
     }
   }
 
   const handleIsActiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      is_active: e.target.checked
-    }))
+    setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
   }
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
 
-    // Full name validation
-    if (!formData.full_name) {
-      newErrors.full_name = 'Full name is required'
-    }
+    if (!formData.full_name) newErrors.full_name = 'Full name is required'
+    if (!formData.hierarchy_level) newErrors.hierarchy_level = 'Hierarchy level is required'
 
-    // Hierarchy level validation
-    if (!formData.hierarchy_level) {
-      newErrors.hierarchy_level = 'Hierarchy level is required'
-    }
-
-    // Conditional validations based on hierarchy level
     if (formData.hierarchy_level === 'province') {
-      if (!formData.province_id) {
-        newErrors.province_id = 'Province is required for province-level admins'
-      }
-      if (formData.regions.length === 0) {
+      if (!formData.province_id) newErrors.province_id = 'Province is required'
+      if (formData.regions.length === 0)
         newErrors.regions = 'At least one province must be selected'
-      }
     } else if (formData.hierarchy_level === 'district') {
-      if (!formData.province_id) {
-        newErrors.province_id = 'Province is required for district-level admins'
-      }
-      if (!formData.district_id) {
-        newErrors.district_id = 'District is required for district-level admins'
-      }
-      if (formData.regions.length === 0) {
+      if (!formData.province_id) newErrors.province_id = 'Province is required'
+      if (!formData.district_id) newErrors.district_id = 'District is required'
+      if (formData.regions.length === 0)
         newErrors.regions = 'At least one district must be selected'
-      }
     } else if (formData.hierarchy_level === 'palika') {
-      if (!formData.province_id) {
-        newErrors.province_id = 'Province is required for palika-level admins'
-      }
-      if (!formData.district_id) {
-        newErrors.district_id = 'District is required for palika-level admins'
-      }
-      if (!formData.palika_id) {
-        newErrors.palika_id = 'Palika is required for palika-level admins'
-      }
-      if (formData.regions.length === 0) {
+      if (!formData.province_id) newErrors.province_id = 'Province is required'
+      if (!formData.district_id) newErrors.district_id = 'District is required'
+      if (!formData.palika_id) newErrors.palika_id = 'Palika is required'
+      if (formData.regions.length === 0)
         newErrors.regions = 'At least one palika must be selected'
-      }
     }
 
     setErrors(newErrors)
@@ -317,11 +288,10 @@ export default function EditAdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     setIsSubmitting(true)
+    setSuccessMessage('')
 
     try {
       await adminsService.update(adminId, {
@@ -330,25 +300,76 @@ export default function EditAdminPage() {
         province_id: formData.province_id ? Number(formData.province_id) : undefined,
         district_id: formData.district_id ? Number(formData.district_id) : undefined,
         palika_id: formData.palika_id ? Number(formData.palika_id) : undefined,
-        is_active: formData.is_active
+        is_active: formData.is_active,
       } as any)
 
-      // Success - redirect to admin list
-      router.push('/admins')
+      setSuccessMessage('Admin updated successfully')
+      setIsEditing(false)
+      await fetchAdmin()
     } catch (error) {
       console.error('Error updating admin:', error)
       setErrors({
-        submit: error instanceof Error ? error.message : 'An error occurred while updating the admin'
+        submit:
+          error instanceof Error ? error.message : 'An error occurred while updating the admin',
       })
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const openDeleteModal = () => {
+    setDeleteModal({ isOpen: true, isDeleting: false, error: null })
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, isDeleting: false, error: null })
+  }
+
+  const handleDelete = async () => {
+    try {
+      setDeleteModal((prev) => ({ ...prev, isDeleting: true, error: null }))
+
+      const response = await fetch(`/api/admins/${adminId}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete admin')
+      }
+
+      router.push('/admins')
+    } catch (err) {
+      console.error('Error deleting admin:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete admin'
+      setDeleteModal((prev) => ({ ...prev, error: errorMessage, isDeleting: false }))
+    }
+  }
+
+  const regionLabel = useMemo(() => {
+    if (formData.hierarchy_level === 'province') return 'Assign to Provinces *'
+    if (formData.hierarchy_level === 'district') return 'Assign to Districts *'
+    if (formData.hierarchy_level === 'palika') return 'Assign to Palikas *'
+    return 'Regions'
+  }, [formData.hierarchy_level])
+
+  const regionEmptyHint = useMemo(() => {
+    if (formData.hierarchy_level === 'province') return 'Loading provinces…'
+    if (formData.hierarchy_level === 'district') return 'Select a province first'
+    if (formData.hierarchy_level === 'palika') return 'Select a district first'
+    return ''
+  }, [formData.hierarchy_level])
+
   if (isLoading) {
     return (
       <AdminLayout>
-        <div style={{ padding: '20px' }}>Loading admin data...</div>
+        <div className="admins-container">
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <div className="spinner" style={{ margin: '0 auto' }} />
+            <p style={{ marginTop: '16px', color: '#64748b' }}>Loading admin…</p>
+          </div>
+        </div>
       </AdminLayout>
     )
   }
@@ -356,19 +377,23 @@ export default function EditAdminPage() {
   if (!admin) {
     return (
       <AdminLayout>
-        <div style={{ padding: '20px' }}>
-          <div style={{
-            padding: '12px',
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            borderRadius: '4px',
-            border: '1px solid #f5c6cb'
-          }}>
-            {errors.submit || 'Admin not found'}
+        <div className="admins-container">
+          <div className="admins-page-header">
+            <div className="header-content">
+              <div>
+                <h1 className="page-title">Admin Not Found</h1>
+                <p className="page-subtitle">{errors.submit || 'This admin could not be loaded'}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => router.push('/admins')}
+            >
+              <ArrowLeft size={16} />
+              Back to Admins
+            </button>
           </div>
-          <Link href="/admins" className="btn btn-secondary" style={{ marginTop: '20px' }}>
-            ← Back to Admins
-          </Link>
         </div>
       </AdminLayout>
     )
@@ -376,227 +401,442 @@ export default function EditAdminPage() {
 
   return (
     <AdminLayout>
-      <div style={{ marginBottom: '20px' }}>
-        <Link href="/admins" className="btn btn-secondary">
-          ← Back to Admins
-        </Link>
-      </div>
-
-      <div className="card" style={{ maxWidth: '800px' }}>
-        <h1>Edit Admin: {admin.full_name}</h1>
-
-        {errors.submit && (
-          <div style={{
-            padding: '12px',
-            marginBottom: '20px',
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            borderRadius: '4px',
-            border: '1px solid #f5c6cb'
-          }}>
-            {errors.submit}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Email Field - Read Only */}
-          <div className="form-group">
-            <label htmlFor="email">Email (Read-only)</label>
-            <input
-              id="email"
-              type="email"
-              value={admin.email}
-              disabled
-              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
-            />
-          </div>
-
-          {/* Full Name Field */}
-          <div className="form-group">
-            <label htmlFor="full_name">Full Name *</label>
-            <input
-              id="full_name"
-              type="text"
-              name="full_name"
-              value={formData.full_name}
-              onChange={handleInputChange}
-              placeholder="John Doe"
-              required
-            />
-            {errors.full_name && <span style={{ color: '#dc3545', fontSize: '0.9em' }}>{errors.full_name}</span>}
-          </div>
-
-          {/* Role Field - Read Only */}
-          <div className="form-group">
-            <label htmlFor="role">Role (Read-only)</label>
-            <input
-              id="role"
-              type="text"
-              value={admin.role}
-              disabled
-              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
-            />
-          </div>
-
-          {/* Hierarchy Level Field */}
-          <div className="form-group">
-            <label htmlFor="hierarchy_level">Hierarchy Level *</label>
-            <select
-              id="hierarchy_level"
-              name="hierarchy_level"
-              value={formData.hierarchy_level}
-              onChange={handleHierarchyLevelChange}
-              required
-            >
-              <option value="">Select hierarchy level</option>
-              <option value="national">National</option>
-              <option value="province">Province</option>
-              <option value="district">District</option>
-              <option value="palika">Palika</option>
-            </select>
-            {errors.hierarchy_level && <span style={{ color: '#dc3545', fontSize: '0.9em' }}>{errors.hierarchy_level}</span>}
-          </div>
-
-          {/* Province Field - shown for province, district, and palika levels */}
-          {(formData.hierarchy_level === 'province' || formData.hierarchy_level === 'district' || formData.hierarchy_level === 'palika') && (
-            <div className="form-group">
-              <label htmlFor="province_id">Province *</label>
-              <select
-                id="province_id"
-                name="province_id"
-                value={formData.province_id}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select a province</option>
-                {provinces.map(province => (
-                  <option key={province.id} value={province.id}>
-                    {province.name_en}
-                  </option>
-                ))}
-              </select>
-              {errors.province_id && <span style={{ color: '#dc3545', fontSize: '0.9em' }}>{errors.province_id}</span>}
+      <div className="admins-container">
+        {/* Page Header */}
+        <div className="admins-page-header">
+          <div className="header-content">
+            <div className="header-icon-box">
+              <UserIcon size={32} />
             </div>
-          )}
-
-          {/* District Field - shown for district and palika levels */}
-          {(formData.hierarchy_level === 'district' || formData.hierarchy_level === 'palika') && (
-            <div className="form-group">
-              <label htmlFor="district_id">District *</label>
-              <select
-                id="district_id"
-                name="district_id"
-                value={formData.district_id}
-                onChange={handleInputChange}
-                required
-                disabled={!formData.province_id}
-              >
-                <option value="">Select a district</option>
-                {districts.map(district => (
-                  <option key={district.id} value={district.id}>
-                    {district.name_en}
-                  </option>
-                ))}
-              </select>
-              {errors.district_id && <span style={{ color: '#dc3545', fontSize: '0.9em' }}>{errors.district_id}</span>}
+            <div>
+              <h1 className="page-title">{isEditing ? 'Edit Admin' : 'Admin Details'}</h1>
+              <p className="page-subtitle">{admin.full_name}</p>
             </div>
-          )}
-
-          {/* Palika Field - shown for palika level */}
-          {formData.hierarchy_level === 'palika' && (
-            <div className="form-group">
-              <label htmlFor="palika_id">Palika *</label>
-              <select
-                id="palika_id"
-                name="palika_id"
-                value={formData.palika_id}
-                onChange={handleInputChange}
-                required
-                disabled={!formData.district_id}
-              >
-                <option value="">Select a palika</option>
-                {palikas.map(palika => (
-                  <option key={palika.id} value={palika.id}>
-                    {palika.name_en}
-                  </option>
-                ))}
-              </select>
-              {errors.palika_id && <span style={{ color: '#dc3545', fontSize: '0.9em' }}>{errors.palika_id}</span>}
-            </div>
-          )}
-
-          {/* Region Assignment - shown for non-national levels */}
-          {formData.hierarchy_level && formData.hierarchy_level !== 'national' && (
-            <div className="form-group">
-              <label>
-                {formData.hierarchy_level === 'province' && 'Assign to Provinces *'}
-                {formData.hierarchy_level === 'district' && 'Assign to Districts *'}
-                {formData.hierarchy_level === 'palika' && 'Assign to Palikas *'}
-              </label>
-              <div style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                padding: '10px',
-                maxHeight: '300px',
-                overflowY: 'auto',
-                backgroundColor: '#f9f9f9'
-              }}>
-                {availableRegions.length === 0 ? (
-                  <p style={{ color: '#666', margin: 0 }}>
-                    {formData.hierarchy_level === 'province' && 'Select a province first'}
-                    {formData.hierarchy_level === 'district' && 'Select a district first'}
-                    {formData.hierarchy_level === 'palika' && 'Select a palika first'}
-                  </p>
-                ) : (
-                  availableRegions.map(region => (
-                    <div key={`${region.type}-${region.id}`} style={{ marginBottom: '8px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedRegions.has(`${region.type}-${region.id}`)}
-                          onChange={() => handleRegionToggle(region.id, region.type)}
-                          style={{ marginRight: '8px' }}
-                        />
-                        {region.name}
-                      </label>
-                    </div>
-                  ))
-                )}
-              </div>
-              {errors.regions && <span style={{ color: '#dc3545', fontSize: '0.9em' }}>{errors.regions}</span>}
-            </div>
-          )}
-
-          {/* Is Active Checkbox */}
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                name="is_active"
-                checked={formData.is_active}
-                onChange={handleIsActiveChange}
-                style={{ marginRight: '8px' }}
-              />
-              Active
-            </label>
           </div>
-
-          {/* Form Actions */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {!isEditing && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit size={16} />
+                  Edit Admin
+                </button>
+                <button type="button" className="btn btn-danger" onClick={openDeleteModal}>
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </>
+            )}
             <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-              style={{ opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => router.push('/admins')}
             >
-              {isSubmitting ? 'Updating...' : 'Update Admin'}
+              <ArrowLeft size={16} />
+              Back to Admins
             </button>
-            <Link href="/admins" className="btn btn-secondary">
-              Cancel
-            </Link>
           </div>
-        </form>
+        </div>
+
+        <div className="admins-content">
+          {errors.submit && (
+            <div className="message-alert error">
+              <AlertCircle size={20} />
+              {errors.submit}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="message-alert success">
+              <CheckCircle size={20} />
+              {successMessage}
+            </div>
+          )}
+
+          <div className="form-card">
+            {isEditing ? (
+              <form onSubmit={handleSubmit}>
+                {/* Basic Information */}
+                <div className="form-section">
+                  <h3>
+                    <UserIcon
+                      size={18}
+                      style={{
+                        display: 'inline-block',
+                        marginRight: '8px',
+                        verticalAlign: '-3px',
+                      }}
+                    />
+                    Basic Information
+                  </h3>
+
+                  <div className="form-group">
+                    <label htmlFor="email">Email (Read-only)</label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={admin.email}
+                      disabled
+                      style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed' }}
+                    />
+                    <small>Email cannot be changed after creation.</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="full_name">Full Name *</label>
+                    <input
+                      id="full_name"
+                      type="text"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.full_name && <span className="field-error">{errors.full_name}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="role">Role (Read-only)</label>
+                    <input
+                      id="role"
+                      type="text"
+                      value={admin.role}
+                      disabled
+                      style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed' }}
+                    />
+                    <small>Role changes require creating a new admin account.</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="checkbox-field">
+                      <input
+                        type="checkbox"
+                        name="is_active"
+                        checked={formData.is_active}
+                        onChange={handleIsActiveChange}
+                      />
+                      <span style={{ fontWeight: 500, color: '#1e293b' }}>Active</span>
+                    </label>
+                    <small>Inactive admins cannot log in to the platform.</small>
+                  </div>
+                </div>
+
+                {/* Hierarchy & Regions */}
+                <div className="form-section">
+                  <h3>
+                    <Shield
+                      size={18}
+                      style={{
+                        display: 'inline-block',
+                        marginRight: '8px',
+                        verticalAlign: '-3px',
+                      }}
+                    />
+                    Hierarchy & Regions
+                  </h3>
+
+                  <div className="form-group">
+                    <label htmlFor="hierarchy_level">Hierarchy Level *</label>
+                    <select
+                      id="hierarchy_level"
+                      name="hierarchy_level"
+                      value={formData.hierarchy_level}
+                      onChange={handleHierarchyLevelChange}
+                      required
+                    >
+                      <option value="">Select hierarchy level</option>
+                      <option value="national">National</option>
+                      <option value="province">Province</option>
+                      <option value="district">District</option>
+                      <option value="palika">Palika</option>
+                    </select>
+                    {errors.hierarchy_level && (
+                      <span className="field-error">{errors.hierarchy_level}</span>
+                    )}
+                  </div>
+
+                  {(formData.hierarchy_level === 'province' ||
+                    formData.hierarchy_level === 'district' ||
+                    formData.hierarchy_level === 'palika') && (
+                    <div className="form-group">
+                      <label htmlFor="province_id">Province *</label>
+                      <select
+                        id="province_id"
+                        name="province_id"
+                        value={formData.province_id}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="">Select a province</option>
+                        {provinces.map((province) => (
+                          <option key={province.id} value={province.id}>
+                            {province.name_en}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.province_id && (
+                        <span className="field-error">{errors.province_id}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {(formData.hierarchy_level === 'district' ||
+                    formData.hierarchy_level === 'palika') && (
+                    <div className="form-group">
+                      <label htmlFor="district_id">District *</label>
+                      <select
+                        id="district_id"
+                        name="district_id"
+                        value={formData.district_id}
+                        onChange={handleInputChange}
+                        required
+                        disabled={!formData.province_id}
+                      >
+                        <option value="">Select a district</option>
+                        {districts.map((district) => (
+                          <option key={district.id} value={district.id}>
+                            {district.name_en}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.district_id && (
+                        <span className="field-error">{errors.district_id}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {formData.hierarchy_level === 'palika' && (
+                    <div className="form-group">
+                      <label htmlFor="palika_id">Palika *</label>
+                      <select
+                        id="palika_id"
+                        name="palika_id"
+                        value={formData.palika_id}
+                        onChange={handleInputChange}
+                        required
+                        disabled={!formData.district_id}
+                      >
+                        <option value="">Select a palika</option>
+                        {palikas.map((palika) => (
+                          <option key={palika.id} value={palika.id}>
+                            {palika.name_en}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.palika_id && (
+                        <span className="field-error">{errors.palika_id}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {formData.hierarchy_level && formData.hierarchy_level !== 'national' && (
+                    <div className="form-group">
+                      <label>
+                        <MapPin
+                          size={14}
+                          style={{
+                            display: 'inline-block',
+                            marginRight: '6px',
+                            verticalAlign: '-2px',
+                          }}
+                        />
+                        {regionLabel}
+                      </label>
+                      <div className="region-picker">
+                        {availableRegions.length === 0 ? (
+                          <p className="region-picker-empty">{regionEmptyHint}</p>
+                        ) : (
+                          availableRegions.map((region) => (
+                            <label
+                              key={`${region.type}-${region.id}`}
+                              className="region-picker-item"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedRegions.has(`${region.type}-${region.id}`)}
+                                onChange={() => handleRegionToggle(region.id, region.type)}
+                              />
+                              {region.name}
+                            </label>
+                          ))
+                        )}
+                      </div>
+                      {errors.regions && <span className="field-error">{errors.regions}</span>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-actions">
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={isSubmitting}
+                    style={{
+                      opacity: isSubmitting ? 0.6 : 1,
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {isSubmitting ? 'Saving…' : 'Save Changes'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setIsEditing(false)
+                      setErrors({})
+                      // Reset form to current admin values
+                      if (admin) {
+                        setFormData({
+                          full_name: admin.full_name,
+                          hierarchy_level: admin.hierarchy_level,
+                          province_id: admin.province_id || '',
+                          district_id: admin.district_id || '',
+                          palika_id: admin.palika_id || '',
+                          regions: admin.regions || [],
+                          is_active: admin.is_active,
+                        })
+                        const selected = new Set<string>()
+                        ;(admin.regions || []).forEach((r) => {
+                          selected.add(`${r.region_type}-${r.region_id}`)
+                        })
+                        setSelectedRegions(selected)
+                      }
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="user-details">
+                <div className="detail-section">
+                  <h3>
+                    <UserIcon
+                      size={18}
+                      style={{
+                        display: 'inline-block',
+                        marginRight: '8px',
+                        verticalAlign: '-3px',
+                      }}
+                    />
+                    Basic Information
+                  </h3>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <label>Full Name</label>
+                      <div>{admin.full_name}</div>
+                    </div>
+                    <div className="detail-item">
+                      <label>Email</label>
+                      <div>{admin.email}</div>
+                    </div>
+                    <div className="detail-item">
+                      <label>Role</label>
+                      <div>
+                        <span className={`role-badge ${admin.role.replace(/_/g, '-')}`}>
+                          {admin.role.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="detail-item">
+                      <label>Status</label>
+                      <div>
+                        <span className={`status-badge ${admin.is_active ? 'active' : 'inactive'}`}>
+                          {admin.is_active ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h3>
+                    <Shield
+                      size={18}
+                      style={{
+                        display: 'inline-block',
+                        marginRight: '8px',
+                        verticalAlign: '-3px',
+                      }}
+                    />
+                    Hierarchy & Regions
+                  </h3>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <label>Hierarchy Level</label>
+                      <div>
+                        <span className="hierarchy-badge">{admin.hierarchy_level}</span>
+                      </div>
+                    </div>
+                    <div className="detail-item">
+                      <label>Region Assignments</label>
+                      <div>
+                        {admin.regions && admin.regions.length > 0
+                          ? `${admin.regions.length} region${admin.regions.length !== 1 ? 's' : ''} assigned`
+                          : admin.hierarchy_level === 'national'
+                          ? 'National (all regions)'
+                          : 'No regions assigned'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.isOpen && (
+        <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div className="modal-content delete-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-icon-danger">
+                <AlertCircle size={24} />
+              </div>
+              <h3 className="modal-title">Delete Admin</h3>
+            </div>
+            <div className="modal-body">
+              <p className="modal-text">
+                Are you sure you want to delete <strong>{admin.full_name}</strong>?
+              </p>
+              <p className="modal-warning">
+                This action cannot be undone. All region assignments will be removed, and the admin
+                will lose access to the platform.
+              </p>
+              {deleteModal.error && (
+                <div
+                  className="message-alert error"
+                  style={{ marginTop: '16px', marginBottom: 0 }}
+                >
+                  <AlertCircle size={20} />
+                  {deleteModal.error}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={closeDeleteModal}
+                disabled={deleteModal.isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleDelete}
+                disabled={deleteModal.isDeleting}
+              >
+                <Trash2 size={16} />
+                {deleteModal.isDeleting ? 'Deleting…' : 'Delete Admin'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   )
 }

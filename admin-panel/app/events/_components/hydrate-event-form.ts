@@ -42,8 +42,9 @@ export function hydrateEventForm(event: Partial<Event>): EventFormState {
     ...EMPTY_EVENT_FORM,
     name_en: event.name_en ?? '',
     name_ne: event.name_ne ?? '',
-    event_type: event.event_type ?? '',
-    is_festival: !!event.is_festival,
+    // event_type and is_festival are no longer part of EventFormState:
+    //   - `is_festival` is driven by the /events vs /festivals route (mode prop)
+    //   - `event_type` has been retired from the UI in favour of category_id
     category_id: event.category_id != null ? String(event.category_id) : '',
     status: safeStatus,
     start_date: toDateInput(event.start_date),

@@ -9,13 +9,16 @@ import { palikaService, type Palika } from '@/lib/client/palika-client.service'
  * Keys here are already aligned with the Supabase `events` table
  * (so there is no rename step in the submit handler beyond building
  * the create/update payload).
+ *
+ * Note: `is_festival` is no longer stored in state — it is derived from
+ * the `mode` prop on <EventForm> ("event" vs "festival"). `event_type`
+ * has been dropped from the UI entirely; `category_id` is the real
+ * classification and the DB column stays null for new records.
  */
 export interface EventFormState {
   // Basic
   name_en: string
   name_ne: string
-  event_type: string
-  is_festival: boolean
   category_id: string // select value is a string; we coerce to number on submit
   status: 'draft' | 'published' | 'archived'
 
@@ -44,8 +47,6 @@ export interface EventFormState {
 export const EMPTY_EVENT_FORM: EventFormState = {
   name_en: '',
   name_ne: '',
-  event_type: '',
-  is_festival: false,
   category_id: '',
   status: 'draft',
   start_date: '',
@@ -62,6 +63,8 @@ export const EMPTY_EVENT_FORM: EventFormState = {
   full_description_ne: '',
   featured_image: ''
 }
+
+export type EventFormMode = 'event' | 'festival'
 
 /**
  * Payload shipped to POST /api/events and PUT /api/events/[id].
@@ -89,8 +92,17 @@ export interface EventSubmitPayload {
   status: 'draft' | 'published' | 'archived'
 }
 
-/** Convert raw form state to a server-ready payload. */
-export function buildEventPayload(form: EventFormState): EventSubmitPayload {
+/**
+ * Convert raw form state to a server-ready payload.
+ *
+ * `mode` drives `is_festival` — the form no longer asks the user.
+ * `event_type` is intentionally omitted: the DB column stays null, and
+ * `category_id` is the canonical classification going forward.
+ */
+export function buildEventPayload(
+  form: EventFormState,
+  mode: EventFormMode
+): EventSubmitPayload {
   const toNum = (s: string): number | undefined => {
     if (s === '' || s === null || s === undefined) return undefined
     const n = parseFloat(s)
@@ -107,8 +119,9 @@ export function buildEventPayload(form: EventFormState): EventSubmitPayload {
     name_ne: form.name_ne.trim(),
     palika_id: toInt(form.palika_id) ?? 0,
     category_id: toInt(form.category_id),
-    event_type: form.event_type || undefined,
-    is_festival: !!form.is_festival,
+    // event_type deliberately omitted — column stays null for new records.
+    event_type: undefined,
+    is_festival: mode === 'festival',
     nepali_calendar_date: form.nepali_calendar_date || undefined,
     recurrence_pattern: form.recurrence_pattern,
     start_date: form.start_date,
@@ -126,7 +139,17 @@ export function buildEventPayload(form: EventFormState): EventSubmitPayload {
 }
 
 interface EventFormProps {
-  mode: 'create' | 'edit'
+  /**
+   * CRUD intent — drives submit button copy.
+   */
+  formMode: 'create' | 'edit'
+  /**
+   * Classification — drives `is_festival` on the submitted payload and
+   * tweaks copy (e.g. "Create Event" vs "Create Festival"). The dedicated
+   * `/events/*` and `/festivals/*` routes each pin this to a single value,
+   * so palika admins never see an ambiguous checkbox.
+   */
+  mode: EventFormMode
   value: EventFormState
   onChange: (next: EventFormState) => void
   onSubmit: (e: React.FormEvent) => void
@@ -146,6 +169,7 @@ const TABS = [
 type TabId = typeof TABS[number]['id']
 
 export default function EventForm({
+  formMode,
   mode,
   value,
   onChange,
@@ -184,8 +208,9 @@ export default function EventForm({
   const progress = ((currentIndex + 1) / TABS.length) * 100
   const isLastTab = currentIndex === TABS.length - 1
 
-  const submitButtonLabel = mode === 'create' ? 'Create Event' : 'Update Event'
-  const submittingLabel = mode === 'create' ? 'Creating...' : 'Saving...'
+  const noun = mode === 'festival' ? 'Festival' : 'Event'
+  const submitButtonLabel = formMode === 'create' ? `Create ${noun}` : `Update ${noun}`
+  const submittingLabel = formMode === 'create' ? 'Creating...' : 'Saving...'
 
   return (
     <>
@@ -244,12 +269,12 @@ export default function EventForm({
               <div className="form-card">
                 <div className="form-card-header">
                   <span className="form-card-icon-text">Names</span>
-                  <h4>Event Names</h4>
+                  <h4>{noun} Names</h4>
                 </div>
                 <div className="grid grid-2">
                   <div className="form-group">
                     <label htmlFor="name_ne" className="form-label">
-                      Event Name (Nepali) <span className="required">*</span>
+                      {noun} Name (Nepali) <span className="required">*</span>
                     </label>
                     <input
                       type="text"
@@ -264,7 +289,7 @@ export default function EventForm({
 
                   <div className="form-group">
                     <label htmlFor="name_en" className="form-label">
-                      Event Name (English) <span className="required">*</span>
+                      {noun} Name (English) <span className="required">*</span>
                     </label>
                     <input
                       type="text"
@@ -282,7 +307,7 @@ export default function EventForm({
               <div className="form-card">
                 <div className="form-card-header">
                   <span className="form-card-icon-text">Category</span>
-                  <h4>Classification</h4>
+                  <h4>Category & Status</h4>
                 </div>
                 <div className="grid grid-2">
                   <div className="form-group">
@@ -302,45 +327,10 @@ export default function EventForm({
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="event_type" className="form-label">
-                      Event Type
-                    </label>
-                    <select
-                      id="event_type"
-                      className="form-select"
-                      value={value.event_type}
-                      onChange={(e) => setField('event_type', e.target.value)}
-                    >
-                      <option value="">Select Type</option>
-                      <option value="festival">Festival</option>
-                      <option value="cultural">Cultural</option>
-                      <option value="religious">Religious</option>
-                      <option value="sports">Sports</option>
-                      <option value="educational">Educational</option>
-                      <option value="workshop">Workshop</option>
-                      <option value="tour">Tour</option>
-                      <option value="performance">Performance</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-2">
-                  <div className="form-group">
-                    <label htmlFor="is_festival" className="form-label checkbox-label">
-                      <input
-                        type="checkbox"
-                        id="is_festival"
-                        checked={value.is_festival}
-                        onChange={(e) => setField('is_festival', e.target.checked)}
-                      />
-                      <span>This event is a festival</span>
-                    </label>
                     <div className="help-text">
-                      Flagging a festival makes it appear in the dedicated festivals listing.
+                      {mode === 'festival'
+                        ? 'Group this festival under a category (e.g. Religious, Cultural).'
+                        : 'Group this event under a category (e.g. Sports, Workshop).'}
                     </div>
                   </div>
 

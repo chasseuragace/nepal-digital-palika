@@ -7,15 +7,21 @@ import EventForm, {
   EMPTY_EVENT_FORM,
   buildEventPayload,
   type EventFormState
-} from '../_components/EventForm'
-import { hydrateEventForm } from '../_components/hydrate-event-form'
+} from '../../events/_components/EventForm'
+import { hydrateEventForm } from '../../events/_components/hydrate-event-form'
 import { eventsService } from '@/lib/client/events-client.service'
-import '../new/events-new.css'
+import '../../events/new/events-new.css'
 
-export default function EditEventPage() {
+/**
+ * Festival edit page. Shares the same EventForm component as
+ * /events/[id] — only the `mode="festival"` prop and the redirect
+ * target differ. `is_festival=true` is derived from the mode prop,
+ * so there is no UI checkbox.
+ */
+export default function EditFestivalPage() {
   const router = useRouter()
   const params = useParams()
-  const eventId = params.id as string
+  const festivalId = params.id as string
 
   const [formData, setFormData] = useState<EventFormState>(EMPTY_EVENT_FORM)
   const [isLoading, setIsLoading] = useState(true)
@@ -27,15 +33,15 @@ export default function EditEventPage() {
     let cancelled = false
     setIsLoading(true)
     eventsService
-      .getById(eventId)
+      .getById(festivalId)
       .then((data) => {
         if (cancelled) return
         setFormData(hydrateEventForm(data as any))
       })
       .catch((err) => {
         if (cancelled) return
-        console.error('Error fetching event:', err)
-        setError('Error loading event')
+        console.error('Error fetching festival:', err)
+        setError('Error loading festival')
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false)
@@ -43,7 +49,7 @@ export default function EditEventPage() {
     return () => {
       cancelled = true
     }
-  }, [eventId])
+  }, [festivalId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,7 +58,7 @@ export default function EditEventPage() {
     setSuccess('')
 
     try {
-      const payload = buildEventPayload(formData, 'event')
+      const payload = buildEventPayload(formData, 'festival')
 
       if (!payload.palika_id) {
         setError('Palika is required')
@@ -60,12 +66,12 @@ export default function EditEventPage() {
         return
       }
 
-      await eventsService.update(eventId, payload as any)
-      setSuccess('Event updated successfully!')
-      setTimeout(() => router.push('/events'), 1500)
+      await eventsService.update(festivalId, payload as any)
+      setSuccess('Festival updated successfully!')
+      setTimeout(() => router.push('/festivals'), 1500)
     } catch (err) {
-      console.error('Error updating event:', err)
-      setError(err instanceof Error ? err.message : 'Failed to update event')
+      console.error('Error updating festival:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update festival')
     } finally {
       setIsSubmitting(false)
     }
@@ -95,34 +101,34 @@ export default function EditEventPage() {
               </svg>
             </div>
             <div>
-              <h1 className="page-title">Edit Event</h1>
+              <h1 className="page-title">Edit Festival</h1>
               <p className="page-subtitle">
-                {formData.name_en || formData.name_ne || 'Loading event...'}
+                {formData.name_en || formData.name_ne || 'Loading festival...'}
               </p>
             </div>
           </div>
           <button
             type="button"
             className="btn btn-secondary header-cancel-btn"
-            onClick={() => router.push('/events')}
+            onClick={() => router.push('/festivals')}
           >
-            ← Back to Events
+            ← Back to Festivals
           </button>
         </div>
 
         {isLoading ? (
           <div className="heritage-form-container" style={{ textAlign: 'center', padding: '48px' }}>
             <div className="spinner" style={{ margin: '0 auto' }}></div>
-            <p style={{ marginTop: '16px', color: '#64748b' }}>Loading event...</p>
+            <p style={{ marginTop: '16px', color: '#64748b' }}>Loading festival...</p>
           </div>
         ) : (
           <EventForm
             formMode="edit"
-            mode="event"
+            mode="festival"
             value={formData}
             onChange={setFormData}
             onSubmit={handleSubmit}
-            onCancel={() => router.push('/events')}
+            onCancel={() => router.push('/festivals')}
             isSubmitting={isSubmitting}
             error={error}
             success={success}

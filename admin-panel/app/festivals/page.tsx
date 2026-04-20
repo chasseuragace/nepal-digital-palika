@@ -4,25 +4,30 @@ import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
 import { eventsService, type Event } from '@/lib/client/events-client.service'
-import './events.css'
+import '../events/events.css'
 
-export default function EventsPage() {
+/**
+ * Festivals listing — mirrors /events but filtered to `is_festival = true`.
+ * Same shared data layer (eventsService) and same CSS; only copy + the
+ * is_festival filter differ. Create/edit flows live under /festivals/new
+ * and /festivals/[id] and reuse the shared EventForm with mode="festival".
+ */
+export default function FestivalsPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
-    fetchEvents()
+    fetchFestivals()
   }, [])
 
-  const fetchEvents = async () => {
+  const fetchFestivals = async () => {
     try {
-      // Non-festival entries only. Festivals live at /festivals.
-      const result = await eventsService.getAll({ is_festival: false })
+      const result = await eventsService.getAll({ is_festival: true })
       setEvents(result.data)
     } catch (error) {
-      console.error('Error fetching events:', error)
+      console.error('Error fetching festivals:', error)
       setEvents([])
     } finally {
       setIsLoading(false)
@@ -51,7 +56,7 @@ export default function EventsPage() {
       <AdminLayout>
         <div className="loading-container">
           <div className="spinner-large"></div>
-          <p>Loading events...</p>
+          <p>Loading festivals...</p>
         </div>
       </AdminLayout>
     )
@@ -71,16 +76,16 @@ export default function EventsPage() {
             </svg>
           </div>
           <div>
-            <h1 className="page-title">Events Management</h1>
-            <p className="page-subtitle">Non-festival events — workshops, tours, performances and more</p>
+            <h1 className="page-title">Festivals Management</h1>
+            <p className="page-subtitle">Showcase your palika&apos;s festivals and celebrations</p>
           </div>
         </div>
-        <Link href="/events/new" className="btn btn-primary header-add-btn">
+        <Link href="/festivals/new" className="btn btn-primary header-add-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Create Event
+          Create Festival
         </Link>
       </div>
 
@@ -97,7 +102,7 @@ export default function EventsPage() {
           </div>
           <div className="stat-content">
             <div className="stat-value">{stats.total}</div>
-            <div className="stat-label">Total Events</div>
+            <div className="stat-label">Total Festivals</div>
           </div>
         </div>
 
@@ -172,7 +177,7 @@ export default function EventsPage() {
 
         {/* Results Count */}
         <div className="results-info">
-          Showing <strong>{filteredEvents.length}</strong> of <strong>{events.length}</strong> events
+          Showing <strong>{filteredEvents.length}</strong> of <strong>{events.length}</strong> festivals
         </div>
 
         {/* Table */}
@@ -180,7 +185,7 @@ export default function EventsPage() {
           <table className="events-table">
             <thead>
               <tr>
-                <th>Event Name</th>
+                <th>Festival Name</th>
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Status</th>
@@ -209,15 +214,9 @@ export default function EventsPage() {
                   <td>{new Date(event.created_at).toLocaleDateString()}</td>
                   <td>
                     <div className="action-buttons">
-                      <Link href={`/events/${event.id}`} className="btn-icon" title="Edit">
+                      <Link href={`/festivals/${event.id}`} className="btn-icon" title="Edit">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                        </svg>
-                      </Link>
-                      <Link href={`/events/${event.id}/view`} className="btn-icon" title="View">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                       </Link>
                     </div>
@@ -240,21 +239,21 @@ export default function EventsPage() {
             </div>
             <h3 className="empty-state-title">
               {filter || statusFilter !== 'all'
-                ? 'No events match your filters'
-                : 'No events yet'}
+                ? 'No festivals match your filters'
+                : 'No festivals yet'}
             </h3>
             <p className="empty-state-description">
               {filter || statusFilter !== 'all'
                 ? 'Try adjusting your search or filter criteria'
-                : 'Get started by creating your first event'}
+                : 'Get started by creating your first festival'}
             </p>
             {!filter && statusFilter === 'all' && (
-              <Link href="/events/new" className="btn btn-primary">
+              <Link href="/festivals/new" className="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                Create First Event
+                Create First Festival
               </Link>
             )}
           </div>

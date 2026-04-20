@@ -7,11 +7,16 @@ import EventForm, {
   EMPTY_EVENT_FORM,
   buildEventPayload,
   type EventFormState
-} from '../_components/EventForm'
+} from '../../events/_components/EventForm'
 import { eventsService } from '@/lib/client/events-client.service'
-import './events-new.css'
+import '../../events/new/events-new.css'
 
-export default function NewEventPage() {
+/**
+ * Festival creation page. Shares the same EventForm component as
+ * /events/new — only the `mode="festival"` prop differs, which flips
+ * `is_festival=true` on the submitted payload and swaps copy.
+ */
+export default function NewFestivalPage() {
   const router = useRouter()
   const [formData, setFormData] = useState<EventFormState>(EMPTY_EVENT_FORM)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -25,7 +30,7 @@ export default function NewEventPage() {
     setSuccess('')
 
     try {
-      const payload = buildEventPayload(formData, 'event')
+      const payload = buildEventPayload(formData, 'festival')
 
       if (!payload.palika_id) {
         setError('Palika is required')
@@ -34,11 +39,11 @@ export default function NewEventPage() {
       }
 
       await eventsService.create(payload as any)
-      setSuccess('Event created successfully!')
-      setTimeout(() => router.push('/events'), 1500)
+      setSuccess('Festival created successfully!')
+      setTimeout(() => router.push('/festivals'), 1500)
     } catch (err) {
-      console.error('Error creating event:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create event')
+      console.error('Error creating festival:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create festival')
     } finally {
       setIsSubmitting(false)
     }
@@ -68,26 +73,26 @@ export default function NewEventPage() {
               </svg>
             </div>
             <div>
-              <h1 className="page-title">Create Event</h1>
-              <p className="page-subtitle">Share upcoming events with your community</p>
+              <h1 className="page-title">Create Festival</h1>
+              <p className="page-subtitle">Showcase your palika&apos;s festivals and celebrations</p>
             </div>
           </div>
           <button
             type="button"
             className="btn btn-secondary header-cancel-btn"
-            onClick={() => router.push('/events')}
+            onClick={() => router.push('/festivals')}
           >
-            ← Back to Events
+            ← Back to Festivals
           </button>
         </div>
 
         <EventForm
           formMode="create"
-          mode="event"
+          mode="festival"
           value={formData}
           onChange={setFormData}
           onSubmit={handleSubmit}
-          onCancel={() => router.push('/events')}
+          onCancel={() => router.push('/festivals')}
           isSubmitting={isSubmitting}
           error={error}
           success={success}

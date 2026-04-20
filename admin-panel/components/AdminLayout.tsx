@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Landmark,
   Calendar,
+  Sparkles,
   FileText,
   Users,
   Building2,
@@ -89,12 +90,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/heritage-sites', label: 'Heritage Sites', icon: Landmark },
     { href: '/events', label: 'Events', icon: Calendar },
+    { href: '/festivals', label: 'Festivals', icon: Sparkles },
     { href: '/blog-posts', label: 'Blog Posts', icon: FileText },
   ]
 
   const adminNavItems = user.role === 'super_admin' || user.role === 'palika_admin' ? [
     { href: '/notifications', label: 'Notifications', icon: Bell },
-    { href: '/users', label: 'Users', icon: Users },
+    { href: '/admins', label: 'Admins', icon: Users },
     { href: '/palika-profile', label: 'Palika Profile', icon: Building2 },
     { href: '/palika-gallery', label: 'Gallery', icon: Image },
     { href: '/tiers', label: 'Tiers', icon: Crown },
