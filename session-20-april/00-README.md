@@ -22,6 +22,8 @@ Verify that the **admin-panel forms**, **Supabase SQL schema**, and **m-place di
 | 03 | [`03-blog-posts-alignment.md`](./03-blog-posts-alignment.md) | Blog Posts: audit + fix plan |
 | 04 | [`04-palika-profile-alignment.md`](./04-palika-profile-alignment.md) | Palika Profile + m-place About + UI consistency |
 | 05 | [`05-master-fix-plan.md`](./05-master-fix-plan.md) | Prioritized execution roadmap across all features |
+| 06 | [`06-phase1-completion-status.md`](./06-phase1-completion-status.md) | Phase 1 admin-form alignment completion report |
+| 07 | [`07-rbac-future-option-c.md`](./07-rbac-future-option-c.md) | Runway to Option C: RBAC tables, scope-enforced admin creation, migration checklist |
 
 ## Summary of what was found
 

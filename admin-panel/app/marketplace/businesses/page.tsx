@@ -1,16 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
+import { Package, AlertCircle, Building2 } from 'lucide-react';
+import AdminLayout from '@/components/AdminLayout';
 import { BusinessTable } from '@/components/BusinessTable';
 import { BusinessFilters } from '@/components/BusinessFilters';
 import { useVerificationAccess } from '@/lib/hooks/useVerificationAccess';
 import { BusinessApprovalService } from '@/services/business-approval.service';
 import { toast } from 'sonner';
+import { adminSessionStore } from '@/lib/storage/session-storage.service';
+import '../marketplace.css';
 
 interface Business {
   id: string;
@@ -23,8 +22,9 @@ interface Business {
 }
 
 export default function BusinessesPage() {
-  const router = useRouter();
-  const { canVerify, verificationErrorMessage, tierInfo, loading: tierLoading } = useVerificationAccess();
+  const adminSession = adminSessionStore.get();
+  const palikaId = adminSession?.palika_id ? Number(adminSession.palika_id) : null;
+  const verificationAccess = useVerificationAccess(palikaId || undefined);
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,17 +41,17 @@ export default function BusinessesPage() {
 
   // Load businesses
   useEffect(() => {
-    if (!tierInfo?.palikaId) return;
+    if (!palikaId) return;
     loadBusinesses();
-  }, [tierInfo?.palikaId, filters, pagination.offset]);
+  }, [palikaId, filters, pagination.offset]);
 
   const loadBusinesses = async () => {
-    if (!tierInfo?.palikaId) return;
+    if (!palikaId) return;
 
     try {
       setLoading(true);
       const result = await BusinessApprovalService.getBusinesses(
-        tierInfo.palikaId,
+        palikaId,
         {
           status: filters.status as any,
           category: filters.category,
@@ -75,7 +75,7 @@ export default function BusinessesPage() {
   };
 
   const handleVerify = async (businessId: string) => {
-    if (!tierInfo?.palikaId) return;
+    if (!palikaId) return;
 
     try {
       // TODO: Get admin_id from auth context
@@ -83,7 +83,7 @@ export default function BusinessesPage() {
 
       await BusinessApprovalService.verifyBusiness({
         businessId,
-        palikaId: tierInfo.palikaId,
+        palikaId: palikaId,
         adminId,
       });
 
@@ -96,7 +96,7 @@ export default function BusinessesPage() {
   };
 
   const handleReject = async (businessId: string, reason: string) => {
-    if (!tierInfo?.palikaId) return;
+    if (!palikaId) return;
 
     try {
       // TODO: Get admin_id from auth context
@@ -104,7 +104,7 @@ export default function BusinessesPage() {
 
       await BusinessApprovalService.rejectBusiness({
         businessId,
-        palikaId: tierInfo.palikaId,
+        palikaId: palikaId,
         adminId,
         reason,
       });
@@ -134,138 +134,143 @@ export default function BusinessesPage() {
     rejected: businesses.filter((b) => b.verification_status === 'rejected').length,
   };
 
-  if (tierLoading) {
+  if (verificationAccess.loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center">
-        <div className="text-gray-500 flex items-center">
-          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          Loading tier information...
+      <AdminLayout>
+        <div className="loading-container">
+          <div className="spinner-large"></div>
+          <p>Loading tier information...</p>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="hover:bg-emerald-50 hover:text-emerald-700"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+    <AdminLayout>
+      <div className="marketplace-container">
+        <div className="marketplace-page-header">
+          <div className="header-content">
+            <div className="header-icon-box">
+              <Building2 size={32} />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Business Management</h1>
-              <p className="text-gray-600">Manage and verify marketplace businesses</p>
+              <h1 className="page-title">Business Management</h1>
+              <p className="page-subtitle">Manage and verify marketplace businesses</p>
             </div>
           </div>
         </div>
 
         {/* Tier Info */}
-        {tierInfo && (
-          <Card className="mb-6 bg-white/80 backdrop-blur-sm border-green-200/50 shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Tier</p>
-                  <p className="text-lg font-semibold text-gray-800">{tierInfo.tierName}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Approval Workflow</p>
-                  <Badge
-                    className={
-                      canVerify
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }
-                  >
-                    {canVerify ? 'Enabled' : 'Disabled'}
-                  </Badge>
-                </div>
+        {verificationAccess.tierName && (
+          <div className="card tier-info-card">
+            <div className="tier-info-content">
+              <div>
+                <p className="tier-label">Tier</p>
+                <p className="tier-value">{verificationAccess.tierName}</p>
               </div>
-              {!canVerify && verificationErrorMessage && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-yellow-700">{verificationErrorMessage}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <div>
+                <p className="tier-label">Approval Workflow</p>
+                <span className={`badge ${verificationAccess.canVerify ? 'badge-success' : 'badge-warning'}`}>
+                  {verificationAccess.canVerify ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+            </div>
+            {!verificationAccess.canVerify && verificationAccess.errorMessage && (
+              <div className="alert alert-warning">
+                <AlertCircle size={20} />
+                <p>{verificationAccess.errorMessage}</p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-white/80 backdrop-blur-sm border-green-200/50 shadow-lg">
-            <CardContent className="pt-6">
-              <p className="text-sm text-gray-600 mb-1">Total Businesses</p>
-              <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-            </CardContent>
-          </Card>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon total">
+              <Building2 size={24} />
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.total}</div>
+              <div className="stat-label">Total Businesses</div>
+            </div>
+          </div>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-yellow-200/50 shadow-lg">
-            <CardContent className="pt-6">
-              <p className="text-sm text-gray-600 mb-1">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-            </CardContent>
-          </Card>
+          <div className="stat-card">
+            <div className="stat-icon pending">
+              <AlertCircle size={24} />
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.pending}</div>
+              <div className="stat-label">Pending</div>
+            </div>
+          </div>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-emerald-200/50 shadow-lg">
-            <CardContent className="pt-6">
-              <p className="text-sm text-gray-600 mb-1">Verified</p>
-              <p className="text-2xl font-bold text-emerald-600">{stats.verified}</p>
-            </CardContent>
-          </Card>
+          <div className="stat-card">
+            <div className="stat-icon verified">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.verified}</div>
+              <div className="stat-label">Verified</div>
+            </div>
+          </div>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-red-200/50 shadow-lg">
-            <CardContent className="pt-6">
-              <p className="text-sm text-gray-600 mb-1">Rejected</p>
-              <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-            </CardContent>
-          </Card>
+          <div className="stat-card">
+            <div className="stat-icon rejected">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.rejected}</div>
+              <div className="stat-label">Rejected</div>
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
-        <BusinessFilters
-          onStatusChange={(status) => handleFilterChange({ status })}
-          onSearchChange={(search) => handleFilterChange({ search })}
-          onReset={handleReset}
-        />
+        <div className="card">
+          <BusinessFilters
+            onStatusChange={(status) => handleFilterChange({ status })}
+            onSearchChange={(search) => handleFilterChange({ search })}
+            onReset={handleReset}
+          />
+        </div>
 
         {/* Business List */}
-        <Card className="mt-6 bg-white/80 backdrop-blur-sm border-green-200/50 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center text-gray-800">
-              <Package className="w-5 h-5 text-emerald-600 mr-2" />
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">
+              <Package size={20} />
               Businesses ({pagination.total} total)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h2>
+          </div>
+          <div className="card-body">
             <BusinessTable
               businesses={businesses}
               loading={loading}
-              onVerify={canVerify ? handleVerify : undefined}
-              onReject={canVerify ? handleReject : undefined}
-              canVerify={canVerify}
-              verificationErrorMessage={verificationErrorMessage}
+              onVerify={verificationAccess.canVerify ? handleVerify : undefined}
+              onReject={verificationAccess.canVerify ? handleReject : undefined}
+              canVerify={verificationAccess.canVerify}
+              verificationErrorMessage={verificationAccess.errorMessage}
             />
 
             {/* Pagination */}
             {pagination.total > pagination.limit && (
-              <div className="mt-6 flex items-center justify-between">
-                <p className="text-sm text-gray-600">
+              <div className="pagination-container">
+                <p className="pagination-info">
                   Showing {pagination.offset + 1} to{' '}
                   {Math.min(pagination.offset + pagination.limit, pagination.total)} of{' '}
                   {pagination.total}
                 </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
+                <div className="pagination-buttons">
+                  <button
+                    className="btn btn-secondary"
                     onClick={() =>
                       setPagination((prev) => ({
                         ...prev,
@@ -275,9 +280,9 @@ export default function BusinessesPage() {
                     disabled={pagination.offset === 0}
                   >
                     Previous
-                  </Button>
-                  <Button
-                    variant="outline"
+                  </button>
+                  <button
+                    className="btn btn-secondary"
                     onClick={() =>
                       setPagination((prev) => ({
                         ...prev,
@@ -287,13 +292,13 @@ export default function BusinessesPage() {
                     disabled={pagination.offset + pagination.limit >= pagination.total}
                   >
                     Next
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
