@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import AdminLayout from '@/components/AdminLayout'
 import { SummaryCard } from '@/components/SummaryCard'
 import { TrendChart } from '@/components/TrendChart'
 import { CategoryBreakdown } from '@/components/CategoryBreakdown'
 import { VerificationStatusChart } from '@/components/VerificationStatusChart'
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
+import './analytics.css'
 
 interface AnalyticsSummary {
   users: {
@@ -40,13 +42,11 @@ export default function AnalyticsDashboard() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true)
-        // Get palika_id from admin session
         const session = adminSessionStore.get()
         if (!session) {
           throw new Error('No admin session found')
         }
 
-        // Defensive: coerce to number in case legacy sessions stored it as string
         const palikaRaw = session.palika_id != null ? Number(session.palika_id) : null
         const palikaId = palikaRaw != null && !Number.isNaN(palikaRaw) ? palikaRaw : null
 
@@ -72,83 +72,84 @@ export default function AnalyticsDashboard() {
     fetchAnalytics()
   }, [])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Loading analytics...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">Error: {error}</div>
-      </div>
-    )
-  }
-
-  if (!analytics) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">No data available</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Marketplace Analytics</h1>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <SummaryCard
-            title="Total Users"
-            value={analytics.users.total}
-            icon="👥"
-            trend={{ value: analytics.users.newThisWeek, isPositive: true }}
-          />
-          <SummaryCard
-            title="Total Businesses"
-            value={analytics.businesses.total}
-            icon="🏢"
-            trend={{ value: analytics.businesses.newThisWeek, isPositive: true }}
-          />
-          <SummaryCard
-            title="Total Products"
-            value={analytics.products.total}
-            icon="📦"
-            trend={{ value: analytics.products.byVerificationStatus.pending, isPositive: false }}
-          />
-          <SummaryCard
-            title="Pending Verification"
-            value={analytics.products.byVerificationStatus.pending}
-            icon="⏳"
-          />
+    <AdminLayout>
+      <div className="analytics-container">
+        <div className="analytics-page-header">
+          <h1 className="analytics-page-title">Marketplace Analytics</h1>
+          <p className="analytics-page-subtitle">
+            Palika-scoped overview of users, businesses, and marketplace products.
+          </p>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <TrendChart title="User Growth (30 days)" data={analytics.users.trend} />
-          <TrendChart title="Business Growth (30 days)" data={analytics.businesses.trend} />
-        </div>
+        {loading && <div className="analytics-state">Loading analytics…</div>}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <TrendChart title="Product Growth (30 days)" data={analytics.products.trend} />
-          <VerificationStatusChart
-            pending={analytics.products.byVerificationStatus.pending}
-            verified={analytics.products.byVerificationStatus.verified}
-            rejected={analytics.products.byVerificationStatus.rejected}
-          />
-        </div>
+        {!loading && error && (
+          <div className="analytics-state error">Error: {error}</div>
+        )}
 
-        {/* Category Breakdowns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CategoryBreakdown title="Products by Category" data={analytics.products.byCategory} />
-          <CategoryBreakdown title="Businesses by Category" data={analytics.businesses.byCategory} />
-        </div>
+        {!loading && !error && !analytics && (
+          <div className="analytics-state">No data available</div>
+        )}
+
+        {!loading && !error && analytics && (
+          <>
+            <div className="summary-grid">
+              <SummaryCard
+                title="Total Users"
+                value={analytics.users.total}
+                icon="👥"
+                trend={{ value: analytics.users.newThisWeek, isPositive: true }}
+              />
+              <SummaryCard
+                title="Total Businesses"
+                value={analytics.businesses.total}
+                icon="🏢"
+                trend={{ value: analytics.businesses.newThisWeek, isPositive: true }}
+              />
+              <SummaryCard
+                title="Total Products"
+                value={analytics.products.total}
+                icon="📦"
+                trend={{
+                  value: analytics.products.byVerificationStatus.pending,
+                  isPositive: false,
+                }}
+              />
+              <SummaryCard
+                title="Pending Verification"
+                value={analytics.products.byVerificationStatus.pending}
+                icon="⏳"
+              />
+            </div>
+
+            <div className="chart-row">
+              <TrendChart title="User Growth (30 days)" data={analytics.users.trend} />
+              <TrendChart title="Business Growth (30 days)" data={analytics.businesses.trend} />
+            </div>
+
+            <div className="chart-row">
+              <TrendChart title="Product Growth (30 days)" data={analytics.products.trend} />
+              <VerificationStatusChart
+                pending={analytics.products.byVerificationStatus.pending}
+                verified={analytics.products.byVerificationStatus.verified}
+                rejected={analytics.products.byVerificationStatus.rejected}
+              />
+            </div>
+
+            <div className="chart-row">
+              <CategoryBreakdown
+                title="Products by Category"
+                data={analytics.products.byCategory}
+              />
+              <CategoryBreakdown
+                title="Businesses by Category"
+                data={analytics.businesses.byCategory}
+              />
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </AdminLayout>
   )
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { createSupabaseClient } from '@/services/database-client'
+import { getMarketplaceAnalyticsDatasource } from '@/lib/marketplace-analytics-config'
 import { MarketplaceAnalyticsService } from '@/services/marketplace-analytics.service'
 
 export async function GET(request: NextRequest) {
@@ -14,24 +13,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const db = createSupabaseClient(supabaseAdmin)
-    const analyticsService = new MarketplaceAnalyticsService(db)
-
+    const analyticsService = new MarketplaceAnalyticsService(getMarketplaceAnalyticsDatasource())
     const result = await analyticsService.getProductAnalytics(parseInt(palikaId))
 
     if (result.error) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: result.status }
-      )
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
     return NextResponse.json(result.data)
   } catch (error) {
     console.error('Error in GET /api/analytics/products:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

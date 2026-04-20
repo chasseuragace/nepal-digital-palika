@@ -6,45 +6,39 @@ interface VerificationStatusChartProps {
   rejected: number
 }
 
-export function VerificationStatusChart({ pending, verified, rejected }: VerificationStatusChartProps) {
+export function VerificationStatusChart({
+  pending,
+  verified,
+  rejected,
+}: VerificationStatusChartProps) {
   const total = pending + verified + rejected
-  const pendingPercent = total > 0 ? (pending / total) * 100 : 0
-  const verifiedPercent = total > 0 ? (verified / total) * 100 : 0
-  const rejectedPercent = total > 0 ? (rejected / total) * 100 : 0
+  const rows: Array<{ label: string; value: number; statusClass: string }> = [
+    { label: 'Pending', value: pending, statusClass: 'pending' },
+    { label: 'Verified', value: verified, statusClass: 'verified' },
+    { label: 'Rejected', value: rejected, statusClass: 'rejected' },
+  ]
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Verification Status</h3>
-      <div className="space-y-4">
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">Pending</span>
-            <span className="text-sm font-semibold text-yellow-600">{pending}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="h-2 rounded-full bg-yellow-500" style={{ width: `${pendingPercent}%` }} />
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">Verified</span>
-            <span className="text-sm font-semibold text-green-600">{verified}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="h-2 rounded-full bg-green-500" style={{ width: `${verifiedPercent}%` }} />
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">Rejected</span>
-            <span className="text-sm font-semibold text-red-600">{rejected}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="h-2 rounded-full bg-red-500" style={{ width: `${rejectedPercent}%` }} />
-          </div>
-        </div>
+    <div className="chart-panel">
+      <h3 className="chart-panel-title">Verification Status</h3>
+      <div className="breakdown-list">
+        {rows.map((row) => {
+          const percentage = total > 0 ? (row.value / total) * 100 : 0
+          return (
+            <div key={row.label} className="breakdown-row">
+              <div className="breakdown-row-header">
+                <span className="breakdown-row-label">{row.label}</span>
+                <span className={`breakdown-row-value ${row.statusClass}`}>{row.value}</span>
+              </div>
+              <div className="breakdown-bar-track">
+                <div
+                  className={`breakdown-bar status-${row.statusClass}`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
