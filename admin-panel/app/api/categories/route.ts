@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('entity_type', entityType)
     }
 
-    const { data: categories, error } = await query.order('name')
+    const { data: categories, error } = await query.order('name_en')
 
     if (error) {
       console.error('Supabase error:', error)

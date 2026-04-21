@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { createSupabaseClient } from '@/services/database-client'
 import { TierValidationService } from '@/services/tier-validation.service'
 
 export async function GET(request: NextRequest) {
@@ -14,8 +12,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const db = createSupabaseClient(supabaseAdmin)
-    const tierValidationService = new TierValidationService(db)
+    // Service's default constructor wires the configured ITierValidationDatasource
+    // (fake / supabase) via getTierValidationDatasource().
+    const tierValidationService = new TierValidationService()
 
     const result = await tierValidationService.getPalikaTierInfo(parseInt(palikaId))
 

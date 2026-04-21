@@ -181,10 +181,11 @@ describe('palika', () => {
     expect([200, 404]).toContain(status) // 404 if profile row not yet created
   })
 
-  // Known broken (2026-04-21): /api/tier-info 500. TierValidationService fails.
-  it.fails('GET /api/tier-info returns the palika tier', async () => {
-    const { status } = await call(`/api/tier-info?palika_id=${callerPalikaId}`)
+  it('GET /api/tier-info returns the palika tier', async () => {
+    const { status, json } = await call(`/api/tier-info?palika_id=${callerPalikaId}`)
     expect(status).toBe(200)
+    expect(json?.palikaId).toBe(callerPalikaId)
+    expect(json?.tierName).toBeTruthy()
   })
 
   it('GET /api/tiers?palika_id= returns subscription tiers', async () => {
@@ -217,11 +218,10 @@ describe('content', () => {
     expect(json).toBeTruthy()
   })
 
-  // Known broken (2026-04-21): /api/categories 500. Route does `.order('name')`
-  // but the `categories` table has `name_en` + `name_ne`, no `name` column.
-  it.fails('GET /api/categories', async () => {
-    const { status } = await call('/api/categories')
+  it('GET /api/categories', async () => {
+    const { status, json } = await call('/api/categories')
     expect(status).toBe(200)
+    expect(Array.isArray(json)).toBe(true)
   })
 })
 
@@ -230,12 +230,11 @@ describe('content', () => {
 /* -------------------------------------------------------------------------- */
 
 describe('businesses', () => {
-  // Known broken (2026-04-21): /api/businesses?palika_id returns 500.
-  // Route handler queries a column/relation that no longer matches the schema.
-  // When fixed, flip `it.fails` back to `it`.
-  it.fails('GET /api/businesses?palika_id= returns list', async () => {
-    const { status } = await call(`/api/businesses?palika_id=${callerPalikaId}`)
+  it('GET /api/businesses?palika_id= returns list', async () => {
+    const { status, json } = await call(`/api/businesses?palika_id=${callerPalikaId}`)
     expect(status).toBe(200)
+    expect(json).toBeTruthy()
+    expect(Array.isArray(json?.businesses ?? json?.data ?? json)).toBe(true)
   })
 
   it('GET /api/business-targeting', async () => {
@@ -259,17 +258,23 @@ describe('businesses', () => {
 /* -------------------------------------------------------------------------- */
 
 describe('admins', () => {
-  // Known broken (2026-04-21): /api/admins 500 ("Failed to fetch admins").
-  it.fails('GET /api/admins (palika admin scope)', async () => {
-    const { status } = await call('/api/admins')
-    expect([200, 403]).toContain(status)
+  it('GET /api/admins (palika admin scope)', async () => {
+    const { status, json } = await call('/api/admins')
+    expect(status).toBe(200)
+    const arr = json?.data ?? json
+    expect(Array.isArray(arr)).toBe(true)
+    // Palika admin should only see admins in their own palika.
+    for (const a of arr) {
+      expect(a.palika_id).toBe(callerPalikaId)
+    }
   })
 
-  // Known broken (2026-04-21): /api/regions 500 — route does `.order('name')`
-  // but provinces/districts have `name_en` / `name_ne`, no `name`.
-  it.fails('GET /api/regions', async () => {
-    const { status } = await call('/api/regions')
-    expect([200, 403]).toContain(status)
+  it('GET /api/regions', async () => {
+    const { status, json } = await call('/api/regions')
+    expect(status).toBe(200)
+    const arr = json?.data ?? json
+    expect(Array.isArray(arr)).toBe(true)
+    expect(arr.length).toBeGreaterThanOrEqual(7) // 7 provinces
   })
 
   it('GET /api/audit-log', async () => {

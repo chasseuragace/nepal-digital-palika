@@ -94,7 +94,7 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
   async getBusinessApprovalStatus(businessId: string, palikaId: number): Promise<BusinessApprovalStatus> {
     const { data: business, error } = await this.db
       .from('businesses')
-      .select('id, verification_status, verified_by, verified_at, rejection_reason, name, category')
+      .select('id, verification_status, verified_by, verified_at, rejection_reason, business_name, sub_category')
       .eq('id', businessId)
       .eq('palika_id', palikaId)
       .single()
@@ -109,15 +109,15 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
       verifiedBy: business.verified_by,
       verifiedAt: business.verified_at,
       rejectionReason: business.rejection_reason,
-      businessName: business.name,
-      category: business.category,
+      businessName: business.business_name,
+      category: business.sub_category,
     }
   }
 
   async getAdminName(adminId: string): Promise<string> {
     const { data: admin, error } = await this.db
       .from('admin_users')
-      .select('email, first_name, last_name')
+      .select('full_name')
       .eq('id', adminId)
       .single()
 
@@ -125,11 +125,7 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
       return 'Unknown Admin'
     }
 
-    if (admin.first_name && admin.last_name) {
-      return `${admin.first_name} ${admin.last_name}`
-    }
-
-    return admin.email?.split('@')[0] || 'Unknown Admin'
+    return admin.full_name || 'Unknown Admin'
   }
 
   async logApprovalAction(params: {
@@ -166,7 +162,7 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
   }> {
     const { data: businesses, error, count } = await this.db
       .from('businesses')
-      .select('id, name, category, verification_status, created_at', { count: 'exact' })
+      .select('id, business_name, sub_category, verification_status, created_at', { count: 'exact' })
       .eq('palika_id', palikaId)
       .eq('verification_status', 'pending')
       .order('created_at', { ascending: false })
@@ -201,7 +197,7 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
   }> {
     let query = this.db
       .from('businesses')
-      .select('id, name, category, verification_status, verified_at, rejection_reason, created_at', { count: 'exact' })
+      .select('id, business_name, sub_category, verification_status, verified_at, rejection_reason, created_at', { count: 'exact' })
       .eq('palika_id', palikaId)
 
     if (filters?.status) {
@@ -209,11 +205,11 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
     }
 
     if (filters?.category) {
-      query = query.eq('category', filters.category)
+      query = query.eq('sub_category', filters.category)
     }
 
     if (filters?.search) {
-      query = query.ilike('name', `%${filters.search}%`)
+      query = query.ilike('business_name', `%${filters.search}%`)
     }
 
     const { data: businesses, error, count } = await query

@@ -42,19 +42,24 @@ export class SupabaseTierValidationDatasource implements ITierValidationDatasour
   async getPalikaTierInfo(palikaId: number): Promise<PalikaTierInfo | null> {
     const { data: palika } = await this.db.from('palikas').select('id, subscription_tier_id').eq('id', palikaId).single()
     if (!palika) return null
+    if (!palika.subscription_tier_id) return null
 
-    const { data: tier } = await this.db.from('subscription_tiers').select('id, name, tier_level').eq('id', palika.subscription_tier_id).single()
+    const { data: tier } = await this.db
+      .from('subscription_tiers')
+      .select('id, name, sort_order')
+      .eq('id', palika.subscription_tier_id)
+      .single()
     if (!tier) return null
 
-    const { data: settings } = await this.db.from('palika_settings').select('approval_required').eq('palika_id', palikaId).single()
-    const approvalRequired = settings?.approval_required ?? false
-
+    // Approval-required is a policy flag that previously lived on a (deleted)
+    // palika_settings table. Until a dynamic-policy layer is introduced, default
+    // to false so the endpoint is functional; consumers that care can override.
     return {
       palikaId,
       tierId: tier.id,
-      tierLevel: tier.tier_level,
+      tierLevel: tier.sort_order,
       tierName: tier.name,
-      approvalRequired
+      approvalRequired: false,
     }
   }
 

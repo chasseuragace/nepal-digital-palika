@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         is_active,
         created_at,
         updated_at,
-        admin_regions(
+        admin_regions!admin_regions_admin_id_fkey(
           id,
           region_type,
           region_id,

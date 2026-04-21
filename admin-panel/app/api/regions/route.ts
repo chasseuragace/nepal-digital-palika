@@ -6,8 +6,8 @@ export async function GET(request: NextRequest) {
     // Fetch provinces with their districts and palikas
     const { data: provinces, error: provError } = await supabaseAdmin
       .from('provinces')
-      .select('id, name, name_ne, code')
-      .order('name')
+      .select('id, name_en, name_ne, code')
+      .order('name_en')
 
     if (provError) {
       console.error('Error fetching provinces:', provError)
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     // Fetch districts
     const { data: districts, error: distError } = await supabaseAdmin
       .from('districts')
-      .select('id, province_id, name, name_ne, code')
-      .order('name')
+      .select('id, province_id, name_en, name_ne, code')
+      .order('name_en')
 
     if (distError) {
       console.error('Error fetching districts:', distError)
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     // Fetch palikas
     const { data: palikas, error: palError } = await supabaseAdmin
       .from('palikas')
-      .select('id, district_id, name, name_ne, code, type')
-      .order('name')
+      .select('id, district_id, name_en, name_ne, code, type')
+      .order('name_en')
 
     if (palError) {
       console.error('Error fetching palikas:', palError)
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Fetch admin assignments
     const { data: adminRegions, error: adminError } = await supabaseAdmin
       .from('admin_regions')
-      .select('id, admin_id, region_type, region_id, assigned_at, admin_users(id, full_name, role)')
+      .select('id, admin_id, region_type, region_id, assigned_at, admin_users!admin_regions_admin_id_fkey(id, full_name, role)')
 
     if (adminError) {
       console.error('Error fetching admin regions:', adminError)
