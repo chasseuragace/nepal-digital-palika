@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BusinessApprovalService } from '@/services/business-approval.service';
-import { TierValidationService } from '@/services/tier-validation.service';
 
 /**
  * PUT /api/businesses/:id/verify
- * Verify a business (change status to verified)
- * Requires: palika_id, admin_id
+ * Verify a business (change status to verified).
+ * Requires: palika_id, admin_id.
+ *
+ * Historically this route also ran a tier-based access check
+ * (validateBusinessApprovalAccess). That check has been removed along with
+ * the rest of the tier-gating work — tiers are retained as metadata only and
+ * should not alter functionality. Scope enforcement (business belongs to the
+ * calling palika) still happens inside BusinessApprovalService.
  */
 export async function PUT(
   request: NextRequest,
@@ -17,14 +22,12 @@ export async function PUT(
     const palikaId = searchParams.get('palika_id');
     const adminId = searchParams.get('admin_id');
 
-    // Validate required parameters
     if (!palikaId) {
       return NextResponse.json(
         { error: 'palika_id is required' },
         { status: 400 }
       );
     }
-
     if (!adminId) {
       return NextResponse.json(
         { error: 'admin_id is required' },
@@ -34,25 +37,9 @@ export async function PUT(
 
     const palikaIdNum = parseInt(palikaId);
 
-    // Validate tier eligibility for business approval
-    const tierValidationService = new TierValidationService();
-    const tierValidation = await tierValidationService.validateBusinessApprovalAccess(
-      palikaIdNum,
-      adminId
-    );
-
-    if (!tierValidation.canApprove) {
-      return NextResponse.json(
-        { error: tierValidation.message },
-        { status: 403 }
-      );
-    }
-
-    // Get request body for notes
     const body = await request.json().catch(() => ({}));
     const notes = body.notes;
 
-    // Verify business
     const service = new BusinessApprovalService();
     const result = await service.verifyBusiness({
       businessId,

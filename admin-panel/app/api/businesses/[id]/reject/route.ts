@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BusinessApprovalService } from '@/services/business-approval.service';
-import { TierValidationService } from '@/services/tier-validation.service';
 
 /**
  * PUT /api/businesses/:id/reject
  * Reject a business (change status to rejected with reason)
  * Requires: palika_id, admin_id, reason (in body)
+ *
+ * Tier-based access check removed — tiers are metadata only. Scope
+ * enforcement (business belongs to the calling palika) still happens
+ * inside BusinessApprovalService.
  */
 export async function PUT(
   request: NextRequest,
@@ -45,21 +48,6 @@ export async function PUT(
 
     const palikaIdNum = parseInt(palikaId);
 
-    // Validate tier eligibility for business approval
-    const tierValidationService = new TierValidationService();
-    const tierValidation = await tierValidationService.validateBusinessApprovalAccess(
-      palikaIdNum,
-      adminId
-    );
-
-    if (!tierValidation.canApprove) {
-      return NextResponse.json(
-        { error: tierValidation.message },
-        { status: 403 }
-      );
-    }
-
-    // Reject business
     const service = new BusinessApprovalService();
     const result = await service.rejectBusiness({
       businessId,

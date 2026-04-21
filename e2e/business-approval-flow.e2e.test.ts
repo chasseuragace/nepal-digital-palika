@@ -1,26 +1,23 @@
 /**
  * Cross-layer E2E — business approval.
  *
- * Flow:
- *   1. Citizen (via platform-admin's public self-service registration route)
- *      submits a new business → verification_status='pending'.
- *   2. admin-panel's `/api/businesses?palika_id=&status=pending` (real
- *      BusinessApprovalService + datasource) sees it in the queue.
- *   3. admin-panel's verify route documents the current tier-gate state:
- *      TierValidationService.validateBusinessApprovalAccess checks
- *      tierLevel > 1 AND approvalRequired — but approvalRequired is
- *      hardcoded to `false` in `SupabaseTierValidationDatasource` (the
- *      palika_settings table was removed; the dynamic-policy layer hasn't
- *      shipped yet). So verify currently 403s regardless of tier. This
- *      test asserts that behaviour explicitly rather than masking it.
- *   4. Cleanup: delete the test business directly via the admin-panel
- *      DELETE route (admin listing reads via service, so writing a bespoke
- *      supabase delete would bypass our 'real code only' rule).
+ * Two citizen-registered businesses are walked through the full approval
+ * lifecycle using the real service+datasource on every layer:
  *
- * m-place has no SupabaseBusinessDatasource — the marketplace path is
- * deferred (DIContainer throws when not in mock mode). So the verification
- * read path for this test is admin-panel's listing endpoint, not an m-place
- * repository call.
+ *   1. platform-admin POST /api/businesses/register creates each business
+ *      with verification_status='pending_review' (citizen self-service).
+ *   2. admin-panel GET /api/businesses?status=pending lists both under
+ *      palika 275.
+ *   3. admin-panel PUT /api/businesses/[id]/verify transitions the first
+ *      to verification_status='verified'. PUT /api/businesses/[id]/reject
+ *      (with reason) transitions the second to 'rejected'.
+ *   4. admin-panel re-lists with status=verified / status=rejected and
+ *      confirms each business appears under its new status.
+ *
+ * m-place has no SupabaseBusinessDatasource (marketplace path is deferred —
+ * DIContainer throws when not in mock mode), so public-side verification is
+ * covered by the admin-panel's listing endpoint, which runs through the
+ * same BusinessApprovalService that the admin UI uses.
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -40,7 +37,9 @@ const { mark, print } = mkReporter('Business approval cross-layer E2E summary');
 
 let fetchAdmin: ReturnType<typeof makeAdminFetch>;
 let adminId: string | null = null;
-let createdBusinessId: string | null = null;
+// One business is walked through verify, the other through reject.
+let verifyBusinessId: string | null = null;
+let rejectBusinessId: string | null = null;
 
 beforeAll(async () => {
   const { cookie, user } = await loginPalikaAdmin();
@@ -93,56 +92,54 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (createdBusinessId && fetchAdmin) {
-    try {
-      // admin-panel doesn't expose a direct businesses DELETE — the spec is
-      // "approve or reject, no hard delete". Leaving the rejected test
-      // business in place is intentional. Commented out to document the
-      // design; if a DELETE route is later added, uncomment.
-      // await fetchAdmin(`/api/businesses/${createdBusinessId}`, { method: 'DELETE' });
-    } catch {
-      /* best effort */
-    }
-  }
+  // admin-panel doesn't expose a businesses DELETE — the spec is "approve or
+  // reject, no hard delete" for audit-trail reasons. Verified and rejected
+  // test businesses therefore linger in the DB; they are re-runnable because
+  // each gets a unique slug from the datasource.
   print();
 });
 
-describe('phase 1 :: citizen registers business via platform-admin', () => {
-  it('POST /api/businesses/register (platform) returns pending_review', async () => {
-    // Service only requires palika_id, business_name, contact_phone, address.
-    // The datasource supplies defaults for owner_user_id, business_type_id,
-    // ward_number, and a "SRID=4326;POINT(0 0)" location.
-    const payload = {
+async function registerBusiness(tag: string): Promise<string> {
+  const { status, json } = await fetchPlatform('/api/businesses/register', {
+    method: 'POST',
+    body: JSON.stringify({
       palika_id: PALIKA_ID,
-      business_name: `E2E Cafe ${runTag}`,
+      business_name: `E2E Cafe ${tag}`,
       contact_phone: '+977-9822222222',
       address: 'E2E test address, Kathmandu',
-      description: 'Cross-layer E2E test business. Rejects leave it stale.',
-    };
-    const { status, json } = await fetchPlatform('/api/businesses/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    expect(status).toBe(201);
-    expect(json?.success).toBe(true);
-    expect(json?.data?.verification_status).toBe('pending_review');
-    expect(json?.data?.business_id).toBeTruthy();
-    createdBusinessId = json.data.business_id;
-    mark('platform.register', '✓', `id=${createdBusinessId}`);
+      description: 'Cross-layer E2E test business.',
+    }),
+  });
+  if (status !== 201) {
+    throw new Error(`register failed ${status}: ${JSON.stringify(json)}`);
+  }
+  return json.data.business_id as string;
+}
+
+describe('phase 1 :: citizen registers two businesses via platform-admin', () => {
+  it('first business (to be verified) registers with pending_review', async () => {
+    verifyBusinessId = await registerBusiness(`${runTag}-v`);
+    expect(verifyBusinessId).toBeTruthy();
+    mark('platform.register.verify', '✓', `id=${verifyBusinessId}`);
+  });
+
+  it('second business (to be rejected) registers with pending_review', async () => {
+    rejectBusinessId = await registerBusiness(`${runTag}-r`);
+    expect(rejectBusinessId).toBeTruthy();
+    mark('platform.register.reject', '✓', `id=${rejectBusinessId}`);
   });
 });
 
-describe('phase 2 :: admin-panel sees it in pending queue', () => {
-  it('GET /api/businesses?palika_id=&status=pending includes the new business', async () => {
-    expect(createdBusinessId).toBeTruthy();
+describe('phase 2 :: admin-panel pending queue contains both', () => {
+  it('status=pending list includes both businesses', async () => {
     const { status, json } = await fetchAdmin(
-      `/api/businesses?palika_id=${PALIKA_ID}&status=pending&limit=100`
+      `/api/businesses?palika_id=${PALIKA_ID}&status=pending&limit=200`
     );
     expect(status).toBe(200);
     const rows = json?.businesses ?? json?.data ?? [];
     expect(Array.isArray(rows)).toBe(true);
-    const found = rows.some((b: any) => b.id === createdBusinessId);
-    expect(found).toBe(true);
+    expect(rows.some((b: any) => b.id === verifyBusinessId)).toBe(true);
+    expect(rows.some((b: any) => b.id === rejectBusinessId)).toBe(true);
     mark(
       'admin.get.pending',
       '✓',
@@ -151,62 +148,86 @@ describe('phase 2 :: admin-panel sees it in pending queue', () => {
   });
 });
 
-describe('phase 3 :: admin-panel verify documents current tier gate', () => {
-  it('PUT /api/businesses/[id]/verify currently 403s (approvalRequired hardcoded false)', async () => {
-    // This is not a bug in the E2E. It exposes an incomplete migration:
-    // SupabaseTierValidationDatasource.getPalikaTierInfo returns
-    // `approvalRequired: false` as a placeholder (the old palika_settings
-    // table was dropped; dynamic policy layer hasn't landed). Until that
-    // layer exists or the gate is removed, no palika can verify/reject.
-    // When the gate is unblocked, flip this assertion to 200.
+describe('phase 3 :: admin-panel verify + reject succeed end-to-end', () => {
+  it('PUT /api/businesses/[id]/verify → 200, verification_status=verified', async () => {
     const { status, json } = await fetchAdmin(
-      `/api/businesses/${createdBusinessId}/verify?palika_id=${PALIKA_ID}&admin_id=${adminId}`,
+      `/api/businesses/${verifyBusinessId}/verify?palika_id=${PALIKA_ID}&admin_id=${adminId}`,
       {
         method: 'PUT',
-        body: JSON.stringify({ notes: 'E2E verify attempt' }),
+        body: JSON.stringify({ notes: 'E2E verify' }),
       }
     );
-    expect(status).toBe(403);
-    expect(json?.error).toBeTruthy();
-    mark('admin.verify.gated', '~', `403 (${String(json.error).slice(0, 40)}…)`);
+    expect(status).toBe(200);
+    expect(json?.success).toBe(true);
+    mark('admin.verify', '✓', `id=${verifyBusinessId}`);
   });
 
-  it('PUT /api/businesses/[id]/reject currently 403s for the same reason', async () => {
+  it('PUT /api/businesses/[id]/reject → 200 with reason', async () => {
+    const { status, json } = await fetchAdmin(
+      `/api/businesses/${rejectBusinessId}/reject?palika_id=${PALIKA_ID}&admin_id=${adminId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ reason: 'E2E reject — not a real business' }),
+      }
+    );
+    expect(status).toBe(200);
+    expect(json?.success).toBe(true);
+    mark('admin.reject', '✓', `id=${rejectBusinessId}`);
+  });
+
+  it('reject without a reason still returns 400', async () => {
+    // The datasource rejects empty reason at write time. Keep this guard
+    // under test so future refactors don't drop the validation.
     const { status } = await fetchAdmin(
-      `/api/businesses/${createdBusinessId}/reject?palika_id=${PALIKA_ID}&admin_id=${adminId}`,
+      `/api/businesses/${verifyBusinessId}/reject?palika_id=${PALIKA_ID}&admin_id=${adminId}`,
       {
         method: 'PUT',
-        body: JSON.stringify({ reason: 'E2E reject attempt' }),
+        body: JSON.stringify({ reason: '' }),
       }
     );
-    expect(status).toBe(403);
-    mark('admin.reject.gated', '~', '403 (same tier gate)');
+    expect(status).toBe(400);
+    mark('admin.reject.missing-reason', '✓', '400 (reason required)');
+  });
+});
+
+describe('phase 4 :: status filters reflect the transitions', () => {
+  it('status=verified list contains the verified business', async () => {
+    const { status, json } = await fetchAdmin(
+      `/api/businesses?palika_id=${PALIKA_ID}&status=verified&limit=200`
+    );
+    expect(status).toBe(200);
+    const rows = json?.businesses ?? json?.data ?? [];
+    expect(rows.some((b: any) => b.id === verifyBusinessId)).toBe(true);
+    mark('admin.list.verified', '✓', `${rows.length} verified`);
   });
 
-  it('direct platform-admin approval path is also present (registration only is exposed)', async () => {
-    // Platform-admin exposes /api/businesses/approvals (list) and
-    // /[id]/approval-details / -status / -notes, but no verify/reject
-    // mutation route — the intent is that approvals happen in the
-    // palika-facing admin-panel. So there's no alternate route to test
-    // from platform-admin. We verify the approvals list endpoint is alive.
+  it('status=rejected list contains the rejected business', async () => {
+    const { status, json } = await fetchAdmin(
+      `/api/businesses?palika_id=${PALIKA_ID}&status=rejected&limit=200`
+    );
+    expect(status).toBe(200);
+    const rows = json?.businesses ?? json?.data ?? [];
+    expect(rows.some((b: any) => b.id === rejectBusinessId)).toBe(true);
+    mark('admin.list.rejected', '✓', `${rows.length} rejected`);
+  });
+
+  it('status=pending no longer contains either (they moved out)', async () => {
+    const { status, json } = await fetchAdmin(
+      `/api/businesses?palika_id=${PALIKA_ID}&status=pending&limit=200`
+    );
+    expect(status).toBe(200);
+    const rows = json?.businesses ?? json?.data ?? [];
+    expect(rows.some((b: any) => b.id === verifyBusinessId)).toBe(false);
+    expect(rows.some((b: any) => b.id === rejectBusinessId)).toBe(false);
+    mark('admin.list.pending-drained', '✓', `${rows.length} still pending`);
+  });
+
+  it('platform-admin approvals list endpoint reachable', async () => {
     const { status, json } = await fetchPlatform(
       `/api/businesses/approvals?palika_id=${PALIKA_ID}&limit=50`
     );
     expect(status).toBe(200);
     expect(json).toBeTruthy();
-    mark('platform.approvals.list', '✓', 'endpoint reachable');
-  });
-});
-
-describe('phase 4 :: verification status round-trips via admin-panel list', () => {
-  it('status filter still returns the pending business (approval never happened)', async () => {
-    const { status, json } = await fetchAdmin(
-      `/api/businesses?palika_id=${PALIKA_ID}&status=pending&limit=100`
-    );
-    expect(status).toBe(200);
-    const rows = json?.businesses ?? json?.data ?? [];
-    const stillPending = rows.some((b: any) => b.id === createdBusinessId);
-    expect(stillPending).toBe(true);
-    mark('admin.still-pending', '✓', 'tier gate blocked the transition');
+    mark('platform.approvals.list', '✓', 'reachable');
   });
 });

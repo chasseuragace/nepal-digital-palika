@@ -16,20 +16,24 @@ interface UpgradeTierRequest {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const palikaId = parseInt(params.id, 10)
+    // Next.js 15+ requires `params` to be awaited — reading it synchronously
+    // yields `undefined` and the resulting `parseInt(undefined)` produces NaN,
+    // which silently filters the Supabase query down to zero rows and surfaces
+    // as a generic "Palika not found".
+    const { id } = await params
+    const palikaId = parseInt(id, 10)
 
     // Get Palika with current tier
     const { data: palikaData, error: palikaError } = await supabase
       .from('palikas')
-      .select(
-        `
-        *,
-        subscription_tier:subscription_tier_id(*)
-      `
-      )
+      // Embed target is the table name (`subscription_tiers`) with an alias
+      // for the response key. Using the FK column name as the embed hint
+      // (`subscription_tier:subscription_tier_id(*)`) silently fails through
+      // supabase-js and surfaces as `palikaError` → generic 404.
+      .select('*, subscription_tier:subscription_tiers(*)')
       .eq('id', palikaId)
       .single()
 
@@ -90,10 +94,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const palikaId = parseInt(params.id, 10)
+    const { id } = await params
+    const palikaId = parseInt(id, 10)
 
     // TODO: Verify user is super_admin
     // const user = await getUserSession(request)
@@ -154,12 +159,11 @@ export async function PUT(
     // Get updated tier info
     const { data: updatedPalika } = await supabase
       .from('palikas')
-      .select(
-        `
-        *,
-        subscription_tier:subscription_tier_id(*)
-      `
-      )
+      // Embed target is the table name (`subscription_tiers`) with an alias
+      // for the response key. Using the FK column name as the embed hint
+      // (`subscription_tier:subscription_tier_id(*)`) silently fails through
+      // supabase-js and surfaces as `palikaError` → generic 404.
+      .select('*, subscription_tier:subscription_tiers(*)')
       .eq('id', palikaId)
       .single()
 

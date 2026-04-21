@@ -15,10 +15,12 @@ interface ImageUploadResponse {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const businessId = params.id
+    // Next.js 15+ requires awaiting params — reading synchronously yields
+    // undefined and downstream queries silently filter to zero rows.
+    const { id: businessId } = await params
 
     // Verify business exists
     const { data: business, error: businessError } = await supabase

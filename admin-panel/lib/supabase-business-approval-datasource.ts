@@ -13,7 +13,7 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
     // Verify business belongs to palika
     const { data: business, error: fetchError } = await this.db
       .from('businesses')
-      .select('id, palika_id, name, category')
+      .select('id, palika_id, business_name, sub_category')
       .eq('id', businessId)
       .eq('palika_id', palikaId)
       .single()
@@ -56,7 +56,7 @@ export class SupabaseBusinessApprovalDatasource implements IBusinessApprovalData
     // Verify business belongs to palika
     const { data: business, error: fetchError } = await this.db
       .from('businesses')
-      .select('id, palika_id, name, category')
+      .select('id, palika_id, business_name, sub_category')
       .eq('id', businessId)
       .eq('palika_id', palikaId)
       .single()
