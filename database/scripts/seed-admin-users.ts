@@ -20,7 +20,7 @@ async function seedAdminUsers() {
   const { data: kathmanduData, error: kathmanduError } = await supabaseAdmin
     .from('palikas')
     .select('id, name_en')
-    .eq('code', 'KTM001')
+    .eq('code', 'D28-MT01')
     .single();
 
   if (kathmanduError || !kathmanduData) {
@@ -35,7 +35,7 @@ async function seedAdminUsers() {
   const { data: bhaktapurData, error: bhaktapurError } = await supabaseAdmin
     .from('palikas')
     .select('id, name_en')
-    .eq('code', 'BHK001')
+    .eq('code', 'D26-M01')
     .single();
 
   if (bhaktapurError || !bhaktapurData) {
