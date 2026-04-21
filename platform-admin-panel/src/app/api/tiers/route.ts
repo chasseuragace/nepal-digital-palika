@@ -1,49 +1,18 @@
-/**
- * GET /api/tiers
- * Fetch all subscription tiers with feature counts
- */
-
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { TiersService } from '@/services/tiers.service'
 
-export async function GET(request: NextRequest) {
-  try {
-    // Fetch all active tiers with feature counts
-    const { data, error } = await supabase
-      .from('subscription_tiers')
-      .select(
-        `
-        *,
-        tier_features(count)
-      `
-      )
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
+const service = new TiersService()
 
-    if (error) {
-      console.error('Error fetching tiers:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch subscription tiers' },
-        { status: 500 }
-      )
-    }
+export async function GET(_request: NextRequest) {
+  const result = await service.getAllActive()
 
-    // Transform response to include feature count
-    const tiersWithCounts = data?.map((tier: any) => ({
-      ...tier,
-      feature_count: tier.tier_features?.[0]?.count || 0,
-    })) || []
-
-    return NextResponse.json({
-      success: true,
-      data: tiersWithCounts,
-      count: tiersWithCounts.length,
-    })
-  } catch (error) {
-    console.error('Unexpected error in GET /api/tiers:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 })
   }
+
+  return NextResponse.json({
+    success: true,
+    data: result.data,
+    count: result.data?.length ?? 0,
+  })
 }

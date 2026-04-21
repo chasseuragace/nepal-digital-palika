@@ -23,7 +23,8 @@ CREATE POLICY "Admins can create notifications for their palika"
         EXISTS (
             SELECT 1 FROM public.admin_regions ar
             WHERE ar.admin_id = auth.uid()
-            AND ar.palika_id = notifications.palika_id
+            AND ar.region_type = 'palika'
+            AND ar.region_id = notifications.palika_id
         )
     );
 
@@ -32,7 +33,7 @@ CREATE POLICY "Users can update their own notification seen status"
     ON public.notifications
     FOR UPDATE
     USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id AND is_seen != OLD.is_seen);
+    WITH CHECK (auth.uid() = user_id);
 
 -- Admins can update notifications in their palika
 CREATE POLICY "Admins can update notifications in their palika"
@@ -42,7 +43,8 @@ CREATE POLICY "Admins can update notifications in their palika"
         EXISTS (
             SELECT 1 FROM public.admin_regions ar
             WHERE ar.admin_id = auth.uid()
-            AND ar.palika_id = notifications.palika_id
+            AND ar.region_type = 'palika'
+            AND ar.region_id = notifications.palika_id
         )
     );
 
@@ -54,7 +56,8 @@ CREATE POLICY "Admins can delete notifications in their palika"
         EXISTS (
             SELECT 1 FROM public.admin_regions ar
             WHERE ar.admin_id = auth.uid()
-            AND ar.palika_id = notifications.palika_id
+            AND ar.region_type = 'palika'
+            AND ar.region_id = notifications.palika_id
         )
     );
 
@@ -83,7 +86,8 @@ CREATE POLICY "Admins can create attachments for their palika notifications"
             AND EXISTS (
                 SELECT 1 FROM public.admin_regions ar
                 WHERE ar.admin_id = auth.uid()
-                AND ar.palika_id = n.palika_id
+                AND ar.region_type = 'palika'
+                AND ar.region_id = n.palika_id
             )
         )
     );

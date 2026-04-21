@@ -127,30 +127,27 @@ else
     echo -e "${YELLOW}⚠ run-seeds.sh not found, running individual scripts...${NC}"
     
     cd database
-    
-    # Stage 1: Infrastructure
-    echo -e "${CYAN}Stage 1: Infrastructure Setup${NC}"
-    npx ts-node scripts/seed-subscription-tiers.ts
-    npx ts-node scripts/seed-business-types.ts
-    npx ts-node scripts/seed-business-categories-direct.ts
-    npx ts-node scripts/seed-marketplace-categories-direct.ts
-    
-    # Stage 2: Admin Users
-    echo -e "${CYAN}Stage 2: Admin Users${NC}"
-    npx ts-node scripts/seed-admin-users.ts
-    
-    # Stage 3: Tier Assignment
-    echo -e "${CYAN}Stage 3: Palika Tier Assignment${NC}"
-    npx ts-node scripts/enroll-palikas-tiers.ts
-    
-    # Stage 4: User Creation
-    echo -e "${CYAN}Stage 4: User & Business Creation${NC}"
-    npx ts-node scripts/seed-marketplace-proper.ts
-    
-    # Stage 5: Products
-    echo -e "${CYAN}Stage 5: Marketplace Products${NC}"
-    npx ts-node scripts/seed-marketplace-test-data.ts
-    
+
+    # NOTE: Infrastructure (geography, RBAC, categories, business_categories,
+    # marketplace_categories, subscription_tiers/features) is now seeded
+    # automatically by `supabase db reset` via supabase/seeds/*.sql files.
+
+    # Stage 1: Admin Users (uses auth admin SDK — not portable to SQL)
+    echo -e "${CYAN}Stage 1: Admin Users${NC}"
+    npx tsx scripts/seed-admin-users.ts
+
+    # Stage 2: Palika tier enrolment (operational policy; not part of infra seed)
+    echo -e "${CYAN}Stage 2: Palika Tier Assignment${NC}"
+    npx tsx scripts/enroll-palikas-tiers.ts
+
+    # Stage 3 (dev only): test users + businesses
+    echo -e "${CYAN}Stage 3: User & Business Creation${NC}"
+    npx tsx scripts/seed-marketplace-proper.ts
+
+    # Stage 4 (dev only): marketplace products
+    echo -e "${CYAN}Stage 4: Marketplace Products${NC}"
+    npx tsx scripts/seed-marketplace-test-data.ts
+
     cd ..
 fi
 echo ""

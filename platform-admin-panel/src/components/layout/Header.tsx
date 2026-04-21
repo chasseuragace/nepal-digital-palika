@@ -1,16 +1,13 @@
 'use client'
 
-import { useAuthStore } from '@/lib/auth-store'
 import { Bell, User } from 'lucide-react'
 
 export function Header() {
-  const user = useAuthStore((state) => state.user)
-
   return (
     <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Dashboard</h2>
-        <p className="text-sm text-slate-500">Welcome back, {user?.full_name}</p>
+        <h2 className="text-2xl font-bold text-slate-900">Platform Admin</h2>
+        <p className="text-sm text-slate-500">Nepal Digital Tourism — Internal Dev Panel</p>
       </div>
 
       <div className="flex items-center gap-4">

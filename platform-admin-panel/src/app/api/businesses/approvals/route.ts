@@ -1,24 +1,12 @@
 /**
  * GET /api/businesses/approvals
  * List pending businesses for palika staff verification
- * Tier-gated: Only available if verification_workflow feature enabled
- * RLS: Staff can only see their own palika's businesses
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { palikaHasFeature } from '@/lib/tier-utils'
+import { BusinessesService } from '@/services/businesses.service'
 
-interface ApprovalsQuery {
-  palika_id?: number
-  status?: 'pending_review' | 'approved' | 'rejected' | 'draft'
-  category?: string
-  search?: string
-  start_date?: string
-  end_date?: string
-  page?: number
-  limit?: number
-}
+const service = new BusinessesService()
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +23,6 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '25', 10)
 
-    // Validate pagination
     if (page < 1 || limit < 1 || limit > 100) {
       return NextResponse.json(
         { error: 'Invalid pagination parameters' },
@@ -43,84 +30,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // If palika_id not provided, will be enforced by RLS
-    let query = supabase
-      .from('businesses')
-      .select(
-        `
-        id,
-        business_name,
-        business_name_ne,
-        category,
-        palika_id,
-        contact_phone,
-        contact_email,
+    const result = await service.getApprovals(
+      {
+        palika_id: palikaId,
         status,
-        verification_status,
-        created_at,
-        owner_info,
-        featured_image_url,
-        palikas(id, name_en, name_ne)
-      `,
-        { count: 'exact' }
-      )
+        category,
+        search,
+        start_date: startDate,
+        end_date: endDate,
+      },
+      { page, limit }
+    )
 
-    // Filter by palika if provided
-    if (palikaId) {
-      query = query.eq('palika_id', palikaId)
-    }
-
-    // Filter by status
-    if (status) {
-      query = query.eq('status', status)
-    } else {
-      // Default: show pending review and draft statuses
-      query = query.in('status', ['pending_review', 'draft'])
-    }
-
-    // Filter by category
-    if (category) {
-      query = query.eq('category', category)
-    }
-
-    // Filter by date range
-    if (startDate) {
-      query = query.gte('created_at', startDate)
-    }
-    if (endDate) {
-      query = query.lte('created_at', endDate)
-    }
-
-    // Search by business name
-    if (search) {
-      query = query.or(
-        `business_name.ilike.%${search}%,business_name_ne.ilike.%${search}%`
-      )
-    }
-
-    // Apply pagination
-    const offset = (page - 1) * limit
-    query = query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    const { data, error, count } = await query
-
-    if (error) {
-      console.error('Error fetching approvals:', error)
+    if (!result.success || !result.data) {
       return NextResponse.json(
-        { error: 'Failed to fetch pending approvals' },
+        { error: result.error || 'Failed to fetch pending approvals' },
         { status: 500 }
       )
     }
 
     return NextResponse.json({
       success: true,
-      data: data || [],
-      total: count || 0,
+      data: result.data.data || [],
+      total: result.data.count || 0,
       page,
       limit,
-      pages: Math.ceil((count || 0) / limit),
+      pages: Math.ceil((result.data.count || 0) / limit),
     })
   } catch (error) {
     console.error('Unexpected error in GET /api/businesses/approvals:', error)

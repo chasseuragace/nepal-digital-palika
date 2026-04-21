@@ -26,7 +26,7 @@ async function enrollPalikas() {
     if (tiersError) throw tiersError
 
     if (!tiers || tiers.length === 0) {
-      console.log('❌ No subscription tiers found. Run seed-subscription-tiers.ts first.')
+      console.log('❌ No subscription tiers found. Apply supabase/seeds/subscription-tiers.sql first.')
       process.exit(1)
     }
 

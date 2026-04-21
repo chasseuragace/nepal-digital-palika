@@ -93,6 +93,6 @@ ON CONFLICT (tier_id, feature_id) DO UPDATE SET enabled = EXCLUDED.enabled;
 INSERT INTO public.tier_features (tier_id, feature_id, enabled)
 SELECT t.id, f.id, true
 FROM public.subscription_tiers t
-JOIN public.features f
+CROSS JOIN public.features f
 WHERE t.name = 'premium'
 ON CONFLICT (tier_id, feature_id) DO UPDATE SET enabled = EXCLUDED.enabled;

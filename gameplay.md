@@ -36,6 +36,9 @@ Clean Architecture Refactoring: COMPLETE ✅
                           API routes, not direct Supabase calls. The two pages that loaded successfully without authentication were
                          the admin and role detail pages, which confirmed our refactoring is working. Should we move on to the next
                          piece of work?", voice: "arngeir")
+-----
+
+
 
 ❯ well bring forward hte greybeard, they say all that cant be tested are not clean, in the sence that they dont haev ahte astract   
   to be able to mock them, meaning htesystem is coupled .                                                                           

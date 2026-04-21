@@ -1,54 +1,18 @@
--- Seed data for Nepal Digital Tourism Infrastructure
--- Provides basic geographic and permission data for tests
-
--- Insert provinces
-INSERT INTO public.provinces (name_en, name_ne, code) VALUES
-  ('Madhesh', 'मधेश', 'MADHESH'),
-  ('Bagmati', 'बागमती', 'BAGMATI'),
-  ('Gandaki', 'गण्डकी', 'GANDAKI'),
-  ('Lumbini', 'लुम्बिनी', 'LUMBINI'),
-  ('Karnali', 'कर्णाली', 'KARNALI'),
-  ('Far West', 'सुदूर', 'FARWEST')
-ON CONFLICT DO NOTHING;
-
--- Insert districts for Madhesh province
-INSERT INTO public.districts (province_id, name_en, name_ne, code) VALUES
-  ((SELECT id FROM public.provinces WHERE code = 'MADHESH'), 'Saptari', 'सप्तरी', 'SAPTARI'),
-  ((SELECT id FROM public.provinces WHERE code = 'MADHESH'), 'Sunsari', 'सुनसरी', 'SUNSARI'),
-  ((SELECT id FROM public.provinces WHERE code = 'MADHESH'), 'Siraha', 'सिराहा', 'SIRAHA')
-ON CONFLICT DO NOTHING;
-
--- Insert districts for Bagmati province
-INSERT INTO public.districts (province_id, name_en, name_ne, code) VALUES
-  ((SELECT id FROM public.provinces WHERE code = 'BAGMATI'), 'Kathmandu', 'काठमाडौं', 'KATHMND'),
-  ((SELECT id FROM public.provinces WHERE code = 'BAGMATI'), 'Bhaktapur', 'भक्तपुर', 'BHKTPUR'),
-  ((SELECT id FROM public.provinces WHERE code = 'BAGMATI'), 'Lalitpur', 'ललितपुर', 'LALITPU')
-ON CONFLICT DO NOTHING;
-
--- Insert palikas for Saptari district
-INSERT INTO public.palikas (district_id, name_en, name_ne, type, code) VALUES
-  ((SELECT id FROM public.districts WHERE code = 'SAPTARI'), 'Rajbiraj', 'राजबिराज', 'municipality', 'RAJ001'),
-  ((SELECT id FROM public.districts WHERE code = 'SAPTARI'), 'Kanyam', 'कन्याम', 'rural_municipality', 'KAN001'),
-  ((SELECT id FROM public.districts WHERE code = 'SAPTARI'), 'Tilawe', 'तिलावे', 'rural_municipality', 'TIL001')
-ON CONFLICT DO NOTHING;
-
--- Insert palikas for Sunsari district
-INSERT INTO public.palikas (district_id, name_en, name_ne, type, code) VALUES
-  ((SELECT id FROM public.districts WHERE code = 'SUNSARI'), 'Itahari', 'इटहरी', 'municipality', 'ITA001'),
-  ((SELECT id FROM public.districts WHERE code = 'SUNSARI'), 'Dharan', 'धरान', 'municipality', 'DHA001'),
-  ((SELECT id FROM public.districts WHERE code = 'SUNSARI'), 'Inaruwa', 'इनारुवा', 'municipality', 'INA001')
-ON CONFLICT DO NOTHING;
-
--- Insert palikas for Kathmandu district
-INSERT INTO public.palikas (district_id, name_en, name_ne, type, code) VALUES
-  ((SELECT id FROM public.districts WHERE code = 'KATHMND'), 'Kathmandu', 'काठमाडौं', 'metropolitan', 'KTM001'),
-  ((SELECT id FROM public.districts WHERE code = 'KATHMND'), 'Tokha', 'तोखा', 'municipality', 'TOK001'),
-  ((SELECT id FROM public.districts WHERE code = 'KATHMND'), 'Budhanilkantha', 'बुढानिलकण्ठ', 'rural_municipality', 'BUD001')
-ON CONFLICT DO NOTHING;
-
--- Insert palikas for Bhaktapur district
-INSERT INTO public.palikas (district_id, name_en, name_ne, type, code) VALUES
-  ((SELECT id FROM public.districts WHERE code = 'BHKTPUR'), 'Bhaktapur', 'भक्तपुर', 'municipality', 'BHK001'),
-  ((SELECT id FROM public.districts WHERE code = 'BHKTPUR'), 'Madanpur', 'मदनपुर', 'rural_municipality', 'MAD001'),
-  ((SELECT id FROM public.districts WHERE code = 'BHKTPUR'), 'Thimi', 'थिमी', 'municipality', 'THI001')
-ON CONFLICT DO NOTHING;
+-- =====================================================================
+-- seed.sql — historical orchestrator (no longer used)
+-- =====================================================================
+-- Supabase's seed loader does not support psql meta-commands (\ir, \i),
+-- so the ordered list of seed files is configured in supabase/config.toml
+-- under [db.seed] sql_paths.
+--
+-- Current ordered run list (see config.toml):
+--   1) seeds/01-geography.sql              (provinces, districts, palikas)
+--   2) seeds/02-rbac.sql                   (roles only; perms+role_perms in migration 20250127000008)
+--   3) seeds/03-categories.sql             (global categories + per-palika business types)
+--   4) seeds/04-business-categories.sql    (global business_categories table)
+--   5) seeds/05-marketplace-categories.sql (marketplace_categories T1/T2/T3)
+--   6) seeds/subscription-tiers.sql        (subscription_tiers, features, tier_features)
+--
+-- This file is intentionally a no-op to keep historical tooling happy.
+-- =====================================================================
+SELECT 1;

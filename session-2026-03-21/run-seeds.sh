@@ -92,22 +92,23 @@ echo -e "${BLUE}Running Seeding Scripts${NC}"
 echo ""
 
 SEED_SCRIPTS=(
-    # Stage 1: Infrastructure Setup
-    "database/scripts/seed-subscription-tiers.ts"
-    "database/scripts/seed-business-types.ts"
-    "database/scripts/seed-business-categories-direct.ts"
-    "database/scripts/seed-marketplace-categories-direct.ts"
-    
-    # Stage 2: Admin Setup
+    # NOTE: All infrastructure (geography, RBAC, categories, business_categories,
+    # marketplace_categories, subscription_tiers/features/tier_features) is now
+    # seeded automatically by `supabase db reset` via supabase/seeds/*.sql files
+    # listed in supabase/config.toml [db.seed] sql_paths.
+    #
+    # Only the remaining operational steps run as TS scripts:
+
+    # Stage 1: Admin user creation (requires auth.users via admin SDK)
     "database/scripts/seed-admin-users.ts"
-    
-    # Stage 3: Palika Tier Assignment
+
+    # Stage 2: Palika subscription-tier enrolment (policy decision; not part of infra seed)
     "database/scripts/enroll-palikas-tiers.ts"
-    
-    # Stage 4: Palika User Creation
+
+    # Stage 3 (dev only): test users + businesses
     "database/scripts/seed-marketplace-proper.ts"
-    
-    # Stage 5: Marketplace Product Creation
+
+    # Stage 4 (dev only): marketplace product data
     "database/scripts/seed-marketplace-test-data.ts"
 )
 

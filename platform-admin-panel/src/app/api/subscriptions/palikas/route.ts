@@ -1,101 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { PalikasService } from '@/services/palikas.service'
 
-/**
- * GET /api/subscriptions/palikas
- * Returns all palikas with their subscription tier
- * Uses service role key to bypass RLS
- */
-export async function GET(request: NextRequest) {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const service = new PalikasService()
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Server misconfigured' },
-        { status: 500 }
-      )
-    }
+export async function GET(_request: NextRequest) {
+  const result = await service.getAllBasicWithTier()
 
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
-
-    const { data, error } = await serviceClient
-      .from('palikas')
-      .select(`
-        id,
-        name_en,
-        subscription_tier_id,
-        subscription_tiers(id, name, display_name)
-      `)
-      .order('name_en', { ascending: true })
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ data }, { status: 200 })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch palikas'
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    )
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 })
   }
+
+  return NextResponse.json({ data: result.data }, { status: 200 })
 }
 
-/**
- * PATCH /api/subscriptions/palikas/:id
- * Updates a palika's subscription tier
- */
 export async function PATCH(request: NextRequest) {
+  let body: any
   try {
-    const body = await request.json()
-    const { palikaId, tierId } = body
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
 
-    if (!palikaId || !tierId) {
-      return NextResponse.json(
-        { error: 'Missing palikaId or tierId' },
-        { status: 400 }
-      )
-    }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Server misconfigured' },
-        { status: 500 }
-      )
-    }
-
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
-
-    const { error } = await serviceClient
-      .from('palikas')
-      .update({ subscription_tier_id: tierId })
-      .eq('id', palikaId)
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
-    }
-
+  const { palikaId, tierId } = body || {}
+  if (!palikaId || !tierId) {
     return NextResponse.json(
-      { success: true },
-      { status: 200 }
-    )
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to update palika'
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
+      { error: 'Missing palikaId or tierId' },
+      { status: 400 }
     )
   }
+
+  const result = await service.updateTier(Number(palikaId), String(tierId))
+
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true }, { status: 200 })
 }

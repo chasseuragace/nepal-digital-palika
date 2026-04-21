@@ -1,150 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { AdminsService } from '@/services/admins.service'
 
-/**
- * GET /api/admins/[id]
- * Returns a single admin user by ID
- * Uses service role key to bypass RLS (infinite recursion issue)
- */
+const service = new AdminsService()
+
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const { id } = await params
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Server misconfigured' },
-        { status: 500 }
-      )
-    }
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Admin ID is required' },
-        { status: 400 }
-      )
-    }
-
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
-
-    // Fetch admin with palika relations
-    const { data: admin, error } = await serviceClient
-      .from('admin_users')
-      .select(`
-        id,
-        full_name,
-        role,
-        palika_id,
-        is_active,
-        created_at,
-        palikas(
-          id,
-          name_en,
-          district_id,
-          districts(
-            id,
-            name_en,
-            province_id,
-            provinces(
-              id,
-              name_en
-            )
-          )
-        )
-      `)
-      .eq('id', id)
-      .single()
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
-    }
-
-    // Fetch email from auth.users
-    const { data: { user }, error: authError } = await serviceClient.auth.admin.getUserById(id)
-
-    const data = {
-      ...admin,
-      email: user?.email || 'N/A'
-    }
-
-    return NextResponse.json({ data }, { status: 200 })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch admin'
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    )
+  const { id } = await params
+  const result = await service.getById(id)
+  if (!result.success) {
+    const status = result.error === 'Admin ID is required' ? 400 : 500
+    return NextResponse.json({ error: result.error }, { status })
   }
+  return NextResponse.json({ data: result.data }, { status: 200 })
 }
 
-/**
- * DELETE /api/admins/[id]
- * Deletes an admin user (hard delete from both auth and admin_users)
- * Uses service role key for secure deletion
- */
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const { id } = await params
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Server misconfigured' },
-        { status: 500 }
-      )
-    }
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Admin ID is required' },
-        { status: 400 }
-      )
-    }
-
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
-
-    // Step 1: Delete from admin_users table
-    const { error: adminError } = await serviceClient
-      .from('admin_users')
-      .delete()
-      .eq('id', id)
-
-    if (adminError) {
-      return NextResponse.json(
-        { error: `Failed to delete admin profile: ${adminError.message}` },
-        { status: 400 }
-      )
-    }
-
-    // Step 2: Delete from auth.users
-    try {
-      await serviceClient.auth.admin.deleteUser(id)
-    } catch (authError: any) {
-      // Auth user might already be deleted or doesn't exist
-      // Log but don't fail
-      console.warn(`Warning: Could not delete auth user ${id}:`, authError.message)
-    }
-
-    return NextResponse.json(
-      { message: 'Admin user deleted successfully' },
-      { status: 200 }
-    )
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to delete admin'
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    )
+  const { id } = await params
+  const result = await service.delete(id)
+  if (!result.success) {
+    const status = result.error === 'Admin ID is required' ? 400 : 400
+    return NextResponse.json({ error: result.error }, { status })
   }
+  return NextResponse.json({ message: result.message }, { status: 200 })
 }
