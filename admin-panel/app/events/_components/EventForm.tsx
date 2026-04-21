@@ -1,10 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { categoriesService, type Category } from '@/lib/client/categories-client.service'
 import { palikaService, type Palika } from '@/lib/client/palika-client.service'
-import { LocationPicker } from '@/components/LocationPicker'
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
+
+// Leaflet references `window` at module-eval time. Even though this form is a
+// `'use client'` component, Next.js still runs the module graph during the
+// static-prerender pass of `next build`, which tries to evaluate Leaflet and
+// crashes with `window is not defined`. Loading `LocationPicker` via
+// `next/dynamic` with `ssr: false` keeps the Leaflet chunk client-only.
+const LocationPicker = dynamic(
+  () => import('@/components/LocationPicker').then((m) => m.LocationPicker),
+  { ssr: false }
+)
 
 /**
  * Shape of the event form state.

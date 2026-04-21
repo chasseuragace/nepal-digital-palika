@@ -1,5 +1,10 @@
 'use client'
 
+// Admin-only form page — no SEO value, and a transitive import touches
+// `window` at module eval time (probably a Leaflet/map component). Skip
+// the static prerender pass so `next build` doesn't bail on it.
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'

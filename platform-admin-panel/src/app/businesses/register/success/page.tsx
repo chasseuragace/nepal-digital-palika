@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import styles from './success.module.css'
 
@@ -14,7 +14,18 @@ interface BusinessData {
   palika_id: number
 }
 
+// Next 15+ requires `useSearchParams()` consumers to be under a Suspense
+// boundary or the static-prerender pass bails out. The outer page provides
+// the boundary so the inner component is free to read the query string.
 export default function RegistrationSuccessPage() {
+  return (
+    <Suspense fallback={<div className={styles.loading}>Loading…</div>}>
+      <RegistrationSuccessContent />
+    </Suspense>
+  )
+}
+
+function RegistrationSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const businessId = searchParams.get('id')

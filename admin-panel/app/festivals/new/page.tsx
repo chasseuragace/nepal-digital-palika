@@ -1,5 +1,8 @@
 'use client'
 
+// Admin-only form page — see app/events/new/page.tsx for the same reasoning.
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'

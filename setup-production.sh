@@ -63,15 +63,46 @@ if [ -z "$SUPABASE_DB_URL" ] && [ -z "$SUPABASE_URL" ]; then
 fi
 
 # ── 2. migrations ─────────────────────────────────────────────────────────────
+#
+# Two supported topologies:
+#   (a) Remote-linked Supabase (cloud / self-hosted studio): `supabase db push
+#       --linked` is authoritative.
+#   (b) Self-hosted with local Docker Supabase acting as the prod DB: there is
+#       no remote to push to; migrations are applied directly to the local
+#       database by `supabase migration up --local` (or were already applied
+#       during `supabase start` via the config.toml migrations path).
+#
+# The script auto-detects by checking for a linked project. If neither mode is
+# available (no docker, no link), it errors.
 section "2. Migrations"
-if [ "$MODE" = "check" ]; then
-  step "would run: supabase db push --linked --dry-run"
-  supabase db push --linked --dry-run 2>&1 | tail -5 || warn "dry-run failed"
-else
-  step "supabase db push --linked"
-  supabase db push --linked || error "migration push failed"
-  success "migrations applied"
-fi
+
+have_linked_project() {
+  supabase projects list >/dev/null 2>&1
+}
+
+migration_step() {
+  if have_linked_project; then
+    step "supabase db push --linked"
+    if [ "$MODE" = "check" ]; then
+      supabase db push --linked --dry-run 2>&1 | tail -5 || warn "dry-run failed"
+    else
+      supabase db push --linked || error "migration push failed"
+      success "migrations applied (linked remote)"
+    fi
+  elif docker ps --format '{{.Names}}' 2>/dev/null | grep -q supabase_db_; then
+    step "local Supabase detected — using \`supabase migration up --local\`"
+    if [ "$MODE" = "check" ]; then
+      supabase migration list --local 2>&1 | tail -5 || warn "migration list failed"
+    else
+      supabase migration up --local || error "local migration up failed"
+      success "migrations applied (local)"
+    fi
+  else
+    error "no linked Supabase project AND no local Docker instance — nothing to migrate against"
+  fi
+}
+
+migration_step
 
 # ── 3. infrastructure SQL seeds (idempotent) ──────────────────────────────────
 section "3. Infrastructure seeds"
