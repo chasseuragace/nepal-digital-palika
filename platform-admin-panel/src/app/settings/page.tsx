@@ -3,8 +3,26 @@
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { useState } from 'react'
 
 export default function SettingsPage() {
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleSave = () => {
+    setIsSaving(true)
+    // Simulate save operation
+    setTimeout(() => {
+      setIsSaving(false)
+      alert('Settings saved successfully!')
+    }, 1000)
+  }
+
+  const handleCancel = () => {
+    // Reset form or navigate away
+    if (confirm('Discard unsaved changes?')) {
+      window.location.reload()
+    }
+  }
   return (
     <AdminLayout>
       <div className="p-6 space-y-6 max-w-2xl">
@@ -27,7 +45,7 @@ export default function SettingsPage() {
               <input
                 type="text"
                 defaultValue="Nepal Digital Tourism Infrastructure"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -37,7 +55,7 @@ export default function SettingsPage() {
               <input
                 type="email"
                 defaultValue="support@nepaltourism.dev"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -47,7 +65,7 @@ export default function SettingsPage() {
               <input
                 type="tel"
                 defaultValue="+977-1-4123456"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </CardContent>
@@ -66,7 +84,7 @@ export default function SettingsPage() {
               <input
                 type="number"
                 defaultValue="30"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -76,7 +94,7 @@ export default function SettingsPage() {
               <input
                 type="number"
                 defaultValue="8"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="flex items-center gap-3">
@@ -121,6 +139,8 @@ export default function SettingsPage() {
                 Email on Permission Change
               </label>
             </div>
+            
+          
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -137,8 +157,12 @@ export default function SettingsPage() {
 
         {/* Save Button */}
         <div className="flex gap-4">
-          <Button variant="primary">Save Changes</Button>
-          <Button variant="secondary">Cancel</Button>
+          <Button variant="primary" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
+          <Button variant="secondary" onClick={handleCancel} disabled={isSaving}>
+            Cancel
+          </Button>
         </div>
       </div>
     </AdminLayout>

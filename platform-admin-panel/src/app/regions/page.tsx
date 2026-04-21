@@ -112,7 +112,7 @@ export default function RegionsPage() {
                         {new Date(region.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
                           <Edit2 className="w-4 h-4 text-slate-600" />
                         </button>
                       </TableCell>

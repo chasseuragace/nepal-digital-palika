@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
 import { Plus, Edit2, Trash2 } from 'lucide-react'
 import { usePermissions } from '@/lib/hooks'
+import Link from 'next/link'
 
 export default function PermissionsPage() {
   const { data: permissions, isLoading, error } = usePermissions()
@@ -31,10 +32,12 @@ export default function PermissionsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Permissions</h1>
             <p className="text-slate-600 mt-1">Manage system permissions</p>
           </div>
-          <Button variant="primary" size="lg">
-            <Plus className="w-5 h-5 mr-2" />
-            New Permission
-          </Button>
+          <Link href="/permissions/new" className="inline-block">
+            <Button variant="primary" size="lg">
+              <Plus className="w-5 h-5 mr-2" />
+              New Permission
+            </Button>
+          </Link>
         </div>
 
         {/* Table */}
@@ -64,10 +67,10 @@ export default function PermissionsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                          <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
                             <Edit2 className="w-4 h-4 text-slate-600" />
                           </button>
-                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
                         </div>

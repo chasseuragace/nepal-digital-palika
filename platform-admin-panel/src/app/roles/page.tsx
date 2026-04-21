@@ -53,10 +53,12 @@ export default function RolesPage() {
             <h1 className="text-3xl font-bold text-slate-900">Roles</h1>
             <p className="text-slate-600 mt-1">Manage roles and their permissions</p>
           </div>
-          <Button variant="primary" size="lg">
-            <Plus className="w-5 h-5 mr-2" />
-            New Role
-          </Button>
+          <Link href="/roles/new" className="inline-block">
+            <Button variant="primary" size="lg">
+              <Plus className="w-5 h-5 mr-2" />
+              New Role
+            </Button>
+          </Link>
         </div>
 
         {/* Table */}
@@ -93,11 +95,11 @@ export default function RolesPage() {
                       <TableCell>
                         <div className="flex gap-2">
                           <Link href={`/roles/${role.id}`}>
-                            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
                               <Edit2 className="w-4 h-4 text-slate-600" />
                             </button>
                           </Link>
-                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                          <button className="p-2 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
                         </div>

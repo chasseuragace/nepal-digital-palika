@@ -11,10 +11,10 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
           <Bell className="w-5 h-5 text-slate-600" />
         </button>
-        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
           <User className="w-5 h-5 text-slate-600" />
         </button>
       </div>

@@ -51,7 +51,7 @@ export default function AuditLogPage() {
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:border-blue-400 transition-colors"
           >
             <option value="all">All Actions</option>
             <option value="create">Created</option>
@@ -61,7 +61,7 @@ export default function AuditLogPage() {
           </select>
           <input
             type="date"
-            className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:border-blue-400 transition-colors"
           />
         </div>
 
@@ -105,7 +105,7 @@ export default function AuditLogPage() {
                         {log.entity_id ? log.entity_id.substring(0, 8) : '-'}
                       </TableCell>
                       <TableCell>
-                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
                           <Eye className="w-4 h-4 text-slate-600" />
                         </button>
                       </TableCell>

@@ -102,7 +102,7 @@ export default function AdminsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Admins</h1>
             <p className="text-slate-600 mt-1">Manage platform administrators and their roles</p>
           </div>
-          <Link href="/admins/new">
+          <Link href="/admins/new" className="inline-block">
             <Button variant="primary" size="lg">
               <Plus className="w-5 h-5 mr-2" />
               New Admin
@@ -117,12 +117,12 @@ export default function AdminsPage() {
             placeholder="Search admins..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-text hover:border-blue-400 transition-colors"
           />
-          <select 
+          <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:border-blue-400 transition-colors"
           >
             <option value="all">All Roles</option>
             <option value="super_admin">Super Admin</option>
@@ -198,13 +198,13 @@ export default function AdminsPage() {
                       <TableCell>
                         <div className="flex gap-2">
                           <Link href={`/admins/${admin.id}`}>
-                            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
                               <Edit2 className="w-4 h-4 text-slate-600" />
                             </button>
                           </Link>
                           <button
                             onClick={() => handleDeleteClick(admin)}
-                            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
