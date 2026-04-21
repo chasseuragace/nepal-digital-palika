@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { createSupabaseClient } from '@/services/database-client'
 import { MarketplaceProductsService } from '@/services/marketplace-products.service'
-import { TierValidationService } from '@/services/tier-validation.service'
 
+/**
+ * PUT /api/products/:id/reject
+ *
+ * Tier-based access check removed — tiers are metadata only. Scope
+ * enforcement (product belongs to caller's palika) still happens inside
+ * MarketplaceProductsService.
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -23,28 +27,6 @@ export async function PUT(
       return NextResponse.json(
         { error: 'admin_id is required' },
         { status: 400 }
-      )
-    }
-
-    const tierValidationService = new TierValidationService()
-
-    // Check if palika can access rejection workflow
-    const validationRes = await tierValidationService.validateProductRejection(
-      parseInt(palikaId),
-      params.id
-    )
-
-    if (validationRes.error) {
-      return NextResponse.json(
-        { error: validationRes.error },
-        { status: validationRes.status }
-      )
-    }
-
-    if (!validationRes.data?.canReject) {
-      return NextResponse.json(
-        { error: validationRes.data?.reason || 'Rejection not available for this tier' },
-        { status: 403 }
       )
     }
 

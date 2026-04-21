@@ -6,15 +6,79 @@ import AdminLayout from '@/components/AdminLayout';
 import { BusinessTable } from '@/components/BusinessTable';
 import { BusinessFilters } from '@/components/BusinessFilters';
 import { useVerificationAccess } from '@/lib/hooks/useVerificationAccess';
-import { BusinessApprovalService } from '@/services/business-approval.service';
 import { toast } from 'sonner';
 import { adminSessionStore } from '@/lib/storage/session-storage.service';
+
+// Client-side pages can't import the server-side BusinessApprovalService
+// (it constructs a Supabase service-role client). Hit the HTTP API routes
+// directly — same path the cookie-signed session travels.
+async function fetchBusinesses(
+  palikaId: number,
+  filters: { status?: string; category?: string; search?: string },
+  limit: number,
+  offset: number
+): Promise<{ businesses: Business[]; total: number }> {
+  const p = new URLSearchParams({
+    palika_id: String(palikaId),
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (filters.status) p.append('status', filters.status);
+  if (filters.category) p.append('category', filters.category);
+  if (filters.search) p.append('search', filters.search);
+  const r = await fetch(`/api/businesses?${p.toString()}`);
+  if (!r.ok) throw new Error(`GET /api/businesses ${r.status}`);
+  return r.json();
+}
+
+async function verifyBusiness(
+  businessId: string,
+  palikaId: number,
+  adminId: string,
+  notes?: string
+): Promise<void> {
+  const r = await fetch(
+    `/api/businesses/${businessId}/verify?palika_id=${palikaId}&admin_id=${adminId}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes }),
+    }
+  );
+  if (!r.ok) {
+    const body = await r.text();
+    throw new Error(`verify failed ${r.status}: ${body}`);
+  }
+}
+
+async function rejectBusiness(
+  businessId: string,
+  palikaId: number,
+  adminId: string,
+  reason: string
+): Promise<void> {
+  const r = await fetch(
+    `/api/businesses/${businessId}/reject?palika_id=${palikaId}&admin_id=${adminId}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    }
+  );
+  if (!r.ok) {
+    const body = await r.text();
+    throw new Error(`reject failed ${r.status}: ${body}`);
+  }
+}
 import '../marketplace.css';
 
+// Shape matches what /api/businesses returns (columns as persisted in the
+// `businesses` table). The BusinessTable component reads the snake_case
+// fields directly.
 interface Business {
   id: string;
-  name: string;
-  category: string;
+  business_name: string;
+  sub_category: string;
   verification_status: 'pending' | 'verified' | 'rejected' | 'suspended';
   verified_at?: string;
   rejection_reason?: string;
@@ -24,6 +88,7 @@ interface Business {
 export default function BusinessesPage() {
   const adminSession = adminSessionStore.get();
   const palikaId = adminSession?.palika_id ? Number(adminSession.palika_id) : null;
+  const adminId = adminSession?.id ?? null;
   const verificationAccess = useVerificationAccess(palikaId || undefined);
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -50,10 +115,10 @@ export default function BusinessesPage() {
 
     try {
       setLoading(true);
-      const result = await BusinessApprovalService.getBusinesses(
+      const result = await fetchBusinesses(
         palikaId,
         {
-          status: filters.status as any,
+          status: filters.status,
           category: filters.category,
           search: filters.search,
         },
@@ -75,44 +140,33 @@ export default function BusinessesPage() {
   };
 
   const handleVerify = async (businessId: string) => {
-    if (!palikaId) return;
-
+    if (!palikaId || !adminId) {
+      toast.error('Missing admin session');
+      return;
+    }
     try {
-      // TODO: Get admin_id from auth context
-      const adminId = 'admin-placeholder'; // Placeholder
-
-      await BusinessApprovalService.verifyBusiness({
-        businessId,
-        palikaId: palikaId,
-        adminId,
-      });
-
-      // Reload businesses
+      await verifyBusiness(businessId, palikaId, adminId);
+      toast.success('Business verified');
       await loadBusinesses();
     } catch (error) {
       console.error('Error verifying business:', error);
+      toast.error('Failed to verify business');
       throw error;
     }
   };
 
   const handleReject = async (businessId: string, reason: string) => {
-    if (!palikaId) return;
-
+    if (!palikaId || !adminId) {
+      toast.error('Missing admin session');
+      return;
+    }
     try {
-      // TODO: Get admin_id from auth context
-      const adminId = 'admin-placeholder'; // Placeholder
-
-      await BusinessApprovalService.rejectBusiness({
-        businessId,
-        palikaId: palikaId,
-        adminId,
-        reason,
-      });
-
-      // Reload businesses
+      await rejectBusiness(businessId, palikaId, adminId, reason);
+      toast.success('Business rejected');
       await loadBusinesses();
     } catch (error) {
       console.error('Error rejecting business:', error);
+      toast.error('Failed to reject business');
       throw error;
     }
   };

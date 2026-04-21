@@ -19,8 +19,8 @@ import { toast } from 'sonner';
 
 interface Business {
   id: string;
-  name: string;
-  category: string;
+  business_name: string;
+  sub_category: string;
   verification_status: 'pending' | 'verified' | 'rejected' | 'suspended';
   verified_at?: string;
   rejection_reason?: string;
@@ -158,12 +158,12 @@ export function BusinessTable({
                 {/* Business Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-gray-800 truncate">{business.name}</h3>
+                    <h3 className="font-semibold text-gray-800 truncate">{business.business_name}</h3>
                     {getStatusBadge(business.verification_status)}
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
                     <span className="text-xs bg-emerald-50 px-2 py-1 rounded">
-                      {business.category}
+                      {business.sub_category}
                     </span>
                     <span>Created: {new Date(business.created_at).toLocaleDateString()}</span>
                     {business.verified_at && (

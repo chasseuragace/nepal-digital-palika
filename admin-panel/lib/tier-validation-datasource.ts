@@ -1,15 +1,13 @@
 /**
- * Abstract Tier Validation Datasource
+ * Tier Validation Datasource contract.
+ *
+ * Scope reduced to tier metadata lookup only, following the tier de-gating
+ * sweep. The previous interface also included `validateTier`, `getTierLimits`,
+ * `checkUpgradeEligibility`, `productBelongsToPalika`, and
+ * `businessBelongsToPalika`; all of those were deleted along with the service
+ * methods that called them. If a future dynamic-policy layer needs that kind
+ * of check, introduce it as a dedicated datasource rather than reviving this.
  */
-
-export interface TierValidation {
-  palika_id: number
-  current_tier: string
-  can_upgrade: boolean
-  requirements_met: boolean
-  content_count: number
-  max_content: number
-}
 
 export interface PalikaTierInfo {
   palikaId: number
@@ -20,10 +18,5 @@ export interface PalikaTierInfo {
 }
 
 export interface ITierValidationDatasource {
-  validateTier(palikaId: number): Promise<TierValidation>
-  getTierLimits(tier: string): Promise<{ max_content: number; features: string[] }>
-  checkUpgradeEligibility(palikaId: number): Promise<boolean>
   getPalikaTierInfo(palikaId: number): Promise<PalikaTierInfo | null>
-  productBelongsToPalika(productId: string, palikaId: number): Promise<boolean>
-  businessBelongsToPalika(businessId: string, palikaId: number): Promise<boolean>
 }
