@@ -470,6 +470,9 @@ export default function BlogPostForm({
                     placeholder="Write the English version of your post here…"
                   />
                   {errors.content && <div className="field-error">{errors.content}</div>}
+                  <div className="help-text">
+                    <span>💡 Tip: Drag the bottom-right corner to resize the editor</span>
+                  </div>
                 </div>
               </div>
 
@@ -488,6 +491,9 @@ export default function BlogPostForm({
                     onChange={html => setField('content_ne', html)}
                     placeholder="यहाँ आफ्नो पोष्टको नेपाली संस्करण लेख्नुहोस्…"
                   />
+                  <div className="help-text">
+                    <span>💡 Tip: Drag the bottom-right corner to resize the editor</span>
+                  </div>
                 </div>
               </div>
             </div>
