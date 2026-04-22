@@ -29,7 +29,7 @@ function postToFormValues(post: BlogPost): Partial<BlogPostFormValues> {
     status,
     palika_id: post.palika_id ? String(post.palika_id) : '',
     author_id: post.author_id || '',
-    author_name: post.author_name || '',
+    display_author_name: post.display_author_name || '',
   }
 }
 

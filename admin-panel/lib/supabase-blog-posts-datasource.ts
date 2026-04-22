@@ -18,8 +18,7 @@ export class SupabaseBlogPostsDatasource implements IBlogPostsDatasource {
       .from('blog_posts')
       .select(
         `*,
-        palikas!inner(name_en),
-        admin_users!inner(full_name)`,
+        palikas!inner(name_en)`,
         { count: 'exact' }
       )
 
@@ -60,8 +59,7 @@ export class SupabaseBlogPostsDatasource implements IBlogPostsDatasource {
       .from('blog_posts')
       .select(
         `*,
-        palikas!inner(name_en),
-        admin_users!inner(full_name)`
+        palikas!inner(name_en)`
       )
       .eq('id', id)
       .single()
@@ -79,8 +77,7 @@ export class SupabaseBlogPostsDatasource implements IBlogPostsDatasource {
       .from('blog_posts')
       .select(
         `*,
-        palikas!inner(name_en),
-        admin_users!inner(full_name)`
+        palikas!inner(name_en)`
       )
       .eq('slug', slug)
       .single()
@@ -110,8 +107,7 @@ export class SupabaseBlogPostsDatasource implements IBlogPostsDatasource {
       .insert(postData)
       .select(
         `*,
-        palikas!inner(name_en),
-        admin_users!inner(full_name)`
+        palikas!inner(name_en)`
       )
       .single()
 
@@ -139,8 +135,7 @@ export class SupabaseBlogPostsDatasource implements IBlogPostsDatasource {
       .eq('id', id)
       .select(
         `*,
-        palikas!inner(name_en),
-        admin_users!inner(full_name)`
+        palikas!inner(name_en)`
       )
       .single()
 
@@ -206,6 +201,7 @@ export class SupabaseBlogPostsDatasource implements IBlogPostsDatasource {
       id: data.id,
       palika_id: data.palika_id,
       author_id: data.author_id,
+      display_author_name: data.display_author_name,
       title_en: data.title_en,
       title_ne: data.title_ne,
       slug: data.slug,
@@ -221,7 +217,6 @@ export class SupabaseBlogPostsDatasource implements IBlogPostsDatasource {
       view_count: data.view_count || 0,
       created_at: data.created_at,
       updated_at: data.updated_at,
-      author_name: data.admin_users?.full_name,
       palika_name: data.palikas?.name_en
     }
   }

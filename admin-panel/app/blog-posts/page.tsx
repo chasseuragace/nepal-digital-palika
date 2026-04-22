@@ -32,7 +32,7 @@ export default function BlogPostsPage() {
     const matchesSearch = 
       post.title_en?.toLowerCase().includes(filter.toLowerCase()) ||
       post.title_ne?.includes(filter) ||
-      post.author_name?.toLowerCase().includes(filter.toLowerCase())
+      post.display_author_name?.toLowerCase().includes(filter.toLowerCase())
 
     const matchesStatus = statusFilter === 'all' || post.status === statusFilter
 
@@ -206,7 +206,7 @@ export default function BlogPostsPage() {
                         {post.status}
                       </span>
                     </td>
-                    <td>{post.author_name}</td>
+                    <td>{post.display_author_name}</td>
                     <td>{new Date(post.created_at).toLocaleDateString()}</td>
                     <td>
                       {post.published_at ? new Date(post.published_at).toLocaleDateString() : '-'}

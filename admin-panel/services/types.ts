@@ -217,6 +217,7 @@ export interface BlogPost {
   id: string
   palika_id: number
   author_id: string
+  display_author_name?: string
   title_en: string
   title_ne: string
   slug: string
@@ -233,7 +234,6 @@ export interface BlogPost {
   created_at: string
   updated_at: string
   // Joined fields
-  author_name?: string
   palika_name?: string
 }
 
@@ -251,6 +251,7 @@ export interface CreateBlogPostInput {
   title_ne: string
   palika_id: number
   author_id: string
+  display_author_name?: string
   slug?: string
   excerpt?: string
   excerpt_ne?: string

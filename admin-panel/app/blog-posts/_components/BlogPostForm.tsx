@@ -50,7 +50,7 @@ export type BlogPostFormValues = {
   status: 'draft' | 'published' | 'archived'
   palika_id: string
   author_id: string
-  author_name: string
+  display_author_name: string
 }
 
 export type BlogPostFormPayload = {
@@ -67,7 +67,7 @@ export type BlogPostFormPayload = {
   status: 'draft' | 'published' | 'archived'
   palika_id: number
   author_id: string
-  author_name?: string
+  display_author_name?: string
 }
 
 export const EMPTY_BLOG_POST_FORM: BlogPostFormValues = {
@@ -84,7 +84,7 @@ export const EMPTY_BLOG_POST_FORM: BlogPostFormValues = {
   status: 'draft',
   palika_id: '',
   author_id: '',
-  author_name: '',
+  display_author_name: '',
 }
 
 interface BlogPostFormProps {
@@ -136,7 +136,7 @@ export default function BlogPostForm({
     if (initial.slug) setSlugEdited(true)
   }, [initial])
 
-  // Inject author_id and author_name from the logged-in session (one-shot on mount)
+  // Inject author_id and display_author_name from the logged-in session (one-shot on mount)
   useEffect(() => {
     if (formData.author_id) return
     const session = adminSessionStore.get()
@@ -144,7 +144,7 @@ export default function BlogPostForm({
       setFormData(prev => ({ 
         ...prev, 
         author_id: session.id,
-        author_name: session.full_name || ''
+        display_author_name: session.full_name || ''
       }))
     }
   }, [formData.author_id])
@@ -291,7 +291,7 @@ export default function BlogPostForm({
       status: formData.status,
       palika_id: parseInt(formData.palika_id, 10),
       author_id: authorId,
-      author_name: formData.author_name.trim() || undefined,
+      display_author_name: formData.display_author_name.trim() || undefined,
     }
 
     try {
@@ -712,15 +712,15 @@ export default function BlogPostForm({
                   <h4>Author Information</h4>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="author_name" className="form-label">
-                    Author Name
+                  <label htmlFor="display_author_name" className="form-label">
+                    Display Author Name
                   </label>
                   <input
                     type="text"
-                    id="author_name"
+                    id="display_author_name"
                     className="form-input"
-                    value={formData.author_name}
-                    onChange={(e) => setField('author_name', e.target.value)}
+                    value={formData.display_author_name}
+                    onChange={(e) => setField('display_author_name', e.target.value)}
                     placeholder="Enter author name"
                   />
                   <div className="help-text">

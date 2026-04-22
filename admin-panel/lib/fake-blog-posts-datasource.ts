@@ -37,7 +37,7 @@ const MOCK_POSTS: BlogPost[] = [
     view_count: 342,
     created_at: '2024-03-15T09:30:00Z',
     updated_at: '2024-03-15T09:30:00Z',
-    author_name: 'Ramesh Sharma',
+    display_author_name: 'Ramesh Sharma',
     palika_name: 'Kathmandu Metropolitan'
   },
   {
@@ -61,7 +61,7 @@ const MOCK_POSTS: BlogPost[] = [
     view_count: 215,
     created_at: '2024-03-10T13:30:00Z',
     updated_at: '2024-03-10T13:30:00Z',
-    author_name: 'Anita Paudel',
+    display_author_name: 'Anita Paudel',
     palika_name: 'Bhaktapur Metropolitan'
   },
   {
@@ -85,7 +85,7 @@ const MOCK_POSTS: BlogPost[] = [
     view_count: 567,
     created_at: '2024-02-28T10:30:00Z',
     updated_at: '2024-02-28T10:30:00Z',
-    author_name: 'Pradeep Magar',
+    display_author_name: 'Pradeep Magar',
     palika_name: 'Lalitpur Metropolitan'
   },
   {
@@ -109,7 +109,7 @@ const MOCK_POSTS: BlogPost[] = [
     view_count: 421,
     created_at: '2024-03-05T12:00:00Z',
     updated_at: '2024-03-05T12:00:00Z',
-    author_name: 'Ramesh Sharma',
+    display_author_name: 'Ramesh Sharma',
     palika_name: 'Kathmandu Metropolitan'
   },
   {
@@ -129,11 +129,11 @@ const MOCK_POSTS: BlogPost[] = [
     category: 'Sustainability',
     tags: ['sustainable-tourism', 'environment', 'conservation', 'travel-ethics', 'nepal'],
     status: 'draft',
-    published_at: null,
+    published_at: undefined,
     view_count: 0,
     created_at: '2024-04-01T15:00:00Z',
     updated_at: '2024-04-01T15:00:00Z',
-    author_name: 'Anita Paudel',
+    display_author_name: 'Anita Paudel',
     palika_name: 'Bhaktapur Metropolitan'
   }
 ]
@@ -206,10 +206,11 @@ export class FakeBlogPostsDatasource implements IBlogPostsDatasource {
       category: input.category,
       tags: input.tags,
       status: input.status || 'draft',
-      published_at: null,
+      published_at: undefined,
       view_count: 0,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      display_author_name: input.display_author_name
     }
 
     this.data.push(newPost)
