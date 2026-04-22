@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getServiceProvidersDatasource } from '@/lib/service-providers-config'
+import type { ServiceProviderFilters, CreateServiceProviderInput, PaginationParams } from '@/services/types'
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,36 +11,25 @@ export async function GET(request: NextRequest) {
     const search = params.get('search')
     const page = parseInt(params.get('page') || '1')
     const limit = parseInt(params.get('limit') || '25')
-    const offset = (page - 1) * limit
 
-    let query = supabaseAdmin
-      .from('service_providers')
-      .select('*, palikas!inner(name_en)', { count: 'exact' })
+    const filters: ServiceProviderFilters = {}
+    if (palikaId) filters.palika_id = parseInt(palikaId)
+    if (serviceType) filters.service_type = serviceType
+    if (status) filters.status = status
+    else filters.is_active = true
+    if (search) filters.search = search
 
-    if (palikaId) query = query.eq('palika_id', palikaId)
-    if (serviceType) query = query.eq('service_type', serviceType)
-    if (status) query = query.eq('status', status)
-    else query = query.eq('is_active', true)
-    if (search) {
-      query = query.or(`name_en.ilike.%${search}%,name_ne.ilike.%${search}%,phone.ilike.%${search}%`)
-    }
+    const pagination: PaginationParams = { page, limit }
 
-    query = query
-      .order('service_type')
-      .order('name_en')
-      .range(offset, offset + limit - 1)
-
-    const { data, error, count } = await query
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    const datasource = getServiceProvidersDatasource()
+    const result = await datasource.getAll(filters, pagination)
 
     return NextResponse.json({
-      data: data || [],
-      meta: { page, limit, total: count || 0, hasMore: (data?.length || 0) === limit }
+      data: result.data,
+      meta: { page: result.page, limit: result.limit, total: result.total, hasMore: result.hasMore }
     })
   } catch (error) {
+    console.error('Error fetching service providers:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -48,7 +38,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const providerData = {
+    const providerData: CreateServiceProviderInput = {
       palika_id: body.palika_id,
       name_en: body.name_en,
       name_ne: body.name_ne,
@@ -56,30 +46,22 @@ export async function POST(request: NextRequest) {
       phone: body.phone,
       email: body.email,
       secondary_phones: body.secondary_phones || [],
-      location: `POINT(${body.longitude} ${body.latitude})`,
+      latitude: body.latitude,
+      longitude: body.longitude,
       address: body.address,
       ward_number: body.ward_number,
       coverage_area: body.coverage_area,
       vehicle_count: body.vehicle_count || 1,
       services: body.services || [],
       is_24_7: body.is_24_7 ?? true,
-      status: 'available',
-      is_active: true,
-      created_by: body.admin_id,
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('service_providers')
-      .insert(providerData)
-      .select()
-      .single()
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
+    const datasource = getServiceProvidersDatasource()
+    const data = await datasource.create(providerData)
 
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
+    console.error('Error creating service provider:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
