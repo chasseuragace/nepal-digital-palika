@@ -781,7 +781,7 @@ export default function PalikaProfilePage() {
                           <button
                             type="button"
                             className="btn-danger-sm"
-                            onClick={ Birmingham () => removeVideo(index)}
+                            onClick={() => removeVideo(index)}
                           >
                             Remove
                           </button>

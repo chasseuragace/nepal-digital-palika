@@ -6,13 +6,7 @@
 import { IBlogPostsDatasource } from './blog-posts-datasource'
 import { SupabaseBlogPostsDatasource } from './supabase-blog-posts-datasource'
 import { FakeBlogPostsDatasource } from './fake-blog-posts-datasource'
-import { createClient } from '@supabase/supabase-js'
-
-// Use service role key for server-side operations to bypass RLS policies
-const supabaseServiceClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabaseClient } from './supabase'
 
 let datasourceInstance: IBlogPostsDatasource | null = null
 
@@ -27,8 +21,8 @@ export function createBlogPostsDatasource(): IBlogPostsDatasource {
     return new FakeBlogPostsDatasource()
   }
 
-  console.log('[BlogPosts] Using SUPABASE datasource with service role (NEXT_PUBLIC_USE_FAKE_DATASOURCES=false)')
-  return new SupabaseBlogPostsDatasource(supabaseServiceClient)
+  console.log('[BlogPosts] Using SUPABASE datasource (NEXT_PUBLIC_USE_FAKE_DATASOURCES=false)')
+  return new SupabaseBlogPostsDatasource(supabaseClient as any)
 }
 
 /**
