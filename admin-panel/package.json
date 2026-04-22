@@ -26,7 +26,8 @@
     "react-hook-form": "^7.48.2",
     "react-leaflet": "^4.2.1",
     "react-quill": "^2.0.0",
-    "sonner": "^1.2.0"
+    "sonner": "^1.2.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

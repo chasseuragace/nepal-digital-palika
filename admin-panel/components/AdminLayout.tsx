@@ -19,6 +19,7 @@ import {
   Bell,
   LogOut,
   ChevronDown,
+  AlertTriangle,
   Menu,
   X
 } from 'lucide-react'
@@ -31,8 +32,9 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [user, setUser] = useState<AdminSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isMarketplaceOpen, setIsMarketplaceOpen] = useState(false)
+  const [isSosOpen, setIsSosOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -57,6 +59,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   const isActive = (path: string) => pathname === path
+  const isActiveSection = (prefix: string) => pathname?.startsWith(prefix)
 
   if (isLoading) {
     return (
@@ -99,6 +102,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/blog-posts', label: 'Blog Posts', icon: FileText },
   ]
 
+  const sosItems = [
+    { href: '/sos', label: 'SOS Requests', icon: AlertTriangle },
+    { href: '/sos/providers', label: 'Service Providers', icon: Users },
+  ]
+
   const adminNavItems = user.role === 'super_admin' || user.role === 'palika_admin' ? [
     { href: '/notifications', label: 'Notifications', icon: Bell },
     { href: '/admins', label: 'Admins', icon: Users },
@@ -113,24 +121,31 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/marketplace/businesses', label: 'Businesses', icon: Store },
   ] : []
 
+  const sidebarWidth = 280
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <nav style={{
+    <div style={{ minHeight: '100vh', display: 'flex' }}>
+      {/* Sidebar */}
+      <aside style={{
+        width: isSidebarOpen ? sidebarWidth : 0,
         background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        position: 'sticky',
+        boxShadow: isSidebarOpen ? '2px 0 4px rgba(0,0,0,0.1)' : 'none',
+        position: 'fixed',
+        left: 0,
         top: 0,
-        zIndex: 1000,
+        height: '100vh',
+        zIndex: 999,
+        overflow: 'hidden',
+        transition: 'width 0.3s ease',
       }}>
         <div style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: '0 24px',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '64px',
+          flexDirection: 'column',
+          height: '100%',
+          width: sidebarWidth,
+          padding: '20px 0',
         }}>
+          {/* Logo */}
           <Link href="/dashboard" style={{
             display: 'flex',
             alignItems: 'center',
@@ -138,131 +153,255 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             textDecoration: 'none',
             color: '#fff',
             fontWeight: 600,
-            fontSize: '18px',
+            fontSize: '16px',
+            padding: '0 16px',
+            marginBottom: '32px',
           }}>
             <Building2 size={24} />
             <span>Digital Palika</span>
           </Link>
 
-          <button 
-            style={{
-              display: 'none',
-              background: 'none',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
-              padding: '8px',
-            }}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
+          {/* Nav Sections */}
+          <nav style={{
             flex: 1,
-            justifyContent: 'center',
+            overflowY: 'auto',
+            paddingRight: '8px',
           }}>
-            {navItems.map((item) => (
-              <Link 
-                key={item.href}
-                href={item.href} 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  color: isActive(item.href) ? '#fff' : '#cbd5e1',
-                  backgroundColor: isActive(item.href) ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  transition: 'all 0.2s ease',
-                }}
-                onClick={() => setIsMobileMenuOpen(false)}
-                onMouseEnter={(e) => {
-                  if (!isActive(item.href)) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
-                    e.currentTarget.style.color = '#fff'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive(item.href)) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = '#cbd5e1'
-                  }
-                }}
-              >
-                <item.icon size={18} />
-                <span>{item.label}</span>
-              </Link>
-            ))}
-
-            {adminNavItems.map((item) => (
-              <Link 
-                key={item.href}
-                href={item.href} 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  color: isActive(item.href) ? '#fff' : '#cbd5e1',
-                  backgroundColor: isActive(item.href) ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  transition: 'all 0.2s ease',
-                }}
-                onClick={() => setIsMobileMenuOpen(false)}
-                onMouseEnter={(e) => {
-                  if (!isActive(item.href)) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
-                    e.currentTarget.style.color = '#fff'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive(item.href)) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = '#cbd5e1'
-                  }
-                }}
-              >
-                <item.icon size={18} />
-                <span>{item.label}</span>
-              </Link>
-            ))}
-
-            {marketplaceItems.length > 0 && (
-              <div style={{ position: 'relative' }}>
-                <button 
+            {/* Main Navigation */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                color: '#94a3b8',
+                padding: '0 16px',
+                marginBottom: '8px',
+                letterSpacing: '0.5px',
+              }}>Content</div>
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '4px',
                     borderRadius: '6px',
-                    border: 'none',
-                    background: pathname?.startsWith('/marketplace') ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    color: pathname?.startsWith('/marketplace') ? '#fff' : '#cbd5e1',
+                    textDecoration: 'none',
+                    color: isActive(item.href) ? '#fff' : '#cbd5e1',
+                    backgroundColor: isActive(item.href) ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
                     fontSize: '14px',
                     fontWeight: 500,
-                    cursor: 'pointer',
                     transition: 'all 0.2s ease',
+                    marginLeft: '8px',
+                    marginRight: '8px',
                   }}
-                  onClick={() => setIsMarketplaceOpen(!isMarketplaceOpen)}
                   onMouseEnter={(e) => {
-                    if (!pathname?.startsWith('/marketplace')) {
+                    if (!isActive(item.href)) {
                       e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
                       e.currentTarget.style.color = '#fff'
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!pathname?.startsWith('/marketplace')) {
+                    if (!isActive(item.href)) {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.color = '#cbd5e1'
+                    }
+                  }}
+                >
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* SOS Management */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                color: '#94a3b8',
+                padding: '0 16px',
+                marginBottom: '8px',
+                letterSpacing: '0.5px',
+              }}>Emergency</div>
+              <button
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  marginBottom: '4px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: isActiveSection('/sos') ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                  color: isActiveSection('/sos') ? '#fff' : '#cbd5e1',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  width: '100%',
+                  marginLeft: '8px',
+                  marginRight: '8px',
+                  textAlign: 'left',
+                }}
+                onClick={() => setIsSosOpen(!isSosOpen)}
+                onMouseEnter={(e) => {
+                  if (!isActiveSection('/sos')) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
+                    e.currentTarget.style.color = '#fff'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActiveSection('/sos')) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = '#cbd5e1'
+                  }
+                }}
+              >
+                <AlertTriangle size={18} />
+                <span>SOS Management</span>
+                <ChevronDown
+                  size={16}
+                  style={{
+                    marginLeft: 'auto',
+                    transform: isSosOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }}
+                />
+              </button>
+              {isSosOpen && sosItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 16px 10px 40px',
+                    marginBottom: '4px',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    color: isActive(item.href) ? '#fff' : '#cbd5e1',
+                    backgroundColor: isActive(item.href) ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive(item.href)) {
+                      e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
+                      e.currentTarget.style.color = '#fff'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive(item.href)) {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.color = '#cbd5e1'
+                    }
+                  }}
+                >
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* Admin */}
+            {adminNavItems.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  color: '#94a3b8',
+                  padding: '0 16px',
+                  marginBottom: '8px',
+                  letterSpacing: '0.5px',
+                }}>Administration</div>
+                {adminNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      marginBottom: '4px',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: isActive(item.href) ? '#fff' : '#cbd5e1',
+                      backgroundColor: isActive(item.href) ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      transition: 'all 0.2s ease',
+                      marginLeft: '8px',
+                      marginRight: '8px',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive(item.href)) {
+                        e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
+                        e.currentTarget.style.color = '#fff'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive(item.href)) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = '#cbd5e1'
+                      }
+                    }}
+                  >
+                    <item.icon size={18} />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Marketplace */}
+            {marketplaceItems.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  color: '#94a3b8',
+                  padding: '0 16px',
+                  marginBottom: '8px',
+                  letterSpacing: '0.5px',
+                }}>Marketplace</div>
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '4px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: isActiveSection('/marketplace') ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    color: isActiveSection('/marketplace') ? '#fff' : '#cbd5e1',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    width: '100%',
+                    marginLeft: '8px',
+                    marginRight: '8px',
+                    textAlign: 'left',
+                  }}
+                  onClick={() => setIsMarketplaceOpen(!isMarketplaceOpen)}
+                  onMouseEnter={(e) => {
+                    if (!isActiveSection('/marketplace')) {
+                      e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
+                      e.currentTarget.style.color = '#fff'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActiveSection('/marketplace')) {
                       e.currentTarget.style.backgroundColor = 'transparent'
                       e.currentTarget.style.color = '#cbd5e1'
                     }
@@ -270,78 +409,67 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 >
                   <Store size={18} />
                   <span>Marketplace</span>
-                  <ChevronDown 
-                    size={16} 
+                  <ChevronDown
+                    size={16}
                     style={{
+                      marginLeft: 'auto',
                       transform: isMarketplaceOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s ease',
                     }}
                   />
                 </button>
-                {isMarketplaceOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    marginTop: '8px',
-                    backgroundColor: '#fff',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                    minWidth: '200px',
-                    padding: '8px',
-                    zIndex: 1000,
-                  }}>
-                    {marketplaceItems.map((item) => (
-                      <Link 
-                        key={item.href}
-                        href={item.href} 
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '10px 12px',
-                          borderRadius: '6px',
-                          textDecoration: 'none',
-                          color: isActive(item.href) ? '#3b82f6' : '#475569',
-                          backgroundColor: isActive(item.href) ? '#eff6ff' : 'transparent',
-                          fontSize: '14px',
-                          fontWeight: 500,
-                          transition: 'all 0.2s ease',
-                        }}
-                        onClick={() => {
-                          setIsMobileMenuOpen(false)
-                          setIsMarketplaceOpen(false)
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isActive(item.href)) {
-                            e.currentTarget.style.backgroundColor = '#f8fafc'
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isActive(item.href)) {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }
-                        }}
-                      >
-                        <item.icon size={16} />
-                        <span>{item.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                {isMarketplaceOpen && marketplaceItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 16px 10px 40px',
+                      marginBottom: '4px',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: isActive(item.href) ? '#fff' : '#cbd5e1',
+                      backgroundColor: isActive(item.href) ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive(item.href)) {
+                        e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
+                        e.currentTarget.style.color = '#fff'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive(item.href)) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = '#cbd5e1'
+                      }
+                    }}
+                  >
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
               </div>
             )}
-          </div>
+          </nav>
 
+          {/* User Profile & Logout */}
           <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            padding: '16px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
+            justifyContent: 'space-between',
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              gap: '10px',
+              minWidth: 0,
             }}>
               <div style={{
                 width: '36px',
@@ -354,6 +482,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 color: '#fff',
                 fontWeight: 600,
                 fontSize: '14px',
+                flexShrink: 0,
               }}>
                 {user.full_name.charAt(0).toUpperCase()}
               </div>
@@ -361,12 +490,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '2px',
-                maxWidth: '150px',
-                minWidth: '0',
+                minWidth: 0,
               }}>
                 <span style={{
                   color: '#fff',
-                  fontSize: '14px',
+                  fontSize: '12px',
                   fontWeight: 500,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -374,7 +502,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 }}>{user.full_name}</span>
                 <span style={{
                   color: '#94a3b8',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   textTransform: 'capitalize',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -382,7 +510,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 }}>{user.role.replace('_', ' ')}</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={handleLogout}
               style={{
                 background: 'none',
@@ -395,6 +523,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.2s ease',
+                flexShrink: 0,
               }}
               title="Logout"
               onMouseEnter={(e) => {
@@ -410,15 +539,52 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </button>
           </div>
         </div>
-      </nav>
-      <main style={{
+      </aside>
+
+      {/* Main Content */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
         flex: 1,
-        padding: '24px',
-        backgroundColor: '#f8fafc',
-        minHeight: 'calc(100vh - 64px)',
+        marginLeft: isSidebarOpen ? sidebarWidth : 0,
+        transition: 'margin-left 0.3s ease',
       }}>
-        {children}
-      </main>
+        {/* Toggle Sidebar Button */}
+        <div style={{
+          padding: '12px 16px',
+          borderBottom: '1px solid #e2e8f0',
+          backgroundColor: '#fff',
+        }}>
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#1e293b',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+            }}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+          >
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+
+        {/* Page Content */}
+        <main style={{
+          flex: 1,
+          padding: '24px',
+          backgroundColor: '#f8fafc',
+          overflowY: 'auto',
+        }}>
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
