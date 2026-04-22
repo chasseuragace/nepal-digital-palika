@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react'
 import AssetGallery from '@/components/AssetGallery'
 import { categoriesService, type Category } from '@/lib/client/categories-client.service'
 import { palikaService, type Palika } from '@/lib/client/palika-client.service'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 import type {
   CreateHeritageSiteInput,
   HeritageStatus,
@@ -300,6 +301,18 @@ export default function HeritageSiteForm({
         setPalikas([])
       }
     })()
+  }, [])
+
+  // Auto-inject palika_id from the logged-in admin's session (one-shot on mount)
+  useEffect(() => {
+    if (formData.palika_id) return // Don't override if already set (edit mode)
+    const session = adminSessionStore.get()
+    if (session?.palika_id) {
+      setFormData(prev => ({
+        ...prev,
+        palika_id: session.palika_id!.toString()
+      }))
+    }
   }, [])
 
   const update = <K extends keyof FormState>(field: K, value: FormState[K]) => {
@@ -663,13 +676,17 @@ export default function HeritageSiteForm({
                       className="form-select"
                       value={formData.palika_id}
                       onChange={(e) => update('palika_id', e.target.value)}
+                      disabled
                       required
                     >
-                      <option value="">Select Palika</option>
+                      <option value="">Loading...</option>
                       {palikas.map(p => (
                         <option key={p.id} value={p.id.toString()}>{p.name_en}</option>
                       ))}
                     </select>
+                    <div className="help-text">
+                      Auto-assigned from your admin session
+                    </div>
                   </div>
                 </div>
 

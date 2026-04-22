@@ -4,6 +4,8 @@
  * Used by UI pages to fetch/manage SOS data
  */
 
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
+
 export interface SOSRequest {
   id: string
   request_code: string
@@ -51,7 +53,10 @@ export interface SOSStats {
 }
 
 class SOSClientService {
-  private palikaId = 5; // Default, would come from auth context
+  private get palikaId(): number {
+    const session = adminSessionStore.get()
+    return session?.palika_id || 5 // Fallback for testing
+  }
   private baseUrl = '/api/admin/sos'
 
   // Requests
