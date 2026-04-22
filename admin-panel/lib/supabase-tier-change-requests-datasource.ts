@@ -180,4 +180,40 @@ export class SupabaseTierChangeRequestsDatasource implements ITierChangeRequests
 
     return data as TierChangeRequest
   }
+
+  /**
+   * Get a tier change request by ID
+   */
+  async getRequestById(requestId: string): Promise<TierChangeRequest | null> {
+    const { data, error } = await supabaseAdmin
+      .from('tier_change_requests')
+      .select('*')
+      .eq('id', requestId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null
+      }
+      throw new Error(`Failed to fetch request: ${error.message}`)
+    }
+
+    return data as TierChangeRequest
+  }
+
+  /**
+   * Delete a tier change request
+   */
+  async deleteRequest(requestId: string): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('tier_change_requests')
+      .delete()
+      .eq('id', requestId)
+
+    if (error) {
+      throw new Error(`Failed to delete request: ${error.message}`)
+    }
+
+    return true
+  }
 }

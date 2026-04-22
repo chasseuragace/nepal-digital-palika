@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getTierChangeRequestsDatasource } from '@/lib/tier-change-requests-config'
 
 export async function DELETE(
   request: NextRequest,
@@ -8,14 +8,12 @@ export async function DELETE(
   try {
     const requestId = params.id
 
-    // Get the tier change request
-    const { data: tierRequest, error: fetchError } = await supabaseAdmin
-      .from('tier_change_requests')
-      .select('*')
-      .eq('id', requestId)
-      .single()
+    const datasource = getTierChangeRequestsDatasource()
 
-    if (fetchError || !tierRequest) {
+    // Get the tier change request
+    const tierRequest = await datasource.getRequestById(requestId)
+
+    if (!tierRequest) {
       return NextResponse.json(
         { error: 'Tier change request not found' },
         { status: 404 }
@@ -31,25 +29,14 @@ export async function DELETE(
     }
 
     // Delete the request
-    const { error: deleteError } = await supabaseAdmin
-      .from('tier_change_requests')
-      .delete()
-      .eq('id', requestId)
-
-    if (deleteError) {
-      console.error('Error deleting tier request:', deleteError)
-      return NextResponse.json(
-        { error: 'Failed to delete tier request' },
-        { status: 500 }
-      )
-    }
+    await datasource.deleteRequest(requestId)
 
     return NextResponse.json({
       success: true,
       message: 'Tier change request deleted'
     })
   } catch (error) {
-    console.error('Error in DELETE /api/tier-change-requests/[id]:', error)
+    console.error('Error deleting tier request:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

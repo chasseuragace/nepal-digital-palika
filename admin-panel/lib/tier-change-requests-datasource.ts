@@ -73,6 +73,11 @@ export interface ITierChangeRequestsDatasource {
   getTierChangeRequests(palikaId: number): Promise<TierChangeRequest[]>
 
   /**
+   * Get a tier change request by ID
+   */
+  getRequestById(requestId: string): Promise<TierChangeRequest | null>
+
+  /**
    * Create a new tier change request
    */
   createRequest(palikaId: number, adminId: string, request: Partial<TierChangeRequest>): Promise<TierChangeRequest>
@@ -81,4 +86,9 @@ export interface ITierChangeRequestsDatasource {
    * Update a tier change request
    */
   updateRequest(requestId: string, updates: Partial<TierChangeRequest>): Promise<TierChangeRequest>
+
+  /**
+   * Delete a tier change request
+   */
+  deleteRequest(requestId: string): Promise<boolean>
 }
