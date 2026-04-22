@@ -5,8 +5,6 @@
 import { IAuthDatasource } from './auth-datasource'
 import { SupabaseAuthDatasource } from './supabase-auth-datasource'
 import { FakeAuthDatasource } from './fake-auth-datasource'
-import { supabaseClient } from './supabase'
-
 let datasourceInstance: IAuthDatasource | null = null
 
 export function createAuthDatasource(): IAuthDatasource {
@@ -15,6 +13,7 @@ export function createAuthDatasource(): IAuthDatasource {
     console.log('[Auth] Using FAKE datasource')
     return new FakeAuthDatasource()
   }
+  const { supabaseClient } = require('./supabase')
   console.log('[Auth] Using SUPABASE datasource')
   return new SupabaseAuthDatasource(supabaseClient)
 }

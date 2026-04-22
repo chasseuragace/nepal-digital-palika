@@ -6,7 +6,6 @@
 import { ICategoriesDatasource } from './categories-datasource'
 import { SupabaseCategoriesDatasource } from './supabase-categories-datasource'
 import { FakeCategoriesDatasource } from './fake-categories-datasource'
-import { supabaseClient } from './supabase'
 
 let datasourceInstance: ICategoriesDatasource | null = null
 
@@ -21,6 +20,8 @@ export function createCategoriesDatasource(): ICategoriesDatasource {
     return new FakeCategoriesDatasource()
   }
 
+  // Lazy import to avoid creating Supabase client when using fake datasources
+  const { supabaseClient } = require('./supabase')
   console.log('[Categories] Using SUPABASE datasource (NEXT_PUBLIC_USE_FAKE_DATASOURCES=false)')
   return new SupabaseCategoriesDatasource(supabaseClient)
 }

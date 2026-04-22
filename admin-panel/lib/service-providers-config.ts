@@ -5,8 +5,6 @@
 import { IServiceProvidersDatasource } from './service-providers-datasource'
 import { SupabaseServiceProvidersDatasource } from './supabase-service-providers-datasource'
 import { FakeServiceProvidersDatasource } from './fake-service-providers-datasource'
-import { supabaseClient } from './supabase'
-
 let datasourceInstance: IServiceProvidersDatasource | null = null
 
 export function createServiceProvidersDatasource(): IServiceProvidersDatasource {
@@ -15,6 +13,7 @@ export function createServiceProvidersDatasource(): IServiceProvidersDatasource 
     console.log('[ServiceProviders] Using FAKE datasource')
     return new FakeServiceProvidersDatasource()
   }
+  const { supabaseClient } = require('./supabase')
   console.log('[ServiceProviders] Using SUPABASE datasource')
   return new SupabaseServiceProvidersDatasource(supabaseClient)
 }

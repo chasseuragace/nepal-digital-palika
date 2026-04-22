@@ -6,8 +6,6 @@
 import type { ISOSDatasource } from './sos-datasource';
 import { SupabaseSOSDatasource } from './supabase-sos-datasource';
 import { FakeSOSDatasource } from './fake-sos-datasource';
-import { supabaseClient } from './supabase';
-
 let datasourceInstance: ISOSDatasource | null = null;
 
 /**
@@ -23,6 +21,7 @@ export function createSOSDatasource(): ISOSDatasource {
     return new FakeSOSDatasource();
   }
 
+  const { supabaseClient } = require('./supabase');
   console.log('[SOSDatasource] Using SUPABASE datasource (production mode)');
   return new SupabaseSOSDatasource(supabaseClient);
 }

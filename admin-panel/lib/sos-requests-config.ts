@@ -5,8 +5,6 @@
 import { ISOSRequestsDatasource } from './sos-requests-datasource'
 import { SupabaseSOSRequestsDatasource } from './supabase-sos-requests-datasource'
 import { FakeSOSRequestsDatasource } from './fake-sos-requests-datasource'
-import { supabaseClient } from './supabase'
-
 let datasourceInstance: ISOSRequestsDatasource | null = null
 
 export function createSOSRequestsDatasource(): ISOSRequestsDatasource {
@@ -15,6 +13,7 @@ export function createSOSRequestsDatasource(): ISOSRequestsDatasource {
     console.log('[SOSRequests] Using FAKE datasource')
     return new FakeSOSRequestsDatasource()
   }
+  const { supabaseClient } = require('./supabase')
   console.log('[SOSRequests] Using SUPABASE datasource')
   return new SupabaseSOSRequestsDatasource(supabaseClient)
 }
