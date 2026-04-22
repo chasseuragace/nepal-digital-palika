@@ -11,6 +11,7 @@ import {
   blogPostsService,
   type BlogPost,
 } from '@/lib/client/blog-posts-client.service'
+import '../../heritage-sites/new/heritage-sites-new.css'
 
 function postToFormValues(post: BlogPost): Partial<BlogPostFormValues> {
   const status = (post.status as BlogPostFormValues['status']) || 'draft'

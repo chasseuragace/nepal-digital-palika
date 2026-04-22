@@ -48,6 +48,7 @@
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.5px;
+  color: white;
 }
 
 .page-subtitle {
@@ -55,6 +56,7 @@
   font-size: 16px;
   opacity: 0.9;
   font-weight: 400;
+  color: white;
 }
 
 .header-cancel-btn {
