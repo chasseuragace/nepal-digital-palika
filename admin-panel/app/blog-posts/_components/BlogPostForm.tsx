@@ -7,7 +7,7 @@
  * panel feels coherent. Three-tab wizard:
  *   1. Content        — titles, slug, excerpts, bilingual rich text
  *   2. Media & Tags   — featured image, category, tags
- *   3. Publish        — status, palika (author_id auto-injected)
+ *   3. Publish        — status, palika (auto-assigned from session), author info
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -136,7 +136,7 @@ export default function BlogPostForm({
     if (initial.slug) setSlugEdited(true)
   }, [initial])
 
-  // Inject author_id and display_author_name from the logged-in session (one-shot on mount)
+  // Inject author_id, display_author_name, and palika_id from the logged-in session (one-shot on mount)
   useEffect(() => {
     if (formData.author_id) return
     const session = adminSessionStore.get()
@@ -144,7 +144,8 @@ export default function BlogPostForm({
       setFormData(prev => ({ 
         ...prev, 
         author_id: session.id,
-        display_author_name: session.full_name || ''
+        display_author_name: session.full_name || '',
+        palika_id: session.palika_id ? session.palika_id.toString() : prev.palika_id
       }))
     }
   }, [formData.author_id])
@@ -244,7 +245,7 @@ export default function BlogPostForm({
       .replace(/&nbsp;/g, '')
       .trim()
     if (!contentText) next.content = 'Content is required'
-    if (!formData.palika_id) next.palika_id = 'Palika is required'
+    if (!formData.palika_id) next.palika_id = 'Palika is required (auto-assigned from your admin session)'
 
     setErrors(next)
     if (Object.keys(next).length === 0) return true
@@ -694,14 +695,18 @@ export default function BlogPostForm({
                     className="form-select"
                     value={formData.palika_id}
                     onChange={e => setField('palika_id', e.target.value)}
+                    disabled
                   >
-                    <option value="">Select Palika</option>
+                    <option value="">Loading...</option>
                     {palikas.map(p => (
                       <option key={p.id} value={p.id.toString()}>
                         {p.name_en}
                       </option>
                     ))}
                   </select>
+                  <div className="help-text">
+                    Auto-assigned from your admin session
+                  </div>
                   {errors.palika_id && <div className="field-error">{errors.palika_id}</div>}
                 </div>
               </div>
