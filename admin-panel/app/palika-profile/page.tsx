@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
-import PalikaGallery from '@/components/PalikaGallery'
+import AssetGallery from '@/components/AssetGallery'
 import { palikaProfileService, type PalikaProfile } from '@/lib/client/palika-profile-client.service'
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
 import './palika-profile.css'
 
-interface GalleryItem {
+interface Asset {
   id: string
-  file_name: string
+  public_url: string
   storage_path: string
+  display_name: string
 }
 
 interface PalikaProfileFormData {
@@ -199,8 +200,8 @@ export default function PalikaProfilePage() {
     return videoId ? `https://www.youtube.com/embed/${videoId}` : null
   }
 
-  const handleImageSelect = (item: GalleryItem) => {
-    const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/${item.storage_path}`
+  const handleAssetSelect = (asset: Asset) => {
+    const publicUrl = asset.public_url
 
     if (selectedImageField === 'featured_image') {
       setFormData(prev => ({ ...prev, featured_image: publicUrl }))
@@ -752,7 +753,7 @@ export default function PalikaProfilePage() {
                   </p>
 
                   {palikaId && (
-                    <PalikaGallery palikaId={palikaId} />
+                    <AssetGallery palikaId={palikaId} />
                   )}
                 </div>
               </div>
@@ -780,7 +781,7 @@ export default function PalikaProfilePage() {
                           <button
                             type="button"
                             className="btn-danger-sm"
-                            onClick={() => removeVideo(index)}
+                            onClick={ Birmingham () => removeVideo(index)}
                           >
                             Remove
                           </button>
@@ -887,10 +888,10 @@ export default function PalikaProfilePage() {
                 </button>
               </div>
 
-              <PalikaGallery
+              <AssetGallery
                 palikaId={palikaId}
                 selectMode={true}
-                onImageSelect={handleImageSelect}
+                onAssetSelect={handleAssetSelect}
               />
             </div>
           </div>

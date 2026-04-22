@@ -2,29 +2,26 @@
 
 import { useEffect, useState } from 'react'
 
-type EntityType = 'blog_post' | 'event' | 'heritage_site' | 'palika' | 'notification'
 type FileType = 'image' | 'document'
 
 interface Asset {
   id: string
-  entity_type: EntityType
-  entity_id: number
-  file_name: string
+  palika_id?: number
   file_type: FileType
-  mime_type: string
+  mime_type?: string
   file_size: number
   storage_path: string
+  public_url: string
   display_name: string
-  description: string
-  is_featured: boolean
-  sort_order: number
+  is_featured?: boolean
+  sort_order?: number
+  created_by: string
   created_at: string
   updated_at: string
 }
 
 interface AssetGalleryProps {
-  entityType: EntityType
-  entityId: number
+  palikaId?: number
   onAssetSelect?: (asset: Asset) => void
   selectMode?: boolean
   fileType?: FileType
@@ -32,8 +29,7 @@ interface AssetGalleryProps {
 }
 
 export default function AssetGallery({
-  entityType,
-  entityId,
+  palikaId,
   onAssetSelect,
   selectMode = false,
   fileType = undefined,
@@ -47,15 +43,24 @@ export default function AssetGallery({
 
   useEffect(() => {
     fetchAssets()
-  }, [entityType, entityId])
+  }, [palikaId])
 
   const fetchAssets = async () => {
     try {
-      const params = new URLSearchParams({
-        entity_type: entityType,
-        entity_id: entityId.toString(),
-        ...(fileType && { file_type: fileType })
-      })
+      const params = new URLSearchParams()
+      
+      // Add palika_id if provided
+      if (palikaId) {
+        params.append('palika_id', palikaId.toString())
+      } else {
+        // If no palikaId, fetch generic gallery
+        params.append('generic_gallery', 'true')
+      }
+      
+      // Add file_type filter if specified
+      if (fileType) {
+        params.append('file_type', fileType)
+      }
 
       const response = await fetch(`/api/gallery?${params}`)
       const data = await response.json()
@@ -81,8 +86,6 @@ export default function AssetGallery({
       try {
         const formData = new FormData()
         formData.append('file', file)
-        formData.append('entity_type', entityType)
-        formData.append('entity_id', entityId.toString())
         formData.append('file_type', activeTab)
         formData.append('display_name', file.name)
 
@@ -151,13 +154,17 @@ export default function AssetGallery({
             is_featured: item.id === id
           }))
         )
-        setMessage({ type: 'success', text: 'Featured asset updated' })
+        setMessage({ type: 'success', text: 'Featured image updated' })
+      } else {
+        const data = await response.json()
+        setMessage({ type: 'error', text: data.error || 'Failed to update featured image' })
       }
     } catch (error) {
-      console.error('Error updating featured asset:', error)
-      setMessage({ type: 'error', text: 'Failed to update featured asset' })
+      console.error('Error updating featured image:', error)
+      setMessage({ type: 'error', text: 'Failed to update featured image' })
     }
   }
+
 
   const filteredAssets = assets.filter(item => !fileType || item.file_type === activeTab)
 
@@ -173,9 +180,18 @@ export default function AssetGallery({
     return <div>Loading gallery...</div>
   }
 
+  // Determine gallery title based on props
+  const getGalleryTitle = () => {
+    if (palikaId) {
+      return `Palika Gallery (ID: ${palikaId})`
+    } else {
+      return 'Generic Gallery'
+    }
+  }
+
   return (
     <div style={{ marginTop: '20px' }}>
-      <h2>Asset Gallery</h2>
+      <h2>{getGalleryTitle()}</h2>
 
       {message && (
         <div
@@ -285,7 +301,7 @@ export default function AssetGallery({
               {/* Preview */}
               {item.file_type === 'image' ? (
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/${item.storage_path}`}
+                  src={item.public_url}
                   alt={item.display_name}
                   style={{
                     width: '100%',
@@ -336,19 +352,20 @@ export default function AssetGallery({
 
                 {/* Actions */}
                 {!selectMode && (
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    {item.file_type === 'image' && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {activeTab === 'image' && (
                       <button
                         onClick={() => handleSetFeatured(item.id)}
                         style={{
-                          flex: 1,
+                          flex: '1 1 100%',
                           padding: '5px',
                           fontSize: '11px',
                           backgroundColor: item.is_featured ? '#28a745' : '#e9ecef',
                           color: item.is_featured ? 'white' : 'black',
                           border: 'none',
                           borderRadius: '3px',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          marginBottom: '5px'
                         }}
                       >
                         {item.is_featured ? '⭐ Featured' : 'Set Featured'}

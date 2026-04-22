@@ -204,6 +204,7 @@ export default function EventForm({
   const [activeTab, setActiveTab] = useState<TabId>('basic')
   const [categories, setCategories] = useState<Category[]>([])
   const [palika, setPalika] = useState<Palika | null>(null)
+  const [palikaId, setPalikaId] = useState<number | null>(null)
 
   useEffect(() => {
     categoriesService
@@ -214,9 +215,10 @@ export default function EventForm({
         setCategories([])
       })
 
-    // Fetch palika data for map center
+    // Fetch palika data for map center and gallery
     const session = adminSessionStore.get()
     if (session?.palika_id) {
+      setPalikaId(session.palika_id)
       palikaService
         .getById(session.palika_id)
         .then(setPalika)
@@ -628,18 +630,26 @@ export default function EventForm({
                 <div className="form-group">
                   <label className="form-label">Featured Image</label>
 
-                  {eventId && formMode === 'edit' ? (
-                    <AssetGallery
-                      entityType="event"
-                      entityId={parseInt(eventId, 10)}
-                      selectMode={true}
-                      fileType="image"
-                      uploadEnabled={true}
-                      onAssetSelect={(asset) => {
-                        const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/${asset.storage_path}`
-                        setField('featured_image', imageUrl)
-                      }}
-                    />
+                  {palikaId ? (
+                    <>
+                      <AssetGallery
+                        palikaId={palikaId}
+                        selectMode={true}
+                        fileType="image"
+                        uploadEnabled={true}
+                        onAssetSelect={(asset) => {
+                          setField('featured_image', asset.public_url)
+                        }}
+                      />
+                      <div className="featured-image-preview" style={{ marginTop: '15px' }}>
+                        {value.featured_image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={value.featured_image} alt="Featured preview" />
+                        ) : (
+                          <div className="featured-image-placeholder">No image selected</div>
+                        )}
+                      </div>
+                    </>
                   ) : (
                     <>
                       <input
@@ -651,7 +661,7 @@ export default function EventForm({
                         placeholder="https://example.com/event-cover.jpg"
                       />
                       <div className="help-text">
-                        Paste a public image URL. Create the event first to enable gallery upload.
+                        Paste a public image URL.
                       </div>
                     </>
                   )}

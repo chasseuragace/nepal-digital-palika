@@ -1,42 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getCallerFromRequest } from '@/lib/server/session'
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const ALLOWED_DOCUMENT_TYPES = ['application/pdf']
-const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
-
-type EntityType = 'blog_post' | 'event' | 'heritage_site' | 'palika' | 'notification'
-type FileType = 'image' | 'document'
-
-const VALID_ENTITY_TYPES: EntityType[] = ['blog_post', 'event', 'heritage_site', 'palika', 'notification']
+const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const entityType = formData.get('entity_type') as string
-    const entityIdStr = formData.get('entity_id') as string
     const fileType = formData.get('file_type') as string
     const displayName = formData.get('display_name') as string
 
-    if (!file || !entityType || !entityIdStr || !fileType) {
+    if (!file || !fileType) {
       return NextResponse.json(
-        { error: 'Missing required fields: file, entity_type, entity_id, file_type' },
-        { status: 400 }
-      )
-    }
-
-    const entityId = parseInt(entityIdStr, 10)
-    if (isNaN(entityId) || entityId <= 0) {
-      return NextResponse.json(
-        { error: 'entity_id must be a valid positive integer' },
-        { status: 400 }
-      )
-    }
-
-    if (!VALID_ENTITY_TYPES.includes(entityType as EntityType)) {
-      return NextResponse.json(
-        { error: `entity_type must be one of: ${VALID_ENTITY_TYPES.join(', ')}` },
+        { error: 'Missing required fields: file, file_type' },
         { status: 400 }
       )
     }
@@ -63,15 +42,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate storage path with entity context
+    // Get user and their assigned palika from session
+    const caller = await getCallerFromRequest(request)
+
+    if (!caller) {
+      return NextResponse.json(
+        { error: 'Unauthorized - user required' },
+        { status: 401 }
+      )
+    }
+
+    // Determine storage path based on palika assignment
     const timestamp = Date.now()
     const randomStr = Math.random().toString(36).substring(2, 8)
     const fileExtension = file.name.split('.').pop()
-    const storagePath = `${entityType}_${entityId}/${timestamp}_${randomStr}.${fileExtension}`
+    let storagePath: string
+
+    if (caller.palika_id) {
+      // Palika-scoped upload: palika_palika_id/timestamp_random.ext
+      storagePath = `palika_${caller.palika_id}/${timestamp}_${randomStr}.${fileExtension}`
+    } else {
+      // Generic gallery upload: generic_gallery/timestamp_random.ext
+      storagePath = `generic_gallery/${timestamp}_${randomStr}.${fileExtension}`
+    }
 
     // Upload to storage
     const buffer = await file.arrayBuffer()
-    const { error: uploadError, data: uploadData } = await supabaseAdmin.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from('palika-gallery')
       .upload(storagePath, buffer, {
         contentType: file.type,
@@ -92,21 +89,24 @@ export async function POST(request: NextRequest) {
       .getPublicUrl(storagePath)
 
     // Create asset record
+    const assetData: any = {
+      file_type: fileType,
+      mime_type: file.type,
+      file_size: file.size,
+      storage_path: storagePath,
+      public_url: publicUrlData.publicUrl,
+      display_name: displayName || file.name,
+      created_by: caller.id
+    }
+
+    // Add palika_id if user has one
+    if (caller.palika_id) {
+      assetData.palika_id = caller.palika_id
+    }
+
     const { data: asset, error: dbError } = await supabaseAdmin
       .from('assets')
-      .insert({
-        entity_type: entityType,
-        entity_id: entityId,
-        file_name: file.name,
-        file_type: fileType,
-        mime_type: file.type,
-        file_size: file.size,
-        storage_path: storagePath,
-        display_name: displayName || file.name,
-        description: '',
-        is_featured: false,
-        sort_order: 0
-      })
+      .insert(assetData)
       .select()
       .single()
 

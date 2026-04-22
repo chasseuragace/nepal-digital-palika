@@ -78,14 +78,6 @@ function validatePayload(body: any): { ok: true } | { ok: false; error: string }
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
-function buildGalleryPublicUrl(storagePath: string): string {
-  // Matches the pattern already used in PalikaGallery.tsx and
-  // /api/palika-gallery/upload which both resolve public URLs through
-  // `${NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/<path>`.
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-  return `${base}/storage/v1/object/public/palika-gallery/${storagePath}`
-}
-
 async function fetchPalikaContactInfo(palikaId: number): Promise<Partial<Record<PalikaContactField, any>> | null> {
   try {
     const { data, error } = await supabaseAdmin
@@ -136,7 +128,7 @@ async function updatePalikaContactInfo(
 }
 
 /**
- * Sync `palika_gallery` rows (file_type='image') into
+ * Sync `assets` rows (file_type='image') into
  * `palika_profiles.gallery_images` JSONB so m-place can read the gallery.
  *
  * Best-effort: if the underlying client is mocked (fake datasources / mock auth),
@@ -145,12 +137,13 @@ async function updatePalikaContactInfo(
 async function syncGalleryImages(palikaId: number): Promise<string[] | null> {
   try {
     const { data: rows, error } = await supabaseAdmin
-      .from('palika_gallery')
-      .select('storage_path, sort_order, created_at')
+      .from('assets')
+      .select('public_url, is_featured, sort_order, created_at')
       .eq('palika_id', palikaId)
       .eq('file_type', 'image')
+      .order('is_featured', { ascending: false })
       .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.warn('[palika-profile] gallery sync fetch failed:', error.message)
@@ -158,8 +151,8 @@ async function syncGalleryImages(palikaId: number): Promise<string[] | null> {
     }
 
     const urls: string[] = (rows || [])
-      .filter((r: any) => typeof r?.storage_path === 'string' && r.storage_path.length > 0)
-      .map((r: any) => buildGalleryPublicUrl(r.storage_path))
+      .filter((r: any) => typeof r?.public_url === 'string' && r.public_url.length > 0)
+      .map((r: any) => r.public_url)
 
     // Write the URL list into palika_profiles.gallery_images for this palika.
     const { error: updateError } = await supabaseAdmin

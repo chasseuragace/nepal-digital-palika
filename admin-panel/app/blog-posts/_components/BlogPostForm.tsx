@@ -526,17 +526,15 @@ export default function BlogPostForm({
                 <div className="form-group">
                   <label className="form-label">Featured Image</label>
 
-                  {postId && mode === 'edit' ? (
+                  {formData.palika_id ? (
                     <>
                       <AssetGallery
-                        entityType="blog_post"
-                        entityId={parseInt(postId, 10)}
+                        palikaId={parseInt(formData.palika_id, 10)}
                         selectMode={true}
                         fileType="image"
                         uploadEnabled={true}
                         onAssetSelect={(asset) => {
-                          const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/${asset.storage_path}`
-                          setField('featured_image', imageUrl)
+                          setField('featured_image', asset.public_url)
                         }}
                       />
                       <div className="featured-image-preview" style={{ marginTop: '15px' }}>
@@ -559,7 +557,7 @@ export default function BlogPostForm({
                         placeholder="https://example.com/image.jpg"
                       />
                       <div className="help-text">
-                        <span>Paste a hosted image URL. Create the post first to enable gallery upload.</span>
+                        <span>Select a palika first to enable gallery upload, or paste a hosted image URL.</span>
                       </div>
                       <div className="featured-image-preview">
                         {formData.featured_image ? (

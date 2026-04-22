@@ -102,6 +102,10 @@ export interface FormState {
   audio_guide_url: string
   languages_available: { en: boolean; ne: boolean }
 
+  // Media
+  featured_image: string
+  images: string[]
+
   // URL preview (not sent — datasource derives slug from name_en)
   url_slug: string
 }
@@ -150,6 +154,8 @@ export const EMPTY_FORM_STATE: FormState = {
   average_visit_duration_minutes: '',
   audio_guide_url: '',
   languages_available: { en: true, ne: true },
+  featured_image: '',
+  images: [],
   url_slug: ''
 }
 
@@ -226,7 +232,9 @@ export function buildHeritagePayload(state: FormState): CreateHeritageSiteInput 
     best_time_to_visit: state.best_time_to_visit || undefined,
     average_visit_duration_minutes: toInt(state.average_visit_duration_minutes),
     status: state.status,
-    is_featured: state.is_featured
+    is_featured: state.is_featured,
+    featured_image: state.featured_image || undefined,
+    images: state.images.length > 0 ? state.images : undefined
   }
 
   return payload
@@ -345,7 +353,8 @@ export default function HeritageSiteForm({
   const tabs = [
     { id: 'basic', label: 'Basic Information', icon: '1', description: 'Name, category & location' },
     { id: 'description', label: 'Description', icon: '2', description: 'Tell the story' },
-    { id: 'visitor', label: 'Visitor Info', icon: '3', description: 'Hours, fees & access' }
+    { id: 'visitor', label: 'Visitor Info', icon: '3', description: 'Hours, fees & access' },
+    { id: 'media', label: 'Media', icon: '4', description: 'Photos & gallery' }
   ]
   const getCurrentStepIndex = () => tabs.findIndex(tab => tab.id === activeTab)
   const progress = ((getCurrentStepIndex() + 1) / tabs.length) * 100
@@ -1046,6 +1055,71 @@ export default function HeritageSiteForm({
 
               {/* TODO: Featured image + images[] — Supabase Storage upload
                   will be wired in a follow-up (see alignment spec step 6). */}
+            </div>
+          )}
+
+          {/* ============ TAB 4: MEDIA ============ */}
+          {activeTab === 'media' && (
+            <div className="form-section fade-in">
+              <div className="section-header">
+                <h3 className="section-title">Photos & Gallery</h3>
+                <p className="section-subtitle">Manage visuals for this heritage site</p>
+              </div>
+
+              <div className="form-card">
+                <div className="form-card-header">
+                  <span className="form-card-icon-text">Cover</span>
+                  <h4>Featured Image</h4>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Featured Image URL</label>
+                  <div className="image-picker-row">
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={formData.featured_image}
+                      onChange={(e) => update('featured_image', e.target.value)}
+                      placeholder="https://example.com/cover.jpg"
+                    />
+                  </div>
+                  {formData.palika_id ? (
+                    <div style={{ marginTop: 12 }}>
+                      <AssetGallery
+                        palikaId={parseInt(formData.palika_id, 10)}
+                        selectMode={true}
+                        fileType="image"
+                        onAssetSelect={(asset) => update('featured_image', asset.public_url)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="help-text">
+                      Select a palika in Step 1 to enable gallery selection.
+                    </div>
+                  )}
+                  {formData.featured_image && (
+                    <div className="image-preview" style={{ marginTop: 16 }}>
+                      <img src={formData.featured_image} alt="Featured Preview" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-card">
+                <div className="form-card-header">
+                  <span className="form-card-icon-text">Library</span>
+                  <h4>Palika Asset Library</h4>
+                </div>
+                <p className="help-text" style={{ marginBottom: 16 }}>
+                  Upload and manage reusable images for your Palika.
+                </p>
+                {formData.palika_id ? (
+                  <AssetGallery palikaId={parseInt(formData.palika_id, 10)} />
+                ) : (
+                  <div className="alert alert-warning">
+                    Please select a palika in Step 1 to manage the gallery.
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

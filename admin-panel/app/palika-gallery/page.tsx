@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
-import PalikaGallery from '@/components/PalikaGallery'
+import AssetGallery from '@/components/AssetGallery'
 import { adminSessionStore, type AdminSession } from '@/lib/storage/session-storage.service'
 import './palika-gallery.css'
 
@@ -69,7 +69,7 @@ export default function PalikaGalleryPage() {
         </div>
 
         <div className="gallery-content-card">
-          <PalikaGallery palikaId={admin.palika_id} />
+          <AssetGallery palikaId={admin.palika_id} />
         </div>
       </div>
     </AdminLayout>
