@@ -126,7 +126,7 @@ export default function EditFestivalPage() {
         ) : (
           <EventForm
             formMode="edit"
-            eventId={eventId}
+            eventId={festivalId}
             mode="festival"
             value={formData}
             onChange={setFormData}
