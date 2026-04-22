@@ -6,13 +6,16 @@ import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
-import { Check, AlertCircle } from 'lucide-react'
+import { Check, AlertCircle, RefreshCw, Clock } from 'lucide-react'
+import Link from 'next/link'
+import RenewModal from './RenewModal'
 
 interface SubscriptionTier {
   id: string
   name: string
   display_name: string
   cost_per_year: number
+  cost_per_month: number
   tier_features: Array<{
     feature_id: string
     features: {
@@ -28,10 +31,14 @@ interface PalikaWithTier {
   id: number
   name_en: string
   subscription_tier_id: string | null
+  subscription_start_date: string | null
+  subscription_end_date: string | null
   subscription_tiers: {
     id: string
     name: string
     display_name: string
+    cost_per_month?: number
+    cost_per_year?: number
   } | null
 }
 
@@ -68,8 +75,34 @@ async function updatePalikaTier(palikaId: string, tierId: string) {
   }
 }
 
+function getSubscriptionStatus(endDate: string | null): { label: string; color: string } {
+  if (!endDate) {
+    return { label: 'No tier', color: 'grey' }
+  }
+
+  const now = new Date()
+  const end = new Date(endDate)
+  const diffDays = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) {
+    return { label: `Expired ${Math.abs(diffDays)} days ago`, color: 'red' }
+  } else if (diffDays <= 30) {
+    return { label: `Expiring in ${diffDays} days`, color: 'amber' }
+  } else {
+    return { label: `Active (${diffDays} days left)`, color: 'green' }
+  }
+}
+
+function formatDate(dateString: string | null): string {
+  if (!dateString) return '—'
+  return new Date(dateString).toISOString().split('T')[0]
+}
+
 export default function SubscriptionsPage() {
   const queryClient = useQueryClient()
+  const [renewModalOpen, setRenewModalOpen] = useState(false)
+  const [selectedPalika, setSelectedPalika] = useState<{ id: number; name: string; tierId: string } | null>(null)
+
   const { data: tiers, isLoading: tiersLoading, error: tiersError } = useQuery({
     queryKey: ['subscription-tiers'],
     queryFn: fetchTiers,
@@ -178,28 +211,44 @@ export default function SubscriptionsPage() {
                     <TableHeader>Palika Name</TableHeader>
                     <TableHeader>Current Tier</TableHeader>
                     <TableHeader>Annual Cost</TableHeader>
+                    <TableHeader>End Date</TableHeader>
+                    <TableHeader>Status</TableHeader>
                     <TableHeader>Action</TableHeader>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {palikaLoading ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                         Loading palikas...
                       </TableCell>
                     </TableRow>
                   ) : filteredPalikas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                         No palikas found
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredPalikas.map((palika) => {
                       const currentTier = tiers?.find((t) => t.id === palika.subscription_tier_id)
+                      const status = getSubscriptionStatus(palika.subscription_end_date)
+                      const statusColors = {
+                        green: 'bg-green-100 text-green-700',
+                        amber: 'bg-amber-100 text-amber-700',
+                        red: 'bg-red-100 text-red-700',
+                        grey: 'bg-slate-100 text-slate-600',
+                      }
                       return (
                         <TableRow key={palika.id}>
-                          <TableCell className="font-medium">{palika.name_en}</TableCell>
+                          <TableCell className="font-medium">
+                            <Link
+                              href={`/subscriptions/${palika.id}/history`}
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {palika.name_en}
+                            </Link>
+                          </TableCell>
                           <TableCell>
                             {palika.subscription_tiers ? (
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
@@ -212,27 +261,55 @@ export default function SubscriptionsPage() {
                           <TableCell className="text-sm">
                             {currentTier?.cost_per_year ? `NPR ${currentTier.cost_per_year.toLocaleString()}` : '-'}
                           </TableCell>
+                          <TableCell className="text-sm">
+                            {formatDate(palika.subscription_end_date)}
+                          </TableCell>
                           <TableCell>
-                            <select
-                              value={palika.subscription_tier_id || ''}
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  updateMutation.mutate({
-                                    palikaId: palika.id,
-                                    tierId: e.target.value,
-                                  })
-                                }
-                              }}
-                              disabled={updateMutation.isPending}
-                              className="px-3 py-1 bg-white border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer hover:border-blue-400 transition-colors"
-                            >
-                              <option value="">Select Tier...</option>
-                              {tiers?.map((tier) => (
-                                <option key={tier.id} value={tier.id}>
-                                  {tier.display_name}
-                                </option>
-                              ))}
-                            </select>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[status.color as keyof typeof statusColors]}`}>
+                              {status.label}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <select
+                                value={palika.subscription_tier_id || ''}
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    updateMutation.mutate({
+                                      palikaId: palika.id,
+                                      tierId: e.target.value,
+                                    })
+                                  }
+                                }}
+                                disabled={updateMutation.isPending}
+                                className="px-3 py-1 bg-white border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer hover:border-blue-400 transition-colors"
+                              >
+                                <option value="">Select Tier...</option>
+                                {tiers?.map((tier) => (
+                                  <option key={tier.id} value={tier.id}>
+                                    {tier.display_name}
+                                  </option>
+                                ))}
+                              </select>
+                              <Button
+                                size="sm"
+                                disabled={!palika.subscription_tier_id}
+                                className="disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={!palika.subscription_tier_id ? 'Assign tier first' : 'Renew subscription'}
+                                onClick={() => {
+                                  if (palika.subscription_tier_id) {
+                                    setSelectedPalika({
+                                      id: palika.id,
+                                      name: palika.name_en,
+                                      tierId: palika.subscription_tier_id,
+                                    })
+                                    setRenewModalOpen(true)
+                                  }
+                                }}
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )
@@ -244,6 +321,17 @@ export default function SubscriptionsPage() {
           </Card>
         </div>
       </div>
+
+      {selectedPalika && (
+        <RenewModal
+          isOpen={renewModalOpen}
+          onClose={() => setRenewModalOpen(false)}
+          palikaId={selectedPalika.id}
+          palikaName={selectedPalika.name}
+          currentTierId={selectedPalika.tierId}
+          tiers={tiers || []}
+        />
+      )}
     </AdminLayout>
   )
 }

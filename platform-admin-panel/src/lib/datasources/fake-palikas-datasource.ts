@@ -9,10 +9,14 @@ import {
 import { __fakeTiersData } from './fake-tiers-datasource'
 
 const now = new Date().toISOString()
+const daysFromNow = (d: number) =>
+  new Date(Date.now() + d * 24 * 60 * 60 * 1000).toISOString()
 
 interface FakePalikaRow extends Palika {
   subscription_tier_id: string
   province_id: number
+  subscription_start_date?: string | null
+  subscription_end_date?: string | null
 }
 
 const g = globalThis as any
@@ -60,6 +64,8 @@ function seedPalikas(): FakePalikaRow[] { return [
     created_at: now,
     updated_at: now,
     subscription_tier_id: 'tier-tourism',
+    subscription_start_date: daysFromNow(-305),
+    subscription_end_date: daysFromNow(60),  // Active, 60 days left (green)
   },
   {
     id: 4,
@@ -88,6 +94,8 @@ function seedPalikas(): FakePalikaRow[] { return [
     created_at: now,
     updated_at: now,
     subscription_tier_id: 'tier-tourism',
+    subscription_start_date: daysFromNow(-350),
+    subscription_end_date: daysFromNow(15),  // Expiring in 15 days (amber)
   },
   {
     id: 6,
@@ -130,6 +138,8 @@ function seedPalikas(): FakePalikaRow[] { return [
     created_at: now,
     updated_at: now,
     subscription_tier_id: 'tier-basic',
+    subscription_start_date: daysFromNow(-385),
+    subscription_end_date: daysFromNow(-20),  // Expired 20 days ago (red)
   },
   {
     id: 9,
@@ -229,15 +239,45 @@ export class FakePalikasDatasource implements IPalikasDatasource {
           id: p.id,
           name_en: p.name_en,
           subscription_tier_id: p.subscription_tier_id,
+          subscription_start_date: p.subscription_start_date || null,
+          subscription_end_date: p.subscription_end_date || null,
           subscription_tiers: tier
             ? {
                 id: tier.id,
                 name: tier.name,
                 display_name: tier.display_name,
+                cost_per_month: tier.cost_per_month,
+                cost_per_year: tier.cost_per_year,
               }
             : null,
         }
       })
+  }
+
+  async getById(palikaId: number): Promise<PalikaWithSubscriptionDates | null> {
+    const row = palikas.find((p) => p.id === palikaId)
+    if (!row) return null
+    return {
+      id: row.id,
+      name_en: row.name_en,
+      subscription_tier_id: row.subscription_tier_id,
+      subscription_start_date: row.subscription_start_date || null,
+      subscription_end_date: row.subscription_end_date || null,
+    }
+  }
+
+  async updateSubscriptionDates(
+    palikaId: number,
+    subscriptionStartDate: string,
+    subscriptionEndDate: string,
+    tierId: string
+  ): Promise<void> {
+    const row = palikas.find((p) => p.id === palikaId)
+    if (!row) throw new Error(`Palika ${palikaId} not found`)
+    row.subscription_start_date = subscriptionStartDate
+    row.subscription_end_date = subscriptionEndDate
+    row.subscription_tier_id = tierId
+    row.updated_at = new Date().toISOString()
   }
 
   async updateTier(palikaId: number, tierId: string): Promise<void> {
@@ -245,7 +285,18 @@ export class FakePalikasDatasource implements IPalikasDatasource {
     if (!row) throw new Error(`Palika ${palikaId} not found`)
     const tierExists = __fakeTiersData.tiers.some((t) => t.id === tierId)
     if (!tierExists) throw new Error(`Tier ${tierId} not found`)
+
+    const isFirstAssignment =
+      !row.subscription_tier_id || !row.subscription_end_date
+
     row.subscription_tier_id = tierId
     row.updated_at = new Date().toISOString()
+
+    if (isFirstAssignment) {
+      row.subscription_start_date = new Date().toISOString()
+      row.subscription_end_date = new Date(
+        Date.now() + 365 * 24 * 60 * 60 * 1000
+      ).toISOString() // NOW() + INTERVAL '1 year'
+    }
   }
 }

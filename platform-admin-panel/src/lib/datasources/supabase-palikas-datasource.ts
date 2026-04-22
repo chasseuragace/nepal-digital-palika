@@ -5,6 +5,7 @@ import {
   PalikaPagination,
   PalikaTierFilters,
   PalikasListResult,
+  PalikaWithSubscriptionDates,
 } from './palikas-datasource'
 
 export class SupabasePalikasDatasource implements IPalikasDatasource {
@@ -64,7 +65,9 @@ export class SupabasePalikasDatasource implements IPalikasDatasource {
         id,
         name_en,
         subscription_tier_id,
-        subscription_tiers(id, name, display_name)
+        subscription_start_date,
+        subscription_end_date,
+        subscription_tiers(id, name, display_name, cost_per_month, cost_per_year)
       `
       )
       .order('name_en', { ascending: true })
@@ -73,10 +76,64 @@ export class SupabasePalikasDatasource implements IPalikasDatasource {
     return (data as any) || []
   }
 
-  async updateTier(palikaId: number, tierId: string): Promise<void> {
+  async getById(palikaId: number): Promise<PalikaWithSubscriptionDates | null> {
+    const { data, error } = await this.client
+      .from('palikas')
+      .select('id, name_en, subscription_tier_id, subscription_start_date, subscription_end_date')
+      .eq('id', palikaId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null // Not found
+      throw new Error(error.message)
+    }
+    return data as PalikaWithSubscriptionDates
+  }
+
+  async updateSubscriptionDates(
+    palikaId: number,
+    subscriptionStartDate: string,
+    subscriptionEndDate: string,
+    tierId: string
+  ): Promise<void> {
     const { error } = await this.client
       .from('palikas')
-      .update({ subscription_tier_id: tierId })
+      .update({
+        subscription_start_date: subscriptionStartDate,
+        subscription_end_date: subscriptionEndDate,
+        subscription_tier_id: tierId,
+      })
+      .eq('id', palikaId)
+
+    if (error) throw new Error(error.message)
+  }
+
+  async 
+  async updateTier(palikaId: number, tierId: string): Promise<void> {
+    // First, check if this is a first-time assignment (no tier or no end date)
+    const { data: current, error: fetchError } = await this.client
+      .from('palikas')
+      .select('subscription_tier_id, subscription_start_date, subscription_end_date')
+      .eq('id', palikaId)
+      .single()
+
+    if (fetchError) throw new Error(fetchError.message)
+
+    const isFirstAssignment =
+      !current.subscription_tier_id || !current.subscription_end_date
+
+    const updateData: any = { subscription_tier_id: tierId }
+
+    if (isFirstAssignment) {
+      updateData.subscription_start_date = new Date().toISOString()
+      updateData.subscription_end_date = new Date(
+        Date.now() + 365 * 24 * 60 * 60 * 1000
+      ).toISOString() // NOW() + INTERVAL '1 year'
+    }
+
+    const { error } = await this.client
+      .from('palikas')
+      .update(updateData)
       .eq('id', palikaId)
 
     if (error) throw new Error(error.message)
