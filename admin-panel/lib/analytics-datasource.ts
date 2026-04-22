@@ -17,6 +17,21 @@ export interface IAnalyticsDatasource {
   // Get dashboard statistics for admin overview
   getDashboardStats(palikaId?: number): Promise<DashboardStats>
 
+  // Get simple dashboard stats matching current API format
+  getSimpleDashboardStats(palikaId?: number): Promise<{
+    palika_profile: any
+    heritage_sites: number
+    events: number
+    blog_posts: number
+    pending_approvals: number
+    recent_activity: Array<{
+      id: number
+      type: string
+      title: string
+      created_at: string
+    }>
+  }>
+
   // Get content performance analytics
   getContentAnalytics(
     entityType: 'heritage_site' | 'event' | 'blog_post' | 'business',

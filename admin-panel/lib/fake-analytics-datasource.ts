@@ -50,6 +50,67 @@ export class FakeAnalyticsDatasource implements IAnalyticsDatasource {
     }
   }
 
+  async getSimpleDashboardStats(palikaId?: number): Promise<{
+    palika_profile: any
+    heritage_sites: number
+    events: number
+    blog_posts: number
+    pending_approvals: number
+    recent_activity: Array<{
+      id: number
+      type: string
+      title: string
+      created_at: string
+    }>
+  }> {
+    await this.delay(100)
+
+    let palikaProfile = null
+
+    // If palika_id is provided, return fake palika profile
+    if (palikaId) {
+      palikaProfile = {
+        id: palikaId,
+        name_en: 'Kathmandu Metropolitan',
+        name_ne: 'काठमाडौं महानगरपालिका',
+        code: 'PK-KTM',
+        type: 'Metropolitan',
+        province: 'Bagmati',
+        district: 'Kathmandu',
+        office_phone: '+977-1-4412345',
+        office_email: 'info@kathmandu.gov.np',
+        website: 'https://kathmandu.gov.np',
+        total_wards: 32,
+        is_active: true,
+        subscription_tier_id: 1,
+        subscription_tier_display: 'Gold Tier',
+        subscription_start_date: '2024-01-01',
+        subscription_end_date: '2024-12-31',
+        cost_per_month: 5000,
+        created_at: '2023-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z'
+      }
+    }
+
+    // Fake recent activity
+    const recentActivity = [
+      { id: 1, type: 'Heritage Site', title: 'Swayambhu Temple', created_at: new Date().toISOString() },
+      { id: 2, type: 'Event', title: 'Teej Festival', created_at: new Date(Date.now() - 86400000).toISOString() },
+      { id: 3, type: 'Blog Post', title: 'Top 10 Places to Visit', created_at: new Date(Date.now() - 172800000).toISOString() },
+      { id: 4, type: 'Heritage Site', title: 'Boudhanath Stupa', created_at: new Date(Date.now() - 259200000).toISOString() },
+      { id: 5, type: 'Event', title: 'Dashain Celebration', created_at: new Date(Date.now() - 345600000).toISOString() }
+    ]
+
+    return {
+      palika_profile: palikaProfile,
+      heritage_sites: 15,
+      events: 20,
+      blog_posts: 25,
+      pending_approvals: 0,
+      recent_activity: recentActivity
+    }
+  }
+
   async getContentAnalytics(
     entityType: 'heritage_site' | 'event' | 'blog_post' | 'business',
     filters?: AnalyticsFilters

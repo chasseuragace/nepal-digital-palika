@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getGalleryDatasource } from '@/lib/gallery-config'
 import { supabaseAdmin } from '@/lib/supabase'
 
 type FileType = 'image' | 'document'
@@ -24,22 +25,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build query based on parameters
-    let query = supabaseAdmin
-      .from('assets')
-      .select('*')
-      .order('is_featured', { ascending: false })
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false })
-
-    // Apply filters based on query mode
+    // Build filters object
+    const filters: any = {}
     if (hasPalikaId) {
-      // Palika-scoped query
-      const palikaId = parseInt(palikaIdParam!, 10)
-      query = query.eq('palika_id', palikaId)
+      filters.palika_id = parseInt(palikaIdParam!, 10)
     } else if (isGenericGallery) {
-      // Generic gallery query (no palika)
-      query = query.is('palika_id', null)
+      filters.generic_gallery = true
     } else {
       // No valid query mode specified
       return NextResponse.json(
@@ -50,20 +41,13 @@ export async function GET(request: NextRequest) {
 
     // Apply file type filter if specified
     if (fileTypeParam) {
-      query = query.eq('file_type', fileTypeParam)
+      filters.file_type = fileTypeParam as FileType
     }
 
-    const { data: assets, error } = await query
+    const datasource = getGalleryDatasource()
+    const assets = await datasource.getAssets(filters)
 
-    if (error) {
-      console.error('Error fetching assets:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch assets' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ assets: assets || [] })
+    return NextResponse.json({ assets })
   } catch (error) {
     console.error('Error in GET /api/gallery:', error)
     return NextResponse.json(
@@ -85,44 +69,8 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Handle is_featured logic: if setting this asset as featured, 
-    // unset featured for all other assets in the same palika/context
-    if (is_featured) {
-      // Get the current asset to find its palika_id
-      const { data: asset } = await supabaseAdmin
-        .from('assets')
-        .select('palika_id')
-        .eq('id', id)
-        .single()
-
-      if (asset?.palika_id) {
-        // Unset featured for all other assets of the same palika
-        await supabaseAdmin
-          .from('assets')
-          .update({ is_featured: false })
-          .eq('palika_id', asset.palika_id)
-          .eq('file_type', 'image')
-      }
-    }
-
-    const { data: updatedAsset, error: updateError } = await supabaseAdmin
-      .from('assets')
-      .update({
-        ...updateData,
-        is_featured: is_featured || false,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (updateError) {
-      console.error('Error updating asset:', updateError)
-      return NextResponse.json(
-        { error: 'Failed to update asset' },
-        { status: 500 }
-      )
-    }
+    const datasource = getGalleryDatasource()
+    const updatedAsset = await datasource.updateAsset(id, updateData, is_featured)
 
     return NextResponse.json({
       success: true,

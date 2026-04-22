@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getRegionsDatasource } from '@/lib/regions-config'
+import { ValidationError, DatabaseError } from '@/lib/datasource-errors'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,46 +14,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if assignment already exists
-    const { data: existing, error: checkError } = await supabaseAdmin
-      .from('admin_regions')
-      .select('*')
-      .eq('admin_id', adminId)
-      .eq('region_type', regionType)
-      .eq('region_id', regionId)
-      .single()
+    const datasource = getRegionsDatasource()
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('Error checking assignment:', checkError)
-      return NextResponse.json({ error: 'Failed to assign admin' }, { status: 500 })
+    try {
+      const assignment = await datasource.assignAdminToRegion(adminId, regionType, regionId)
+      return NextResponse.json({ data: assignment }, { status: 201 })
+    } catch (error: any) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          { error: error.message, code: error.code },
+          { status: 409 }
+        )
+      }
+      if (error instanceof DatabaseError) {
+        return NextResponse.json(
+          { error: error.message, code: error.code },
+          { status: 500 }
+        )
+      }
+      throw error
     }
-
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Admin is already assigned to this region' },
-        { status: 409 }
-      )
-    }
-
-    // Create assignment
-    const { data: assignment, error } = await supabaseAdmin
-      .from('admin_regions')
-      .insert([
-        {
-          admin_id: adminId,
-          region_type: regionType,
-          region_id: regionId,
-          assigned_at: new Date().toISOString()
-        }
-      ])
-      .select()
-
-    if (error) {
-      console.error('Error assigning admin:', error)
-      return NextResponse.json({ error: 'Failed to assign admin' }, { status: 500 })
-    }
-
-    return NextResponse.json({ data: assignment?.[0] }, { status: 201 })
   } catch (error) {
     console.error('Error assigning admin:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
