@@ -6,6 +6,7 @@ import BlogPostForm, {
   type BlogPostFormPayload,
 } from '../_components/BlogPostForm'
 import { blogPostsService } from '@/lib/client/blog-posts-client.service'
+import '../../heritage-sites/new/heritage-sites-new.css'
 
 export default function NewBlogPostPage() {
   const router = useRouter()
