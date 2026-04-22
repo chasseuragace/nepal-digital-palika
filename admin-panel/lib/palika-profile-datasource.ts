@@ -29,6 +29,13 @@ export interface PalikaProfile {
   updated_at?: string
 }
 
+export interface PalikaContactInfo {
+  office_phone?: string
+  office_email?: string
+  website?: string
+  total_wards?: number
+}
+
 export interface IPalikaProfileDatasource {
   /**
    * Get palika profile by ID
@@ -44,4 +51,19 @@ export interface IPalikaProfileDatasource {
    * Create or update palika profile
    */
   upsert(palikaId: number, data: Partial<PalikaProfile>): Promise<PalikaProfile>
+
+  /**
+   * Get palika contact info (from palikas table)
+   */
+  getPalikaContactInfo(palikaId: number): Promise<PalikaContactInfo | null>
+
+  /**
+   * Update palika contact info (in palikas table)
+   */
+  updatePalikaContactInfo(palikaId: number, data: Partial<PalikaContactInfo>): Promise<void>
+
+  /**
+   * Sync gallery images from assets table to palika_profiles.gallery_images
+   */
+  syncGalleryImages(palikaId: number): Promise<string[] | null>
 }

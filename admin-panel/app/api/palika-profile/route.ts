@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPalikaProfileDatasource } from '@/lib/palika-profile-config'
-import { supabaseAdmin } from '@/lib/supabase'
 
 const datasource = getPalikaProfileDatasource()
 
@@ -80,20 +79,9 @@ function validatePayload(body: any): { ok: true } | { ok: false; error: string }
 // -----------------------------------------------------------------------------
 async function fetchPalikaContactInfo(palikaId: number): Promise<Partial<Record<PalikaContactField, any>> | null> {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('palikas')
-      .select('office_phone, office_email, website, total_wards')
-      .eq('id', palikaId)
-      .single()
-
-    if (error) {
-      console.warn('[palika-profile] could not fetch palikas contact info:', error.message)
-      return null
-    }
-    return data || null
+    return await datasource.getPalikaContactInfo(palikaId)
   } catch (err) {
-    // In mock-auth mode `supabaseAdmin.from` throws; gracefully degrade.
-    console.warn('[palika-profile] palikas lookup unavailable (mock mode?):', err)
+    console.warn('[palika-profile] could not fetch palikas contact info:', err)
     return null
   }
 }
@@ -113,14 +101,7 @@ async function updatePalikaContactInfo(
   }
 
   try {
-    const { error } = await supabaseAdmin
-      .from('palikas')
-      .update(updates)
-      .eq('id', palikaId)
-
-    if (error) {
-      return { ok: false, error: error.message }
-    }
+    await datasource.updatePalikaContactInfo(palikaId, updates)
     return { ok: true }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Unknown error updating palikas' }
@@ -136,38 +117,8 @@ async function updatePalikaContactInfo(
  */
 async function syncGalleryImages(palikaId: number): Promise<string[] | null> {
   try {
-    const { data: rows, error } = await supabaseAdmin
-      .from('assets')
-      .select('public_url, is_featured, sort_order, created_at')
-      .eq('palika_id', palikaId)
-      .eq('file_type', 'image')
-      .order('is_featured', { ascending: false })
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.warn('[palika-profile] gallery sync fetch failed:', error.message)
-      return null
-    }
-
-    const urls: string[] = (rows || [])
-      .filter((r: any) => typeof r?.public_url === 'string' && r.public_url.length > 0)
-      .map((r: any) => r.public_url)
-
-    // Write the URL list into palika_profiles.gallery_images for this palika.
-    const { error: updateError } = await supabaseAdmin
-      .from('palika_profiles')
-      .update({ gallery_images: urls })
-      .eq('palika_id', palikaId)
-
-    if (updateError) {
-      console.warn('[palika-profile] gallery sync write failed:', updateError.message)
-      return null
-    }
-
-    return urls
+    return await datasource.syncGalleryImages(palikaId)
   } catch (err) {
-    // mock-auth mode or similar — degrade gracefully.
     console.warn('[palika-profile] gallery sync unavailable:', err)
     return null
   }
