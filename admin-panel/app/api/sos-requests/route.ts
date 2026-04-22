@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSOSService } from '@/services/sos.service'
+
+const service = getSOSService()
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,40 +16,34 @@ export async function GET(request: NextRequest) {
     const dateTo = params.get('date_to')
     const page = parseInt(params.get('page') || '1')
     const limit = parseInt(params.get('limit') || '25')
-    const offset = (page - 1) * limit
 
-    let query = supabaseAdmin
-      .from('sos_requests')
-      .select('*, palikas!inner(name_en)', { count: 'exact' })
+    const filters: any = {}
+    if (status) filters.status = status
+    if (emergencyType) filters.emergency_type = emergencyType
+    if (serviceType) filters.service_type = serviceType
+    if (priority) filters.priority = priority
+    if (search) filters.search = search
+    if (dateFrom) filters.date_from = dateFrom
+    if (dateTo) filters.date_to = dateTo
 
-    if (palikaId) query = query.eq('palika_id', palikaId)
-    if (status) query = query.eq('status', status)
-    if (emergencyType) query = query.eq('emergency_type', emergencyType)
-    if (serviceType) query = query.eq('service_type', serviceType)
-    if (priority) query = query.eq('priority', priority)
-    if (dateFrom) query = query.gte('created_at', dateFrom)
-    if (dateTo) query = query.lte('created_at', dateTo)
-    if (search) {
-      query = query.or(
-        `user_name.ilike.%${search}%,user_phone.ilike.%${search}%,request_code.ilike.%${search}%,details.ilike.%${search}%`
-      )
+    // If no palika_id provided, we cannot use the service as it requires palika_id
+    // In this case, return empty or error
+    if (!palikaId) {
+      return NextResponse.json({ error: 'palika_id is required' }, { status: 400 })
     }
 
-    query = query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+    const result = await service.getSOSRequests(parseInt(palikaId), filters, { page, pageSize: limit })
 
-    const { data, error, count } = await query
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!result.success || !result.data) {
+      return NextResponse.json({ error: result.error || 'Failed to fetch SOS requests' }, { status: 500 })
     }
 
     return NextResponse.json({
-      data: data || [],
-      meta: { page, limit, total: count || 0, hasMore: (data?.length || 0) === limit }
+      data: result.data.data,
+      meta: { page: result.data.page, limit: result.data.limit, total: result.data.total, hasMore: result.data.hasMore }
     })
   } catch (error) {
+    console.error('Error fetching SOS requests:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
