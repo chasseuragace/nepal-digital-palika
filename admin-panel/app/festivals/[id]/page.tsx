@@ -10,6 +10,7 @@ import EventForm, {
 } from '../../events/_components/EventForm'
 import { hydrateEventForm } from '../../events/_components/hydrate-event-form'
 import { eventsService } from '@/lib/client/events-client.service'
+import { adminSessionStore } from '@/lib/storage/session-storage.service'
 import '../../events/new/events-new.css'
 
 /**
@@ -58,13 +59,14 @@ export default function EditFestivalPage() {
     setSuccess('')
 
     try {
-      const payload = buildEventPayload(formData, 'festival')
-
-      if (!payload.palika_id) {
-        setError('Palika is required')
+      const session = adminSessionStore.get()
+      if (!session?.palika_id) {
+        setError('Unable to determine your palika. Please contact support.')
         setIsSubmitting(false)
         return
       }
+
+      const payload = buildEventPayload(formData, 'festival', session.palika_id)
 
       await eventsService.update(festivalId, payload as any)
       setSuccess('Festival updated successfully!')
