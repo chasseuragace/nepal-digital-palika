@@ -450,7 +450,7 @@ export default function PalikaProfilePage() {
                         type="text"
                         id="office_phone"
                         className="form-input"
-                        value={formData.office_phone || ''}
+                        value={formData.office_phone ?? ''}
                         onChange={(e) => handleInputChange('office_phone', e.target.value)}
                         placeholder="+977-1-XXXXXXX"
                       />
@@ -462,7 +462,7 @@ export default function PalikaProfilePage() {
                         type="email"
                         id="office_email"
                         className="form-input"
-                        value={formData.office_email || ''}
+                        value={formData.office_email ?? ''}
                         onChange={(e) => handleInputChange('office_email', e.target.value)}
                         placeholder="info@palika.gov.np"
                       />
@@ -476,7 +476,7 @@ export default function PalikaProfilePage() {
                         type="url"
                         id="website"
                         className="form-input"
-                        value={formData.website || ''}
+                        value={formData.website ?? ''}
                         onChange={(e) => handleInputChange('website', e.target.value)}
                         placeholder="https://palika.gov.np"
                       />
@@ -488,8 +488,11 @@ export default function PalikaProfilePage() {
                         type="number"
                         id="total_wards"
                         className="form-input"
-                        value={formData.total_wards ?? 0}
-                        onChange={(e) => handleInputChange('total_wards', e.target.value === '' ? 0 : parseInt(e.target.value, 10))}
+                        value={formData.total_wards === 0 ? '' : (formData.total_wards || '')}
+                        onChange={(e) => {
+                          const val = e.target.value.trim()
+                          handleInputChange('total_wards', val === '' ? 0 : parseInt(val, 10) || 0)
+                        }}
                         min={0}
                         max={50}
                       />
@@ -511,8 +514,11 @@ export default function PalikaProfilePage() {
                         type="number"
                         id="population"
                         className="form-input"
-                        value={formData.demographics.population || 0}
-                        onChange={(e) => handleNestedChange('demographics', 'population', parseInt(e.target.value, 10) || 0)}
+                        value={formData.demographics.population === 0 ? '' : (formData.demographics.population || '')}
+                        onChange={(e) => {
+                          const val = e.target.value.trim()
+                          handleNestedChange('demographics', 'population', val === '' ? 0 : parseInt(val, 10) || 0)
+                        }}
                         placeholder="0"
                       />
                     </div>
@@ -523,8 +529,11 @@ export default function PalikaProfilePage() {
                         type="number"
                         id="area"
                         className="form-input"
-                        value={formData.demographics.area_sq_km || 0}
-                        onChange={(e) => handleNestedChange('demographics', 'area_sq_km', parseFloat(e.target.value) || 0)}
+                        value={formData.demographics.area_sq_km === 0 ? '' : (formData.demographics.area_sq_km || '')}
+                        onChange={(e) => {
+                          const val = e.target.value.trim()
+                          handleNestedChange('demographics', 'area_sq_km', val === '' ? 0 : parseFloat(val) || 0)
+                        }}
                         placeholder="0"
                         step="0.01"
                       />
@@ -536,8 +545,11 @@ export default function PalikaProfilePage() {
                         type="number"
                         id="established"
                         className="form-input"
-                        value={formData.demographics.established_year || 0}
-                        onChange={(e) => handleNestedChange('demographics', 'established_year', parseInt(e.target.value, 10) || 0)}
+                        value={formData.demographics.established_year === 0 ? '' : (formData.demographics.established_year || '')}
+                        onChange={(e) => {
+                          const val = e.target.value.trim()
+                          handleNestedChange('demographics', 'established_year', val === '' ? 0 : parseInt(val, 10) || 0)
+                        }}
                         placeholder="0"
                       />
                     </div>
