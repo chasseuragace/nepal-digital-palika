@@ -49,6 +49,7 @@ export type BlogPostFormValues = {
   status: 'draft' | 'published' | 'archived'
   palika_id: string
   author_id: string
+  author_name: string
 }
 
 export type BlogPostFormPayload = {
@@ -65,6 +66,7 @@ export type BlogPostFormPayload = {
   status: 'draft' | 'published' | 'archived'
   palika_id: number
   author_id: string
+  author_name?: string
 }
 
 export const EMPTY_BLOG_POST_FORM: BlogPostFormValues = {
@@ -81,6 +83,7 @@ export const EMPTY_BLOG_POST_FORM: BlogPostFormValues = {
   status: 'draft',
   palika_id: '',
   author_id: '',
+  author_name: '',
 }
 
 interface BlogPostFormProps {
@@ -130,12 +133,16 @@ export default function BlogPostForm({
     if (initial.slug) setSlugEdited(true)
   }, [initial])
 
-  // Inject author_id from the logged-in session (one-shot on mount)
+  // Inject author_id and author_name from the logged-in session (one-shot on mount)
   useEffect(() => {
     if (formData.author_id) return
     const session = adminSessionStore.get()
     if (session?.id) {
-      setFormData(prev => ({ ...prev, author_id: session.id }))
+      setFormData(prev => ({ 
+        ...prev, 
+        author_id: session.id,
+        author_name: session.full_name || ''
+      }))
     }
   }, [formData.author_id])
 
@@ -281,6 +288,7 @@ export default function BlogPostForm({
       status: formData.status,
       palika_id: parseInt(formData.palika_id, 10),
       author_id: authorId,
+      author_name: formData.author_name.trim() || undefined,
     }
 
     try {
@@ -675,13 +683,25 @@ export default function BlogPostForm({
               <div className="form-card">
                 <div className="form-card-header">
                   <span className="form-card-icon-text">Author</span>
-                  <h4>Author</h4>
+                  <h4>Author Information</h4>
                 </div>
-                <div className="help-text">
-                  <span>
-                    Author is set automatically from your logged-in session
-                    {formData.author_id ? ` (${formData.author_id})` : ''}.
-                  </span>
+                <div className="form-group">
+                  <label htmlFor="author_name" className="form-label">
+                    Author Name
+                  </label>
+                  <input
+                    type="text"
+                    id="author_name"
+                    className="form-input"
+                    value={formData.author_name}
+                    onChange={(e) => setField('author_name', e.target.value)}
+                    placeholder="Enter author name"
+                  />
+                  <div className="help-text">
+                    <span>
+                      The name that will be displayed as the post author. Defaults to your profile name.
+                    </span>
+                  </div>
                 </div>
                 {/* Hidden input keeps author_id in the submit payload */}
                 <input type="hidden" name="author_id" value={formData.author_id} />
