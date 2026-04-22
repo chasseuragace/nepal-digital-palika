@@ -5,6 +5,8 @@
 import { IMarketplaceProductsDatasource } from './marketplace-products-datasource'
 import { SupabaseMarketplaceProductsDatasource } from './supabase-marketplace-products-datasource'
 import { FakeMarketplaceProductsDatasource } from './fake-marketplace-products-datasource'
+import { supabaseClient } from './supabase'
+
 let datasourceInstance: IMarketplaceProductsDatasource | null = null
 
 export function createMarketplaceProductsDatasource(): IMarketplaceProductsDatasource {
@@ -15,9 +17,8 @@ export function createMarketplaceProductsDatasource(): IMarketplaceProductsDatas
     return new FakeMarketplaceProductsDatasource()
   }
 
-  const { supabaseClient } = require('./supabase')
   console.log('[MarketplaceProducts] Using SUPABASE datasource')
-  return new SupabaseMarketplaceProductsDatasource(supabaseClient)
+  return new SupabaseMarketplaceProductsDatasource(supabaseClient as any)
 }
 
 export function getMarketplaceProductsDatasource(): IMarketplaceProductsDatasource {

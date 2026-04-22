@@ -6,6 +6,7 @@
 import { IAnalyticsDatasource } from './analytics-datasource'
 import { SupabaseAnalyticsDatasource } from './supabase-analytics-datasource'
 import { FakeAnalyticsDatasource } from './fake-analytics-datasource'
+import { supabaseClient } from './supabase'
 
 let datasourceInstance: IAnalyticsDatasource | null = null
 
@@ -20,9 +21,8 @@ export function createAnalyticsDatasource(): IAnalyticsDatasource {
     return new FakeAnalyticsDatasource()
   }
 
-  const { supabaseClient } = require('./supabase')
   console.log('[Analytics] Using SUPABASE datasource (NEXT_PUBLIC_USE_FAKE_DATASOURCES=false)')
-  return new SupabaseAnalyticsDatasource(supabaseClient)
+  return new SupabaseAnalyticsDatasource(supabaseClient as any)
 }
 
 /**

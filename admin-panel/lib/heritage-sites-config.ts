@@ -6,6 +6,7 @@
 import { IHeritageSitesDatasource } from './heritage-sites-datasource'
 import { SupabaseHeritageSitesDatasource } from './supabase-heritage-sites-datasource'
 import { FakeHeritageSitesDatasource } from './fake-heritage-sites-datasource'
+import { supabaseClient } from './supabase'
 
 let datasourceInstance: IHeritageSitesDatasource | null = null
 
@@ -20,9 +21,8 @@ export function createHeritageSitesDatasource(): IHeritageSitesDatasource {
     return new FakeHeritageSitesDatasource()
   }
 
-  const { supabaseClient } = require('./supabase')
   console.log('[HeritageSites] Using SUPABASE datasource (NEXT_PUBLIC_USE_FAKE_DATASOURCES=false)')
-  return new SupabaseHeritageSitesDatasource(supabaseClient)
+  return new SupabaseHeritageSitesDatasource(supabaseClient as any)
 }
 
 /**

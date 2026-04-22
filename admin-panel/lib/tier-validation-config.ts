@@ -5,6 +5,8 @@
 import { ITierValidationDatasource } from './tier-validation-datasource'
 import { SupabaseTierValidationDatasource } from './supabase-tier-validation-datasource'
 import { FakeTierValidationDatasource } from './fake-tier-validation-datasource'
+import { supabaseClient } from './supabase'
+
 let datasourceInstance: ITierValidationDatasource | null = null
 
 export function createTierValidationDatasource(): ITierValidationDatasource {
@@ -13,9 +15,8 @@ export function createTierValidationDatasource(): ITierValidationDatasource {
     console.log('[TierValidation] Using FAKE datasource')
     return new FakeTierValidationDatasource()
   }
-  const { supabaseClient } = require('./supabase')
   console.log('[TierValidation] Using SUPABASE datasource')
-  return new SupabaseTierValidationDatasource(supabaseClient)
+  return new SupabaseTierValidationDatasource(supabaseClient as any)
 }
 
 export function getTierValidationDatasource(): ITierValidationDatasource {

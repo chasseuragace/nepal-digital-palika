@@ -41,8 +41,12 @@ export const supabase = new Proxy({}, {
   }
 })
 
-// Export the client directly for datasources that need it
-export const supabaseClient = getSupabaseClient()
+// Export the client lazily - only create when first accessed
+export const supabaseClient = new Proxy({}, {
+  get: (target, prop) => {
+    return getSupabaseClient()[prop as string]
+  }
+})
 
 // Service role client for admin operations
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!

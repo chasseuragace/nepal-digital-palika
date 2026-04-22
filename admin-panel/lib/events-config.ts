@@ -6,6 +6,7 @@
 import { IEventsDatasource } from './events-datasource'
 import { SupabaseEventsDatasource } from './supabase-events-datasource'
 import { FakeEventsDatasource } from './fake-events-datasource'
+import { supabaseClient } from './supabase'
 
 let datasourceInstance: IEventsDatasource | null = null
 
@@ -20,9 +21,8 @@ export function createEventsDatasource(): IEventsDatasource {
     return new FakeEventsDatasource()
   }
 
-  const { supabaseClient } = require('./supabase')
   console.log('[Events] Using SUPABASE datasource (NEXT_PUBLIC_USE_FAKE_DATASOURCES=false)')
-  return new SupabaseEventsDatasource(supabaseClient)
+  return new SupabaseEventsDatasource(supabaseClient as any)
 }
 
 /**
