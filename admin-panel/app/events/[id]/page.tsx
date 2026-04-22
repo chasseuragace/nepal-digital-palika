@@ -120,6 +120,7 @@ export default function EditEventPage() {
         ) : (
           <EventForm
             formMode="edit"
+            eventId={eventId}
             mode="event"
             value={formData}
             onChange={setFormData}

@@ -22,9 +22,9 @@ export const SUPABASE_ANON_KEY =
 
 export const PALIKA_ID = Number(process.env.E2E_PALIKA_ID ?? 275);
 export const ADMIN_EMAIL =
-  process.env.ADMIN_PANEL_TEST_EMAIL ?? 'palika.admin@kathmandu.gov.np';
+  process.env.ADMIN_PANEL_TEST_EMAIL ?? 'palika@admin.com';
 export const ADMIN_PASSWORD =
-  process.env.ADMIN_PANEL_TEST_PASSWORD ?? 'KathmanduAdmin456!';
+  process.env.ADMIN_PANEL_TEST_PASSWORD ?? 'palika123456';
 
 export type Step = { step: string; status: '✓' | '✗' | '~'; detail: string };
 

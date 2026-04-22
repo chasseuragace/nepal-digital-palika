@@ -15,15 +15,20 @@ let supabaseInstance: any = null
 
 function getSupabaseClient() {
   if (useMockAuth) {
-    // Return a mock client that won't try to connect
+    // Use mock auth but allow real Supabase data operations
+    // This enables testing with mock login credentials against real database
+    if (!supabaseInstance) {
+      supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
+    }
+
     return {
       auth: createMockSupabaseAuth(),
-      from: () => {
-        throw new Error('Supabase data operations not available in mock auth mode')
-      }
+      ...supabaseInstance,
+      from: supabaseInstance.from.bind(supabaseInstance),
+      storage: supabaseInstance.storage
     }
   }
-  
+
   if (!supabaseInstance) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
   }
@@ -52,13 +57,14 @@ if (useMockAuth) {
   supabaseAdminAuth = createClient(supabaseUrl, supabaseServiceKey).auth
 }
 
+const supabaseAdminClient = createClient(supabaseUrl, supabaseServiceKey)
+
 export const supabaseAdmin = {
   auth: supabaseAdminAuth,
-  // For data operations, still use real Supabase (only if not mock mode)
+  // For data operations, use service role key to bypass RLS policies
+  // This allows testing and server-side operations even with mock auth
   from: (table: string) => {
-    if (useMockAuth) {
-      throw new Error('Supabase data operations not available in mock auth mode')
-    }
-    return createClient(supabaseUrl, supabaseServiceKey).from(table)
+    return supabaseAdminClient.from(table)
   },
+  storage: supabaseAdminClient.storage
 }

@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { palikaService, type Palika } from '@/lib/client/palika-client.service'
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
+import AssetGallery from '@/components/AssetGallery'
 import RichTextEditor from './RichTextEditor'
 import '../blog-posts.css'
 
@@ -88,6 +89,7 @@ export const EMPTY_BLOG_POST_FORM: BlogPostFormValues = {
 
 interface BlogPostFormProps {
   mode: 'create' | 'edit'
+  postId?: string
   initial?: Partial<BlogPostFormValues>
   submitLabel?: string
   onSubmit: (payload: BlogPostFormPayload) => Promise<void>
@@ -105,6 +107,7 @@ type TabId = (typeof TABS)[number]['id']
 
 export default function BlogPostForm({
   mode,
+  postId,
   initial,
   submitLabel,
   onSubmit,
@@ -521,28 +524,53 @@ export default function BlogPostForm({
                   <h4>Featured Image</h4>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="featured_image" className="form-label">
-                    Image URL
-                  </label>
-                  <input
-                    id="featured_image"
-                    type="url"
-                    className="form-input"
-                    value={formData.featured_image}
-                    onChange={e => setField('featured_image', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  <div className="help-text">
-                    <span>Paste a hosted image URL. File upload: TODO (Phase 1D).</span>
-                  </div>
-                  <div className="featured-image-preview">
-                    {formData.featured_image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={formData.featured_image} alt="Featured preview" />
-                    ) : (
-                      <div className="featured-image-placeholder">No image selected</div>
-                    )}
-                  </div>
+                  <label className="form-label">Featured Image</label>
+
+                  {postId && mode === 'edit' ? (
+                    <>
+                      <AssetGallery
+                        entityType="blog_post"
+                        entityId={parseInt(postId, 10)}
+                        selectMode={true}
+                        fileType="image"
+                        uploadEnabled={true}
+                        onAssetSelect={(asset) => {
+                          const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/${asset.storage_path}`
+                          setField('featured_image', imageUrl)
+                        }}
+                      />
+                      <div className="featured-image-preview" style={{ marginTop: '15px' }}>
+                        {formData.featured_image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={formData.featured_image} alt="Featured preview" />
+                        ) : (
+                          <div className="featured-image-placeholder">No image selected</div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        id="featured_image"
+                        type="url"
+                        className="form-input"
+                        value={formData.featured_image}
+                        onChange={e => setField('featured_image', e.target.value)}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      <div className="help-text">
+                        <span>Paste a hosted image URL. Create the post first to enable gallery upload.</span>
+                      </div>
+                      <div className="featured-image-preview">
+                        {formData.featured_image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={formData.featured_image} alt="Featured preview" />
+                        ) : (
+                          <div className="featured-image-placeholder">No image selected</div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

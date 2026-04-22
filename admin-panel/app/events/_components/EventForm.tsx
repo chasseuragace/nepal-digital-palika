@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import AssetGallery from '@/components/AssetGallery'
 import { categoriesService, type Category } from '@/lib/client/categories-client.service'
 import { palikaService, type Palika } from '@/lib/client/palika-client.service'
 import { adminSessionStore } from '@/lib/storage/session-storage.service'
@@ -160,6 +161,10 @@ interface EventFormProps {
    */
   formMode: 'create' | 'edit'
   /**
+   * Event ID for gallery integration (edit mode only).
+   */
+  eventId?: string
+  /**
    * Classification — drives `is_festival` on the submitted payload and
    * tweaks copy (e.g. "Create Event" vs "Create Festival"). The dedicated
    * `/events/*` and `/festivals/*` routes each pin this to a single value,
@@ -186,6 +191,7 @@ type TabId = typeof TABS[number]['id']
 
 export default function EventForm({
   formMode,
+  eventId,
   mode,
   value,
   onChange,
@@ -620,22 +626,35 @@ export default function EventForm({
                   <h4>Featured Image</h4>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="featured_image" className="form-label">
-                    Featured Image URL
-                  </label>
-                  <input
-                    type="url"
-                    id="featured_image"
-                    className="form-input"
-                    value={value.featured_image}
-                    onChange={(e) => setField('featured_image', e.target.value)}
-                    placeholder="https://example.com/event-cover.jpg"
-                  />
-                  <div className="help-text">
-                    {/* TODO: replace this URL input with a direct file upload once the
-                        storage bucket + signed-URL flow lands in a follow-up session. */}
-                    Paste a public image URL. File upload will land in a follow-up session.
-                  </div>
+                  <label className="form-label">Featured Image</label>
+
+                  {eventId && formMode === 'edit' ? (
+                    <AssetGallery
+                      entityType="event"
+                      entityId={parseInt(eventId, 10)}
+                      selectMode={true}
+                      fileType="image"
+                      uploadEnabled={true}
+                      onAssetSelect={(asset) => {
+                        const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/palika-gallery/${asset.storage_path}`
+                        setField('featured_image', imageUrl)
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <input
+                        type="url"
+                        id="featured_image"
+                        className="form-input"
+                        value={value.featured_image}
+                        onChange={(e) => setField('featured_image', e.target.value)}
+                        placeholder="https://example.com/event-cover.jpg"
+                      />
+                      <div className="help-text">
+                        Paste a public image URL. Create the event first to enable gallery upload.
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

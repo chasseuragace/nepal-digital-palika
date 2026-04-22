@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import AssetGallery from '@/components/AssetGallery'
 import { categoriesService, type Category } from '@/lib/client/categories-client.service'
 import { palikaService, type Palika } from '@/lib/client/palika-client.service'
 import type {
@@ -235,6 +236,7 @@ export function buildHeritagePayload(state: FormState): CreateHeritageSiteInput 
 // Component
 // ---------------------------------------------------------------------------
 interface HeritageSiteFormProps {
+  siteId?: string
   initialState: FormState
   submitLabel: string
   loadingLabel: string
@@ -248,6 +250,7 @@ interface HeritageSiteFormProps {
 }
 
 export default function HeritageSiteForm({
+  siteId,
   initialState,
   submitLabel,
   loadingLabel,
