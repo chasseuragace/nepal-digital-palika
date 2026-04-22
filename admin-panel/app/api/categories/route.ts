@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getCategoriesDatasource } from '@/lib/categories-config'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const entityType = searchParams.get('entity_type')
 
-    let query = supabaseAdmin.from('categories').select('*')
-    
-    if (entityType) {
-      query = query.eq('entity_type', entityType)
-    }
+    const categoriesDatasource = getCategoriesDatasource()
 
-    const { data: categories, error } = await query.order('name_en')
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
-    }
+    const categories = await categoriesDatasource.getAll(
+      entityType ? { entity_type: entityType } : undefined
+    )
 
     return NextResponse.json(categories)
   } catch (error) {
