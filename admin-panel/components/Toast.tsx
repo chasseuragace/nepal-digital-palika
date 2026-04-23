@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react'
+import { CheckCircle, XCircle, AlertCircle, Info, ArrowLeft } from 'lucide-react'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info'
 
@@ -87,7 +87,7 @@ export default function Toast({ type, message, onClose, duration = 5000 }: Toast
           flexShrink: 0,
         }}
       >
-        <X size={18} />
+        <ArrowLeft size={18} />
       </button>
       <style jsx>{`
         @keyframes slideInRight {
