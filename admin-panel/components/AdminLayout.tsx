@@ -21,7 +21,7 @@ import {
   ChevronDown,
   AlertTriangle,
   Menu,
-  X
+  ArrowLeft
 } from 'lucide-react'
 import { adminSessionStore, type AdminSession } from '@/lib/storage/session-storage.service'
 
@@ -571,7 +571,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
           >
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            {isSidebarOpen ? <ArrowLeft size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
