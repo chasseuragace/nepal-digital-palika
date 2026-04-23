@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   Bell, ArrowLeft, Send, Globe, User, Plus, Trash2,
   FileText, Link as LinkIcon, Smartphone, Image, Zap, Store, AlertCircle,
-  Eye, EyeOff, Info, Users, Target, Sparkles, Clock, Settings
+  Eye, EyeOff, Info, Users, Target, Sparkles, Clock, Settings, X
 } from 'lucide-react'
 import {
   NOTIFICATION_CATEGORIES,
@@ -22,6 +22,8 @@ import BusinessTargetingSelector from '@/components/BusinessTargetingSelector'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Toast, { ToastType } from '@/components/Toast'
 import AdminLayout from '@/components/AdminLayout'
+import AssetGallery from '@/components/AssetGallery'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import './compose.css'
 
 type NotificationType = 'general' | 'personal'
@@ -54,6 +56,7 @@ export default function NotificationComposePage() {
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [isFormDirty, setIsFormDirty] = useState(false)
+  const [showImagePicker, setShowImagePicker] = useState(false)
 
   // Templates for the selected category
   const availableTemplates = getTemplatesByCategory(category)
@@ -106,6 +109,13 @@ export default function NotificationComposePage() {
 
   const removeTargetUser = (id: string) => {
     setTargetUsers(prev => prev.filter(u => u.id !== id))
+  }
+
+  // ─── Image picker handler ───
+  const handleAssetSelect = (asset: any) => {
+    setImageUrl(asset.public_url)
+    setShowImagePicker(false)
+    setIsFormDirty(true)
   }
 
   // ─── Business targeting ───
@@ -747,24 +757,58 @@ export default function NotificationComposePage() {
               <label style={{...labelStyle, fontSize: '14px', marginBottom: '12px' }}>
                 Featured Image URL <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
               </label>
-              <input
-                type="text"
-                placeholder="https://..."
-                value={imageUrl}
-                onChange={(e) => {
-                  setImageUrl(e.target.value)
-                  setIsFormDirty(true)
-                }}
-                onFocus={() => setFocusedField('imageUrl')}
-                onBlur={() => setFocusedField(null)}
-                style={{
-                  ...inputStyle, 
-                  marginTop: '8px',
-                  borderColor: focusedField === 'imageUrl' ? '#3b82f6' : '#e2e8f0',
-                  boxShadow: focusedField === 'imageUrl' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
-                  transition: 'all 0.2s ease',
-                }}
-              />
+              <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  value={imageUrl}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value)
+                    setIsFormDirty(true)
+                  }}
+                  onFocus={() => setFocusedField('imageUrl')}
+                  onBlur={() => setFocusedField(null)}
+                  style={{
+                    ...inputStyle,
+                    borderColor: focusedField === 'imageUrl' ? '#3b82f6' : '#e2e8f0',
+                    boxShadow: focusedField === 'imageUrl' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.2s ease',
+                    flex: 1,
+                  }}
+                />
+                <button
+                  onClick={() => setShowImagePicker(true)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid #3b82f6',
+                    backgroundColor: '#3b82f6',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 6px rgba(59, 130, 246, 0.2)',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1d4ed8'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                    e.currentTarget.style.boxShadow = '0 4px 10px rgba(59, 130, 246, 0.3)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3b82f6'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(59, 130, 246, 0.2)'
+                  }}
+                >
+                  <Image size={16} />
+                  Pick from Gallery
+                </button>
+              </div>
               {imageUrl && (
                 <div style={{ 
                   marginTop: '12px', 
@@ -1332,6 +1376,22 @@ export default function NotificationComposePage() {
         </div>
       </div>
       </div>
+
+      {/* Image Picker Dialog */}
+      <Dialog open={showImagePicker} onOpenChange={setShowImagePicker}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select Image from Gallery</DialogTitle>
+          </DialogHeader>
+          <AssetGallery
+            palikaId={PALIKA_ID}
+            selectMode={true}
+            fileType="image"
+            uploadEnabled={true}
+            onAssetSelect={handleAssetSelect}
+          />
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   )
 }
