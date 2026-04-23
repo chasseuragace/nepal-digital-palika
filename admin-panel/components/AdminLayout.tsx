@@ -584,6 +584,32 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }}>
           {children}
         </main>
+
+        {/* ArrowLeft Button at End */}
+        <div style={{
+          padding: '12px 16px',
+          borderTop: '1px solid #e2e8f0',
+          backgroundColor: '#fff',
+        }}>
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#1e293b',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+            }}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+          >
+            {isSidebarOpen ? <ArrowLeft size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
     </div>
   )
