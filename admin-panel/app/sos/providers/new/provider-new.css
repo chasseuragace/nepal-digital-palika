@@ -14,10 +14,10 @@
   align-items: center;
   margin-bottom: 32px;
   padding: 24px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   border-radius: 16px;
   color: white;
-  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 10px 30px rgba(30, 41, 59, 0.3);
   animation: slideInUp 0.5s ease-out;
 }
 
@@ -59,55 +59,82 @@
   color: white;
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  justify-content: center;
+/* Buttons - Highest specificity to override globals.css */
+[data-page="provider-new"] .btn,
+[data-page="provider-new"] .form-page-header .btn,
+[data-page="provider-new"] .form-actions .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 24px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  text-decoration: none !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  min-width: auto !important;
+  width: auto !important;
+  height: auto !important;
+  box-sizing: border-box !important;
 }
 
-.btn-primary {
-  background: #10b981;
-  color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+[data-page="provider-new"] .btn svg,
+[data-page="provider-new"] .form-page-header .btn svg,
+[data-page="provider-new"] .form-actions .btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: #059669;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+[data-page="provider-new"] .btn-primary,
+[data-page="provider-new"] .form-actions .btn-primary {
+  background: #10b981 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
 }
 
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+[data-page="provider-new"] .btn-primary:hover:not(:disabled),
+[data-page="provider-new"] .form-actions .btn-primary:hover:not(:disabled) {
+  background: #059669 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4) !important;
 }
 
-.btn-secondary {
-  background: white;
-  color: #10b981;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+[data-page="provider-new"] .btn-primary:disabled,
+[data-page="provider-new"] .form-actions .btn-primary:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
 }
 
-.btn-secondary:hover {
-  background: #f8fafc;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+[data-page="provider-new"] .btn-secondary,
+[data-page="provider-new"] .form-page-header .btn-secondary,
+[data-page="provider-new"] .form-actions .btn-secondary {
+  background: white !important;
+  color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
-.btn-large {
-  padding: 14px 32px;
-  font-size: 16px;
+[data-page="provider-new"] .btn-secondary:hover,
+[data-page="provider-new"] .form-page-header .btn-secondary:hover,
+[data-page="provider-new"] .form-actions .btn-secondary:hover {
+  background: #f8fafc !important;
+  color: #1e293b !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
+  text-decoration: none !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-page="provider-new"] .btn-large,
+[data-page="provider-new"] .form-actions .btn-large {
+  padding: 14px 32px !important;
+  font-size: 16px !important;
 }
 
 /* Error Banner */
@@ -159,7 +186,7 @@
 }
 
 .section-header svg {
-  color: #10b981;
+  color: #3b82f6;
   flex-shrink: 0;
 }
 
@@ -219,8 +246,8 @@
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .form-input::placeholder,
@@ -257,12 +284,12 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  accent-color: #10b981;
+  accent-color: #3b82f6;
 }
 
 .form-checkbox:checked {
-  background: #10b981;
-  border-color: #10b981;
+  background: #3b82f6;
+  border-color: #3b82f6;
 }
 
 .checkbox-label {
