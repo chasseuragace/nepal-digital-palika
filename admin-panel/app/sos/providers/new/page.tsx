@@ -82,7 +82,54 @@ export default function NewProviderPage() {
 
   return (
     <AdminLayout>
-      <div className="provider-new-container">
+      <style jsx global>{`
+        [data-page="provider-new"] .btn,
+        [data-page="provider-new"] .form-page-header .btn,
+        [data-page="provider-new"] .form-actions .btn {
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+          padding: 12px 24px !important;
+          font-size: 15px !important;
+          font-weight: 600 !important;
+          border-radius: 10px !important;
+          border: none !important;
+          cursor: pointer !important;
+          transition: all 0.3s ease !important;
+          text-decoration: none !important;
+          justify-content: center !important;
+          white-space: nowrap !important;
+          min-width: auto !important;
+          width: auto !important;
+          height: auto !important;
+          box-sizing: border-box !important;
+        }
+        
+        [data-page="provider-new"] .btn svg {
+          width: 18px !important;
+          height: 18px !important;
+          flex-shrink: 0 !important;
+        }
+        
+        [data-page="provider-new"] .btn-primary {
+          background: #10b981 !important;
+          color: white !important;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+        }
+        
+        [data-page="provider-new"] .btn-secondary {
+          background: white !important;
+          color: #1e293b !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+          border: 1px solid #e2e8f0 !important;
+        }
+        
+        [data-page="provider-new"] .btn-large {
+          padding: 14px 32px !important;
+          font-size: 16px !important;
+        }
+      `}</style>
+      <div className="provider-new-container" data-page="provider-new">
         {/* Header */}
         <div className="form-page-header">
           <div className="header-content">
