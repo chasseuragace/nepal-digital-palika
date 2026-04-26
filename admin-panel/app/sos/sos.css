@@ -78,32 +78,77 @@
   color: white;
 }
 
-.header-add-btn {
-  display: flex;
+/* SOS Header Button - Specific styling to avoid conflicts */
+.sos-header-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  font-size: 11px;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 15px;
   font-weight: 600;
-  background: white !important;
-  color: #1e293b !important;
+  background: white;
+  color: #1e293b;
   border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 10px;
   text-decoration: none;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sos-header-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sos-header-btn:hover,
+.sos-header-btn:focus,
+.sos-header-btn:active {
+  background: #f8fafc;
+  color: #1e293b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+}
+
+.header-add-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 24px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  background: white !important;
+  color: #1e293b !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 10px !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+  white-space: nowrap !important;
+  min-width: auto !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.header-add-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
 }
 
 .header-add-btn:hover,
 .header-add-btn:focus,
 .header-add-btn:active,
-.btn.btn-primary.header-add-btn:hover,
-.btn.btn-primary.header-add-btn:focus,
-.btn.btn-primary.header-add-btn:active {
-  background: white !important;
+.header-add-btn:visited {
+  background: #f8fafc !important;
   color: #1e293b !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+  text-decoration: none !important;
 }
 
 /* Stats Grid */
