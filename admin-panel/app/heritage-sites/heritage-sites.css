@@ -97,6 +97,20 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
+.header-cancel-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  background: white;
+  color: #1e293b;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
