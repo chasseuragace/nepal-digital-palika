@@ -75,14 +75,31 @@ export default function AnalyticsDashboard() {
   return (
     <AdminLayout>
       <div className="analytics-container">
+        {/* Page Header */}
         <div className="analytics-page-header">
-          <h1 className="analytics-page-title">Marketplace Analytics</h1>
-          <p className="analytics-page-subtitle">
-            Palika-scoped overview of users, businesses, and marketplace products.
-          </p>
+          <div className="analytics-page-header-content">
+            <div className="analytics-header-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="20" x2="12" y2="10"></line>
+                <line x1="18" y1="20" x2="18" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="16"></line>
+              </svg>
+            </div>
+            <div>
+              <h1 className="analytics-page-title">Marketplace Analytics</h1>
+              <p className="analytics-page-subtitle">
+                Palika-scoped overview of users, businesses, and marketplace products
+              </p>
+            </div>
+          </div>
         </div>
 
-        {loading && <div className="analytics-state">Loading analytics…</div>}
+        {loading && (
+          <div className="analytics-state">
+            <div className="spinner-large"></div>
+            <p>Loading analytics data...</p>
+          </div>
+        )}
 
         {!loading && error && (
           <div className="analytics-state error">Error: {error}</div>
@@ -124,20 +141,11 @@ export default function AnalyticsDashboard() {
             </div>
 
             <div className="chart-row">
-              <TrendChart title="User Growth (30 days)" data={analytics.users.trend} />
-              <TrendChart title="Business Growth (30 days)" data={analytics.businesses.trend} />
-            </div>
-
-            <div className="chart-row">
-              <TrendChart title="Product Growth (30 days)" data={analytics.products.trend} />
               <VerificationStatusChart
                 pending={analytics.products.byVerificationStatus.pending}
                 verified={analytics.products.byVerificationStatus.verified}
                 rejected={analytics.products.byVerificationStatus.rejected}
               />
-            </div>
-
-            <div className="chart-row">
               <CategoryBreakdown
                 title="Products by Category"
                 data={analytics.products.byCategory}
@@ -146,6 +154,18 @@ export default function AnalyticsDashboard() {
                 title="Businesses by Category"
                 data={analytics.businesses.byCategory}
               />
+            </div>
+
+            <div className="chart-row chart-row-single">
+              <TrendChart title="User Growth (30 days)" data={analytics.users.trend} />
+            </div>
+
+            <div className="chart-row chart-row-single">
+              <TrendChart title="Business Growth (30 days)" data={analytics.businesses.trend} />
+            </div>
+
+            <div className="chart-row chart-row-single">
+              <TrendChart title="Product Growth (30 days)" data={analytics.products.trend} />
             </div>
           </>
         )}
