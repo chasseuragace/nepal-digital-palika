@@ -21,7 +21,7 @@
   width: 48px;
   height: 48px;
   border: 4px solid #e9ecef;
-  border-top-color: #10b981;
+  border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -33,10 +33,10 @@
   align-items: center;
   margin-bottom: 32px;
   padding: 24px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   border-radius: 16px;
   color: white;
-  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 10px 30px rgba(30, 41, 59, 0.3);
   animation: slideInUp 0.5s ease-out;
 }
 
@@ -78,37 +78,77 @@
   color: white;
 }
 
-.header-add-btn {
-  display: flex;
+/* Providers Header Button - Specific styling to avoid conflicts */
+.providers-header-btn {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 24px;
   font-size: 15px;
   font-weight: 600;
-  background: white !important;
-  color: #10b981 !important;
+  background: white;
+  color: #1e293b;
   border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 10px;
   text-decoration: none;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.providers-header-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.providers-header-btn:hover,
+.providers-header-btn:focus,
+.providers-header-btn:active {
+  background: #f8fafc;
+  color: #1e293b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+}
+
+.header-add-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 24px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  background: white !important;
+  color: #1e293b !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 10px !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+  white-space: nowrap !important;
+  min-width: auto !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .header-add-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
 }
 
 .header-add-btn:hover,
 .header-add-btn:focus,
 .header-add-btn:active,
-.btn.btn-primary.header-add-btn:hover,
-.btn.btn-primary.header-add-btn:focus,
-.btn.btn-primary.header-add-btn:active {
-  background: white !important;
-  color: #10b981 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+.header-add-btn:visited {
+  background: #f8fafc !important;
+  color: #1e293b !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+  text-decoration: none !important;
 }
 
 /* Stats Grid */
@@ -134,20 +174,20 @@
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border-color: #10b981;
+  border-color: #3b82f6;
 }
 
 .stat-card.active {
-  border-color: #10b981;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
   transform: translateY(-2px);
 }
 
 .stat-card.active:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.2);
-  border-color: #059669;
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
+  border-color: #2563eb;
 }
 
 .stat-icon {
@@ -259,8 +299,8 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .filter-group {
@@ -283,8 +323,8 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .filter-select:hover {
@@ -589,15 +629,15 @@
 }
 
 .btn-primary {
-  background: #10b981;
+  background: #3b82f6;
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover {
-  background: #059669;
+  background: #2563eb;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .btn-danger {
