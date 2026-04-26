@@ -24,7 +24,6 @@ export function SummaryCard({ title, value, icon, trend, onClick }: SummaryCardP
           </p>
         )}
       </div>
-      <div className="summary-card-icon">{icon}</div>
-    </div>
+          </div>
   )
 }
