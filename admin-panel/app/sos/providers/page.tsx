@@ -285,9 +285,6 @@ export default function SOSProvidersPage() {
                     <td>
                       <div className="provider-name-cell">
                         <div className="provider-name-english">{provider.name_en}</div>
-                        {provider.name_ne && (
-                          <div className="provider-name-nepali">{provider.name_ne}</div>
-                        )}
                       </div>
                     </td>
                     <td>
