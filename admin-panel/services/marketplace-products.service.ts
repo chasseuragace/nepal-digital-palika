@@ -1,6 +1,9 @@
 import { IMarketplaceProductsDatasource, ProductListItem, ProductDetails, ProductFilters } from '@/lib/marketplace-products-datasource'
 import { getMarketplaceProductsDatasource } from '@/lib/marketplace-products-config'
 
+// Re-export types that are used by components
+export type { ProductListItem, ProductDetails, ProductFilters } from '@/lib/marketplace-products-datasource'
+
 export interface ProductListResponse {
   data: ProductListItem[]
   meta: {
