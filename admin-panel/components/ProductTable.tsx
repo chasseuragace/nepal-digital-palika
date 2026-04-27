@@ -32,53 +32,48 @@ export function ProductTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead className="bg-gray-100 border-b">
+    <div className="table-container">
+      <table className="products-table">
+        <thead>
           <tr>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Product</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Business</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Category</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Price</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Views</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+            <th>Product</th>
+            <th>Business</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Views</th>
+            <th>Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody>
           {products.map(product => (
-            <tr key={product.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-3">
-                  {product.image && (
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="w-10 h-10 rounded object-cover"
-                    />
-                  )}
-                  <div>
-                    <p className="font-medium text-gray-900">{product.title}</p>
-                    <p className="text-xs text-gray-500">{product.createdAt.split('T')[0]}</p>
+            <tr key={product.id}>
+              <td>
+                <div className="product-name-cell">
+                  <div className="product-info">
+                    <p className="product-title">{product.title}</p>
+                    <p className="product-date">{product.createdAt.split('T')[0]}</p>
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 text-sm text-gray-600">{product.businessName}</td>
-              <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
-              <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                Rs. {product.price.toLocaleString()}
+              <td>{product.businessName}</td>
+              <td>{product.category}</td>
+              <td>
+                <div className="price-cell">
+                  <span className="price-value">Rs. {product.price.toLocaleString()}</span>
+                </div>
               </td>
-              <td className="px-6 py-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(product.verificationStatus)}`}>
+              <td>
+                <span className={`status-badge ${product.verificationStatus}`}>
                   {product.verificationStatus.charAt(0).toUpperCase() + product.verificationStatus.slice(1)}
                 </span>
               </td>
-              <td className="px-6 py-4 text-sm text-gray-600">{product.viewCount}</td>
-              <td className="px-6 py-4">
-                <div className="flex gap-2">
+              <td>{product.viewCount}</td>
+              <td>
+                <div className="action-buttons">
                   <button
                     onClick={() => onViewDetails(product.id)}
-                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="btn-view"
                   >
                     View
                   </button>
@@ -86,13 +81,13 @@ export function ProductTable({
                     <>
                       <button
                         onClick={() => onVerify(product.id)}
-                        className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                        className="btn-edit"
                       >
                         Verify
                       </button>
                       <button
                         onClick={() => onReject(product.id)}
-                        className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                        className="btn-edit"
                       >
                         Reject
                       </button>
@@ -105,8 +100,8 @@ export function ProductTable({
         </tbody>
       </table>
       {!canVerify && verificationErrorMessage && (
-        <div className="p-4 bg-blue-50 border-t border-blue-200">
-          <p className="text-sm text-blue-800">
+        <div className="alert alert-warning">
+          <p>
             <strong>ℹ️ Note:</strong> {verificationErrorMessage}
           </p>
         </div>
