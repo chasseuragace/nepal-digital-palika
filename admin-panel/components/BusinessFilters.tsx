@@ -1,9 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, X } from 'lucide-react';
 
 interface BusinessFiltersProps {
@@ -50,58 +47,55 @@ export function BusinessFilters({
   const hasFilters = search || status || category;
 
   return (
-    <div className="space-y-4 p-4 bg-white/50 rounded-lg border border-green-200/50">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search businesses..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10 border-green-200 focus:border-emerald-400"
-          />
-        </div>
+    <div className="filters-section">
+      <div className="search-box">
+        <Search className="search-icon" />
+        <input
+          type="text"
+          placeholder="Search businesses..."
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="search-input"
+        />
+      </div>
 
+      <div className="filter-group">
         {/* Status Filter */}
-        <Select value={status} onValueChange={handleStatusChange}>
-          <SelectTrigger className="border-green-200 focus:border-emerald-400">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="verified">Verified</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-            <SelectItem value="suspended">Suspended</SelectItem>
-          </SelectContent>
-        </Select>
+        <select
+          value={status}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          className="filter-select"
+        >
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="verified">Verified</option>
+          <option value="rejected">Rejected</option>
+          <option value="suspended">Suspended</option>
+        </select>
 
         {/* Category Filter */}
-        <Select value={category} onValueChange={handleCategoryChange}>
-          <SelectTrigger className="border-green-200 focus:border-emerald-400">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <select
+          value={category}
+          onChange={(e) => handleCategoryChange(e.target.value)}
+          className="filter-select"
+        >
+          <option value="">All Categories</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
 
         {/* Reset Button */}
         {hasFilters && (
-          <Button
-            variant="outline"
+          <button
             onClick={handleReset}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            className="btn btn-secondary"
           >
-            <X className="w-4 h-4 mr-2" />
+            <X className="w-4 h-4" style={{ marginRight: '8px' }} />
             Reset
-          </Button>
+          </button>
         )}
       </div>
     </div>
