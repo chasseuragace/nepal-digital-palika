@@ -70,7 +70,7 @@ async function rejectBusiness(
     throw new Error(`reject failed ${r.status}: ${body}`);
   }
 }
-import '../marketplace.css';
+import './businesses.css';
 
 // Shape matches what /api/businesses returns (columns as persisted in the
 // `businesses` table). The BusinessTable component reads the snake_case
@@ -201,8 +201,8 @@ export default function BusinessesPage() {
 
   return (
     <AdminLayout>
-      <div className="marketplace-container">
-        <div className="marketplace-page-header">
+      <div className="businesses-container">
+        <div className="businesses-page-header">
           <div className="header-content">
             <div className="header-icon-box">
               <Building2 size={32} />
